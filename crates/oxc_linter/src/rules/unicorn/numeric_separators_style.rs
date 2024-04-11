@@ -97,7 +97,7 @@ impl Rule for NumericSeparatorsStyle {
 
                 let formatted = self.format_number(number);
 
-                if formatted != number.raw {
+                if formatted != number.raw.as_str() {
                     ctx.diagnostic_with_fix(NumericSeparatorsStyleDiagnostic(number.span), || {
                         Fix::new(formatted, number.span)
                     });
@@ -155,10 +155,10 @@ impl NumericSeparatorsStyle {
         use oxc_syntax::NumberBase;
 
         match number.base {
-            NumberBase::Binary => self.format_binary(number.raw),
-            NumberBase::Decimal | oxc_syntax::NumberBase::Float => self.format_decimal(number.raw),
-            NumberBase::Hex => self.format_hex(number.raw),
-            NumberBase::Octal => self.format_octal(number.raw),
+            NumberBase::Binary => self.format_binary(&number.raw),
+            NumberBase::Decimal | oxc_syntax::NumberBase::Float => self.format_decimal(&number.raw),
+            NumberBase::Hex => self.format_hex(&number.raw),
+            NumberBase::Octal => self.format_octal(&number.raw),
         }
     }
 

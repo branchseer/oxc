@@ -19,8 +19,11 @@ workspace = true
 doctest = false
 
 [dependencies]
-miette      = { workspace = true }
-compact_str = { workspace = true }
+miette        = { workspace = true }
+compact_str   = { workspace = true }
+bincode       = { workspace = true, optional = true, features = ["derive"] }
+oxc_allocator = { workspace = true, optional = true }
+simdutf8      = { workspace = true, optional = true }
 
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
@@ -29,3 +32,4 @@ serde        = { workspace = true, features = ["derive"], optional = true }
 [features]
 default   = []
 serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "compact_str/serde"]
+bincode   = ["dep:bincode", "dep:oxc_allocator", "dep:simdutf8"]

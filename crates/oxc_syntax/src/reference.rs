@@ -7,6 +7,9 @@ define_index_type! {
     pub struct ReferenceId = u32;
 }
 
+#[cfg(feature = "bincode")]
+crate::impl_bincode_for_index_type!(ReferenceId, u32);
+
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
@@ -32,6 +35,9 @@ bitflags! {
         const ReadWrite = Self::Read.bits() | Self::Write.bits();
     }
 }
+
+#[cfg(feature = "bincode")]
+crate::impl_bincode_for_bitflags!(ReferenceFlag);
 
 impl ReferenceFlag {
     pub const fn read() -> Self {

@@ -1,5 +1,8 @@
 use std::{borrow::Borrow, fmt, hash, ops::Deref};
 
+#[cfg(feature = "bincode")]
+use bincode::Encode;
+
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
@@ -20,13 +23,42 @@ pub const MAX_INLINE_LEN: usize = 16;
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for the
 /// lifetimeless form.
 #[derive(Clone, Eq)]
+#[cfg_attr(feature = "bincode", derive(Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Atom<'a>(&'a str);
 
+#[cfg(feature = "bincode")]
+mod bincode_impls {
+    use bincode::{de::Decoder, error::DecodeError, impl_borrow_decode_with_ctx, Decode};
+    use oxc_allocator::{Allocator, Vec};
+    use simdutf8::basic::from_utf8;
+
+    use super::Atom;
+    impl<'a> Decode<&'a Allocator> for Atom<'a> {
+        fn decode<D: Decoder<Ctx = &'a Allocator>>(decoder: &mut D) -> Result<Self, DecodeError> {
+            let bytes = Vec::<'a, u8>::decode(decoder)?;
+            let s = from_utf8(bytes.into_allocator_slice())
+                .map_err(|err| DecodeError::OtherString(err.to_string()))?;
+            Ok(Self(s))
+        }
+    }
+    impl_borrow_decode_with_ctx!(Atom<'a>, &'a Allocator, 'a);
+}
+
+#[cfg(feature = "serialize")]
+impl<'a> Serialize for Atom<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
 impl<'a> Atom<'a> {
     #[inline]
-    pub fn as_str(&self) -> &str {
+    pub fn as_str(&self) -> &'a str {
         self.0
     }
 

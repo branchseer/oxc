@@ -20,6 +20,7 @@ doctest = false
 [dependencies]
 bumpalo        = { workspace = true, features = ["collections", "allocator-api2"] }
 serde          = { workspace = true }
+bincode = { workspace = true, features = ["derive"] }
 allocator-api2 = { workspace = true }
 
 [dev-dependencies]

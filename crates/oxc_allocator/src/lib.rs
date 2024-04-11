@@ -4,6 +4,7 @@ use std::{
 };
 
 mod arena;
+mod bincode;
 
 pub use arena::{Box, String, Vec};
 use bumpalo::Bump;

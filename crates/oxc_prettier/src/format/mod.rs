@@ -1664,7 +1664,11 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     }
                     Expression::NumericLiteral(literal) => {
                         if need_quote {
-                            Doc::Str(string::print_string(p, literal.raw, p.options.single_quote))
+                            Doc::Str(string::print_string(
+                                p,
+                                literal.raw.as_str(),
+                                p.options.single_quote,
+                            ))
                         } else {
                             literal.format(p)
                         }

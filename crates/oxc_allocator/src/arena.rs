@@ -114,6 +114,11 @@ impl<'alloc, T> Vec<'alloc, T> {
         vec.extend(iter);
         Self(vec)
     }
+
+    #[inline]
+    pub fn into_allocator_slice(self) -> &'alloc [T] {
+        self.0.into_bump_slice()
+    }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {

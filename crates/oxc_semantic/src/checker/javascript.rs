@@ -382,10 +382,10 @@ fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
 
     if ctx.strict_mode() {
         match lit.base {
-            NumberBase::Octal if leading_zero(lit.raw) => {
+            NumberBase::Octal if leading_zero(&lit.raw) => {
                 ctx.error(LegacyOctal(lit.span));
             }
-            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) => {
+            NumberBase::Decimal | NumberBase::Float if leading_zero(&lit.raw) => {
                 #[derive(Debug, Error, Diagnostic)]
                 #[error("Decimals with leading zeros are not allowed in strict mode")]
                 #[diagnostic(help("remove the leading zero"))]

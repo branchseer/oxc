@@ -3,6 +3,8 @@
 
 use std::hash::{Hash, Hasher};
 
+#[cfg(feature = "bincode")]
+use bincode::{Decode, Encode};
 use miette::{SourceOffset, SourceSpan};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -18,6 +20,7 @@ pub const SPAN: Span = Span::new(0, 0);
 /// Utility methods can be copied from the `text-size` crate if they are needed.
 /// NOTE: `u32` is sufficient for "all" reasonable programs. Larger than u32 is a 4GB JS file.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[non_exhaustive] // disallow struct expression constructor `Span {}`
 pub struct Span {

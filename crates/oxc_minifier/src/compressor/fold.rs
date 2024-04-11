@@ -628,7 +628,7 @@ impl<'a> Compressor<'a> {
                         let literal = self.ast.number_literal(
                             unary_expr.span,
                             number_literal.value,
-                            number_literal.raw,
+                            number_literal.raw.as_str(),
                             number_literal.base,
                         );
                         return Some(self.ast.literal_number_expression(literal));
@@ -698,7 +698,7 @@ impl<'a> Compressor<'a> {
                             let literal = self.ast.number_literal(
                                 unary_expr.span,
                                 f64::from(!int_value),
-                                number_literal.raw,
+                                number_literal.raw.as_str(),
                                 NumberBase::Decimal, // since it be converted to i32, it should always be decimal.
                             );
                             return Some(self.ast.literal_number_expression(literal));

@@ -53,8 +53,8 @@ impl Rule for NoZeroFractions {
             return;
         };
 
-        let Some((fmt, is_dangling_dot)) = format_raw(number_literal.raw) else { return };
-        if fmt == number_literal.raw {
+        let Some((fmt, is_dangling_dot)) = format_raw(&number_literal.raw) else { return };
+        if fmt == number_literal.raw.as_str() {
             return;
         };
 

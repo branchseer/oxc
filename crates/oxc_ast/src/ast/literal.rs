@@ -8,6 +8,12 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+#[cfg(feature = "bincode")]
+use bincode::{Decode, Encode};
+
+#[cfg(feature = "bincode")]
+use oxc_allocator::Allocator;
+
 use bitflags::bitflags;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{BigintBase, NumberBase};
@@ -17,6 +23,7 @@ use serde::Serialize;
 use tsify::Tsify;
 
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BooleanLiteral {
@@ -40,6 +47,7 @@ impl BooleanLiteral {
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NullLiteral {
@@ -60,20 +68,21 @@ impl NullLiteral {
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NumericLiteral<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub value: f64,
-    pub raw: &'a str,
+    pub raw: Atom<'a>,
     #[cfg_attr(feature = "serialize", serde(skip))]
     pub base: NumberBase,
 }
 
 impl<'a> NumericLiteral<'a> {
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
-        Self { span, value, raw, base }
+        Self { span, value, raw: raw.into(), base }
     }
 
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
@@ -111,6 +120,7 @@ impl<'a> Hash for NumericLiteral<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BigIntLiteral<'a> {
@@ -128,6 +138,7 @@ impl<'a> BigIntLiteral<'a> {
 }
 
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct RegExpLiteral<'a> {
@@ -140,6 +151,7 @@ pub struct RegExpLiteral<'a> {
 }
 
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
     pub pattern: Atom<'a>,
@@ -166,6 +178,9 @@ bitflags! {
         const V = 1 << 7;
     }
 }
+
+#[cfg(feature = "bincode")]
+oxc_syntax::impl_bincode_for_bitflags!(RegExpFlags);
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -231,10 +246,12 @@ impl fmt::Display for RegExpFlags {
 }
 
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StringLiteral<'a> {

@@ -190,7 +190,7 @@ impl NoLossOfPrecision {
         if node.raw.contains('_') {
             Cow::Owned(node.raw.replace('_', ""))
         } else {
-            Cow::Borrowed(node.raw)
+            Cow::Borrowed(&node.raw)
         }
     }
 

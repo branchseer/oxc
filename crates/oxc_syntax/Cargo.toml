@@ -28,6 +28,8 @@ rustc-hash       = { workspace = true }
 indexmap         = { workspace = true }
 dashmap          = { workspace = true }
 phf              = { workspace = true, features = ["macros"] }
+bincode          = { workspace = true, optional = true, features = ["derive"] }
+
 
 serde        = { workspace = true, features = ["derive"], optional = true }
 tsify        = { workspace = true, optional = true }

@@ -141,7 +141,7 @@ impl<'a> AstBuilder<'a> {
         raw: &'a str,
         base: NumberBase,
     ) -> NumericLiteral<'a> {
-        NumericLiteral { span, value, raw, base }
+        NumericLiteral { span, value, raw: raw.into(), base }
     }
 
     pub fn boolean_literal(&self, span: Span, value: bool) -> BooleanLiteral {

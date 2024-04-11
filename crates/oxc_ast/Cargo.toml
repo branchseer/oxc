@@ -25,6 +25,7 @@ oxc_index     = { workspace = true }
 
 bitflags   = { workspace = true }
 num-bigint = { workspace = true }
+bincode    = { workspace = true, optional = true, features = ["derive"] }
 
 serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
@@ -44,3 +45,4 @@ serialize = [
   "oxc_span/serialize",
   "oxc_syntax/serialize",
 ]
+bincode = ["dep:bincode", "oxc_span/bincode"]

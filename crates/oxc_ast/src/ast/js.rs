@@ -3,6 +3,12 @@
 
 use std::{cell::Cell, fmt, hash::Hash};
 
+#[cfg(feature = "bincode")]
+use bincode::{Decode, Encode};
+
+#[cfg(feature = "bincode")]
+use oxc_allocator::Allocator;
+
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
@@ -37,6 +43,7 @@ export interface FormalParameterRest extends Span {
 "#;
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct Program<'a> {
@@ -62,6 +69,7 @@ impl<'a> Program<'a> {
 
 /// Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Expression<'a> {
@@ -333,6 +341,7 @@ impl<'a> Expression<'a> {
 
 /// Identifier Name
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
 pub struct IdentifierName<'a> {
@@ -349,6 +358,7 @@ impl<'a> IdentifierName<'a> {
 
 /// Identifier Reference
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
 pub struct IdentifierReference<'a> {
@@ -376,6 +386,7 @@ impl<'a> IdentifierReference<'a> {
 
 /// Binding Identifier
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
 pub struct BindingIdentifier<'a> {
@@ -401,6 +412,7 @@ impl<'a> BindingIdentifier<'a> {
 
 /// Label Identifier
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
 pub struct LabelIdentifier<'a> {
@@ -411,6 +423,7 @@ pub struct LabelIdentifier<'a> {
 
 /// This Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ThisExpression {
@@ -420,6 +433,7 @@ pub struct ThisExpression {
 
 /// <https://tc39.es/ecma262/#prod-ArrayLiteral>
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ArrayExpression<'a> {
@@ -434,6 +448,7 @@ pub struct ArrayExpression<'a> {
 
 /// Array Expression Element
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ArrayExpressionElement<'a> {
@@ -457,6 +472,7 @@ impl<'a> ArrayExpressionElement<'a> {
 
 /// Object Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ObjectExpression<'a> {
@@ -474,6 +490,7 @@ impl<'a> ObjectExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ObjectPropertyKind<'a> {
@@ -482,6 +499,7 @@ pub enum ObjectPropertyKind<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ObjectProperty<'a> {
@@ -497,6 +515,7 @@ pub struct ObjectProperty<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum PropertyKey<'a> {
@@ -570,6 +589,7 @@ impl<'a> PropertyKey<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum PropertyKind {
@@ -582,6 +602,7 @@ pub enum PropertyKind {
 ///
 /// This is interpreted by interleaving the expression elements in between the quasi elements.
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TemplateLiteral<'a> {
@@ -603,6 +624,7 @@ impl<'a> TemplateLiteral<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TaggedTemplateExpression<'a> {
@@ -614,6 +636,7 @@ pub struct TaggedTemplateExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TemplateElement<'a> {
@@ -625,6 +648,7 @@ pub struct TemplateElement<'a> {
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
@@ -640,6 +664,7 @@ pub struct TemplateElementValue<'a> {
 
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum MemberExpression<'a> {
@@ -735,6 +760,7 @@ impl<'a> MemberExpression<'a> {
 
 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ComputedMemberExpression<'a> {
@@ -747,6 +773,7 @@ pub struct ComputedMemberExpression<'a> {
 
 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StaticMemberExpression<'a> {
@@ -759,6 +786,7 @@ pub struct StaticMemberExpression<'a> {
 
 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct PrivateFieldExpression<'a> {
@@ -771,6 +799,7 @@ pub struct PrivateFieldExpression<'a> {
 
 /// Call Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct CallExpression<'a> {
@@ -825,6 +854,7 @@ impl<'a> CallExpression<'a> {
 
 /// New Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct NewExpression<'a> {
@@ -837,6 +867,7 @@ pub struct NewExpression<'a> {
 
 /// Meta Property `new.target` | `import.meta`
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct MetaProperty<'a> {
@@ -848,6 +879,7 @@ pub struct MetaProperty<'a> {
 
 /// Spread Element
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SpreadElement<'a> {
@@ -858,6 +890,7 @@ pub struct SpreadElement<'a> {
 
 /// Argument
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Argument<'a> {
@@ -873,6 +906,7 @@ impl Argument<'_> {
 
 /// Update Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct UpdateExpression<'a> {
@@ -885,6 +919,7 @@ pub struct UpdateExpression<'a> {
 
 /// Unary Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct UnaryExpression<'a> {
@@ -896,6 +931,7 @@ pub struct UnaryExpression<'a> {
 
 /// Binary Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BinaryExpression<'a> {
@@ -908,6 +944,7 @@ pub struct BinaryExpression<'a> {
 
 /// Private Identifier in Shift Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct PrivateInExpression<'a> {
@@ -920,6 +957,7 @@ pub struct PrivateInExpression<'a> {
 
 /// Binary Logical Operators
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct LogicalExpression<'a> {
@@ -932,6 +970,7 @@ pub struct LogicalExpression<'a> {
 
 /// Conditional Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ConditionalExpression<'a> {
@@ -944,6 +983,7 @@ pub struct ConditionalExpression<'a> {
 
 /// Assignment Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AssignmentExpression<'a> {
@@ -956,6 +996,7 @@ pub struct AssignmentExpression<'a> {
 
 /// Destructuring Assignment
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AssignmentTarget<'a> {
@@ -981,6 +1022,7 @@ impl<'a> AssignmentTarget<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum SimpleAssignmentTarget<'a> {
@@ -1005,6 +1047,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AssignmentTargetPattern<'a> {
@@ -1014,6 +1057,7 @@ pub enum AssignmentTargetPattern<'a> {
 
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ArrayAssignmentTarget<'a> {
@@ -1040,6 +1084,7 @@ impl<'a> ArrayAssignmentTarget<'a> {
 
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ObjectAssignmentTarget<'a> {
@@ -1072,6 +1117,7 @@ impl<'a> ObjectAssignmentTarget<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "RestElement"))]
 pub struct AssignmentTargetRest<'a> {
@@ -1082,6 +1128,7 @@ pub struct AssignmentTargetRest<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AssignmentTargetMaybeDefault<'a> {
@@ -1108,6 +1155,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AssignmentTargetWithDefault<'a> {
@@ -1118,6 +1166,7 @@ pub struct AssignmentTargetWithDefault<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum AssignmentTargetProperty<'a> {
@@ -1127,6 +1176,7 @@ pub enum AssignmentTargetProperty<'a> {
 
 /// Assignment Property - Identifier Reference
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
@@ -1138,6 +1188,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 
 /// Assignment Property - Property Name
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AssignmentTargetPropertyProperty<'a> {
@@ -1149,6 +1200,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 
 /// Sequence Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SequenceExpression<'a> {
@@ -1158,6 +1210,7 @@ pub struct SequenceExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Super {
@@ -1167,6 +1220,7 @@ pub struct Super {
 
 /// Await Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AwaitExpression<'a> {
@@ -1176,6 +1230,7 @@ pub struct AwaitExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ChainExpression<'a> {
@@ -1185,6 +1240,7 @@ pub struct ChainExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ChainElement<'a> {
@@ -1194,6 +1250,7 @@ pub enum ChainElement<'a> {
 
 /// Parenthesized Expression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ParenthesizedExpression<'a> {
@@ -1204,6 +1261,7 @@ pub struct ParenthesizedExpression<'a> {
 
 /// Statements
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Statement<'a> {
@@ -1246,6 +1304,7 @@ impl<'a> Statement<'a> {
 
 /// Directive Prologue
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Directive<'a> {
@@ -1260,6 +1319,7 @@ pub struct Directive<'a> {
 
 /// Hashbang
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct Hashbang<'a> {
@@ -1270,6 +1330,7 @@ pub struct Hashbang<'a> {
 
 /// Block Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BlockStatement<'a> {
@@ -1280,6 +1341,7 @@ pub struct BlockStatement<'a> {
 
 /// Declarations and the Variable Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Declaration<'a> {
@@ -1321,6 +1383,7 @@ impl<'a> Declaration<'a> {
 
 /// Variable Declaration
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct VariableDeclaration<'a> {
@@ -1339,6 +1402,7 @@ impl<'a> VariableDeclaration<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum VariableDeclarationKind {
@@ -1377,6 +1441,7 @@ impl fmt::Display for VariableDeclarationKind {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct VariableDeclarator<'a> {
@@ -1392,6 +1457,7 @@ pub struct VariableDeclarator<'a> {
 /// Using Declaration
 /// * <https://github.com/tc39/proposal-explicit-resource-management>
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct UsingDeclaration<'a> {
@@ -1404,6 +1470,7 @@ pub struct UsingDeclaration<'a> {
 
 /// Empty Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct EmptyStatement {
@@ -1413,6 +1480,7 @@ pub struct EmptyStatement {
 
 /// Expression Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ExpressionStatement<'a> {
@@ -1423,6 +1491,7 @@ pub struct ExpressionStatement<'a> {
 
 /// If Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct IfStatement<'a> {
@@ -1435,6 +1504,7 @@ pub struct IfStatement<'a> {
 
 /// Do-While Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct DoWhileStatement<'a> {
@@ -1446,6 +1516,7 @@ pub struct DoWhileStatement<'a> {
 
 /// While Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct WhileStatement<'a> {
@@ -1457,6 +1528,7 @@ pub struct WhileStatement<'a> {
 
 /// For Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ForStatement<'a> {
@@ -1469,6 +1541,7 @@ pub struct ForStatement<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ForStatementInit<'a> {
@@ -1494,6 +1567,7 @@ impl<'a> ForStatementInit<'a> {
 
 /// For-In Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ForInStatement<'a> {
@@ -1506,6 +1580,7 @@ pub struct ForInStatement<'a> {
 
 /// For-Of Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ForOfStatement<'a> {
@@ -1518,6 +1593,7 @@ pub struct ForOfStatement<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ForStatementLeft<'a> {
@@ -1536,6 +1612,7 @@ impl<'a> ForStatementLeft<'a> {
 
 /// Continue Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ContinueStatement<'a> {
@@ -1546,6 +1623,7 @@ pub struct ContinueStatement<'a> {
 
 /// Break Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BreakStatement<'a> {
@@ -1556,6 +1634,7 @@ pub struct BreakStatement<'a> {
 
 /// Return Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ReturnStatement<'a> {
@@ -1566,6 +1645,7 @@ pub struct ReturnStatement<'a> {
 
 /// With Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct WithStatement<'a> {
@@ -1577,6 +1657,7 @@ pub struct WithStatement<'a> {
 
 /// Switch Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SwitchStatement<'a> {
@@ -1587,6 +1668,7 @@ pub struct SwitchStatement<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct SwitchCase<'a> {
@@ -1604,6 +1686,7 @@ impl<'a> SwitchCase<'a> {
 
 /// Labelled Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct LabeledStatement<'a> {
@@ -1615,6 +1698,7 @@ pub struct LabeledStatement<'a> {
 
 /// Throw Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ThrowStatement<'a> {
@@ -1625,6 +1709,7 @@ pub struct ThrowStatement<'a> {
 
 /// Try Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TryStatement<'a> {
@@ -1636,6 +1721,7 @@ pub struct TryStatement<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct CatchClause<'a> {
@@ -1656,6 +1742,7 @@ pub struct CatchParameter<'a> {
 
 /// Debugger Statement
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct DebuggerStatement {
@@ -1666,6 +1753,7 @@ pub struct DebuggerStatement {
 /// Destructuring Binding Patterns
 /// * <https://tc39.es/ecma262/#prod-BindingPattern>
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct BindingPattern<'a> {
@@ -1691,6 +1779,7 @@ impl<'a> BindingPattern<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum BindingPatternKind<'a> {
@@ -1730,6 +1819,7 @@ impl<'a> BindingPatternKind<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AssignmentPattern<'a> {
@@ -1741,6 +1831,7 @@ pub struct AssignmentPattern<'a> {
 
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ObjectPattern<'a> {
@@ -1763,6 +1854,7 @@ impl<'a> ObjectPattern<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BindingProperty<'a> {
@@ -1776,6 +1868,7 @@ pub struct BindingProperty<'a> {
 
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ArrayPattern<'a> {
@@ -1801,6 +1894,7 @@ impl<'a> ArrayPattern<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "RestElement"))]
 pub struct BindingRestElement<'a> {
@@ -1811,6 +1905,7 @@ pub struct BindingRestElement<'a> {
 
 /// Function Definitions
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct Function<'a> {
@@ -1877,6 +1972,7 @@ impl<'a> Function<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FunctionType {
     FunctionDeclaration,
@@ -1889,6 +1985,7 @@ pub enum FunctionType {
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
 // See serializer in serialize.rs
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct FormalParameters<'a> {
@@ -1911,6 +2008,7 @@ impl<'a> FormalParameters<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct FormalParameter<'a> {
@@ -1930,6 +2028,7 @@ impl<'a> FormalParameter<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
@@ -1956,6 +2055,7 @@ impl<'a> FormalParameters<'a> {
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct FunctionBody<'a> {
@@ -1973,6 +2073,7 @@ impl<'a> FunctionBody<'a> {
 
 /// Arrow Function Definitions
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ArrowFunctionExpression<'a> {
@@ -2003,6 +2104,7 @@ impl<'a> ArrowFunctionExpression<'a> {
 
 /// Generator Function Definitions
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct YieldExpression<'a> {
@@ -2014,6 +2116,7 @@ pub struct YieldExpression<'a> {
 
 /// Class Definitions
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct Class<'a> {
@@ -2050,6 +2153,7 @@ impl<'a> Class<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum ClassType {
     ClassDeclaration,
@@ -2057,6 +2161,7 @@ pub enum ClassType {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ClassBody<'a> {
@@ -2066,6 +2171,7 @@ pub struct ClassBody<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ClassElement<'a> {
@@ -2167,6 +2273,7 @@ impl<'a> ClassElement<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct MethodDefinition<'a> {
@@ -2185,6 +2292,7 @@ pub struct MethodDefinition<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum MethodDefinitionType {
     MethodDefinition,
@@ -2192,6 +2300,7 @@ pub enum MethodDefinitionType {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct PropertyDefinition<'a> {
@@ -2213,6 +2322,7 @@ pub struct PropertyDefinition<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum PropertyDefinitionType {
     PropertyDefinition,
@@ -2220,6 +2330,7 @@ pub enum PropertyDefinitionType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum MethodDefinitionKind {
@@ -2242,6 +2353,7 @@ impl MethodDefinitionKind {
 }
 
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct PrivateIdentifier<'a> {
@@ -2257,6 +2369,7 @@ impl<'a> PrivateIdentifier<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StaticBlock<'a> {
@@ -2266,6 +2379,7 @@ pub struct StaticBlock<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleDeclaration<'a> {
@@ -2330,6 +2444,7 @@ impl<'a> ModuleDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct AccessorProperty<'a> {
@@ -2343,6 +2458,7 @@ pub struct AccessorProperty<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ImportExpression<'a> {
@@ -2353,6 +2469,7 @@ pub struct ImportExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ImportDeclaration<'a> {
@@ -2368,6 +2485,7 @@ pub struct ImportDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ImportDeclarationSpecifier<'a> {
@@ -2383,6 +2501,7 @@ pub enum ImportDeclarationSpecifier<'a> {
 // import {imported} from "source"
 // import {imported as local} from "source"
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ImportSpecifier<'a> {
@@ -2395,6 +2514,7 @@ pub struct ImportSpecifier<'a> {
 
 // import local from "source"
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ImportDefaultSpecifier<'a> {
@@ -2405,6 +2525,7 @@ pub struct ImportDefaultSpecifier<'a> {
 
 // import * as local from "source"
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ImportNamespaceSpecifier<'a> {
@@ -2414,6 +2535,7 @@ pub struct ImportNamespaceSpecifier<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct WithClause<'a> {
@@ -2424,6 +2546,7 @@ pub struct WithClause<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ImportAttribute<'a> {
@@ -2434,6 +2557,7 @@ pub struct ImportAttribute<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ImportAttributeKey<'a> {
@@ -2451,6 +2575,7 @@ impl<'a> ImportAttributeKey<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ExportNamedDeclaration<'a> {
@@ -2477,6 +2602,7 @@ impl<'a> ExportNamedDeclaration<'a> {
 /// export default ClassDeclaration
 /// export default AssignmentExpression
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct ExportDefaultDeclaration<'a> {
@@ -2493,6 +2619,7 @@ impl<'a> ExportDefaultDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ExportAllDeclaration<'a> {
@@ -2511,6 +2638,7 @@ impl<'a> ExportAllDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct ExportSpecifier<'a> {
@@ -2528,6 +2656,7 @@ impl<'a> ExportSpecifier<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
@@ -2558,6 +2687,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 /// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
 /// * <https://github.com/tc39/ecma262/pull/2154>
 #[derive(Debug, Clone, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleExportName<'a> {
