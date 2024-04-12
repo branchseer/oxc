@@ -45,4 +45,4 @@ serialize = [
   "oxc_span/serialize",
   "oxc_syntax/serialize",
 ]
-bincode = ["dep:bincode", "oxc_span/bincode"]
+bincode = ["dep:bincode", "oxc_span/bincode", "oxc_allocator/bincode"]

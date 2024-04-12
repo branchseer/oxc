@@ -35,7 +35,7 @@ mod bincode_impls {
         error::DecodeError,
         impl_borrow_decode_with_ctx, Decode,
     };
-    use oxc_allocator::{Allocator, Vec};
+    use oxc_allocator::Allocator;
     use simdutf8::basic::from_utf8;
 
     use super::Atom;

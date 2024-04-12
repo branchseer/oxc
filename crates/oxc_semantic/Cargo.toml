@@ -55,4 +55,4 @@ serialize = [
     "oxc_index/serialize",
     "dep:wasm-bindgen",
 ]
-bincode = ["dep:bincode", "oxc_ast/bincode", "oxc_syntax/bincode", "oxc_span/bincode"]
+bincode = ["dep:bincode", "oxc_ast/bincode", "oxc_syntax/bincode", "oxc_span/bincode", "oxc_allocator/bincode"]

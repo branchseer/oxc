@@ -4,6 +4,8 @@ use std::{
 };
 
 mod arena;
+
+#[cfg(feature = "bincode")]
 mod bincode;
 
 pub use arena::{Box, String, Vec};
