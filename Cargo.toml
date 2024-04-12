@@ -98,7 +98,7 @@ napi-build  = "2"
 assert-unchecked    = "0.1.2"
 allocator-api2      = "0.2.18"
 bpaf                = "0.9.11"
-bincode             = { git = "https://github.com/branchseer/bincode/", branch = "decode_context" }
+bincode             = { git = "https://github.com/branchseer/bincode", branch = "decode_context_3rdparty_impls" }
 bitflags            = "2.5.0"
 bumpalo             = "3.16.0"
 convert_case        = "0.6.0"

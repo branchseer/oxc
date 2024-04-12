@@ -2,8 +2,12 @@ use bitflags::bitflags;
 use oxc_index::define_index_type;
 
 define_index_type! {
+    #[cfg_attr(feature = "bincode", derive(bincode::Decode, bincode::Encode))]
     pub struct AstNodeId = usize;
 }
+
+// #[cfg(feature = "bincode")]
+// oxc_index::impl_bincode_for_index_type!(AstNodeId, usize);
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]

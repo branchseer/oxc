@@ -25,6 +25,7 @@ oxc_syntax      = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
 oxc_allocator   = { workspace = true }
+bincode         = { workspace = true, features = ["derive", "index_vec", "indexmap"], optional = true }
 
 indexmap   = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
@@ -45,5 +46,13 @@ phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 
 [features]
-default   = []
-serialize = ["dep:serde", "oxc_span/serialize", "oxc_syntax/serialize", "dep:tsify", "dep:wasm-bindgen"]
+default = []
+serialize = [
+    "dep:serde",
+    "oxc_span/serialize",
+    "oxc_syntax/serialize",
+    "dep:tsify",
+    "oxc_index/serialize",
+    "dep:wasm-bindgen",
+]
+bincode = ["dep:bincode", "oxc_ast/bincode", "oxc_syntax/bincode", "oxc_span/bincode"]

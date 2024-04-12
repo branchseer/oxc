@@ -1,7 +1,11 @@
 use bitflags::bitflags;
 use oxc_index::define_index_type;
 
+#[cfg(feature = "bincode")]
+use bincode::{Decode, Encode};
+
 define_index_type! {
+    #[cfg_attr(feature = "bincode", derive(Decode, Encode))]
     pub struct ScopeId = u32;
 }
 
@@ -11,9 +15,12 @@ const TS_APPEND_CONTENT: &'static str = r#"
 export type ScopeId = number;
 "#;
 
+#[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
+pub struct ScopeFlags(u16);
+
 bitflags! {
-    #[derive(Debug, Clone, Copy)]
-    pub struct ScopeFlags: u16 {
+    impl ScopeFlags: u16 {
         const StrictMode       = 1 << 0;
         const Top              = 1 << 1;
         const Function         = 1 << 2;

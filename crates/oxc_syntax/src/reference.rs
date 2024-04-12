@@ -3,12 +3,13 @@ use oxc_index::define_index_type;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
+#[cfg(feature = "bincode")]
+use bincode::{Decode, Encode};
+
 define_index_type! {
+    #[cfg_attr(feature = "bincode", derive(Decode, Encode))]
     pub struct ReferenceId = u32;
 }
-
-#[cfg(feature = "bincode")]
-crate::impl_bincode_for_index_type!(ReferenceId, u32);
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -23,10 +24,13 @@ export type ReferenceFlag = {
 }
 "#;
 
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
+pub struct ReferenceFlag(u8);
+
 bitflags! {
-    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-    #[cfg_attr(feature = "serialize", derive(Serialize))]
-    pub struct ReferenceFlag: u8 {
+    impl ReferenceFlag: u8 {
         const None = 0;
         const Read = 1 << 0;
         const Write = 1 << 1;
@@ -35,9 +39,6 @@ bitflags! {
         const ReadWrite = Self::Read.bits() | Self::Write.bits();
     }
 }
-
-#[cfg(feature = "bincode")]
-crate::impl_bincode_for_bitflags!(ReferenceFlag);
 
 impl ReferenceFlag {
     pub const fn read() -> Self {

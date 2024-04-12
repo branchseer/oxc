@@ -7,6 +7,9 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+#[cfg(feature = "bincode")]
+use bincode::{Decode, Encode};
+
 use crate::{symbol::SymbolId, AstNodeId};
 
 pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
@@ -14,6 +17,7 @@ pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 pub struct Reference {
     span: Span,
     /// The name of the identifier that was referred to

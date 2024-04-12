@@ -1,7 +1,7 @@
 use std::{borrow::Borrow, fmt, hash, ops::Deref};
 
 #[cfg(feature = "bincode")]
-use bincode::Encode;
+use bincode::{Decode, Encode};
 
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
@@ -147,6 +147,7 @@ impl<'a> fmt::Display for Atom<'a> {
 /// Currently implemented as just a wrapper around `compact_str::CompactString`,
 /// but will be reduced in size with a custom implementation later.
 #[derive(Clone, Eq)]
+#[cfg_attr(feature = "bincode", derive(Encode, Decode))]
 pub struct CompactStr(CompactString);
 
 impl CompactStr {

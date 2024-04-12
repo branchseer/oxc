@@ -4,12 +4,13 @@ use oxc_index::define_index_type;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
+#[cfg(feature = "bincode")]
+use bincode::{Decode, Encode};
+
 define_index_type! {
+    #[cfg_attr(feature = "bincode", derive(Decode, Encode))]
     pub struct SymbolId = u32;
 }
-
-#[cfg(feature = "bincode")]
-crate::impl_bincode_for_index_type!(SymbolId, u32);
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -18,10 +19,13 @@ export type SymbolId = number;
 export type SymbolFlags = unknown;
 "#;
 
+#[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "bincode", derive(Encode, Decode))]
+pub struct SymbolFlags(u32);
+
 bitflags! {
-    #[derive(Debug, Clone, Copy)]
-    #[cfg_attr(feature = "serialize", derive(Serialize))]
-    pub struct SymbolFlags: u32 {
+    impl SymbolFlags: u32 {
         const None                    = 0;
         /// Variable (var) or parameter
         const FunctionScopedVariable  = 1 << 0;

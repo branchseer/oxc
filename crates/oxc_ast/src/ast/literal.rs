@@ -164,9 +164,13 @@ impl<'a> fmt::Display for RegExp<'a> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "bincode", derive(Encode, Decode))]
+
+pub struct RegExpFlags(u8);
+
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct RegExpFlags: u8 {
+    impl RegExpFlags: u8 {
         const G = 1 << 0;
         const I = 1 << 1;
         const M = 1 << 2;
@@ -178,9 +182,6 @@ bitflags! {
         const V = 1 << 7;
     }
 }
-
-#[cfg(feature = "bincode")]
-oxc_syntax::impl_bincode_for_bitflags!(RegExpFlags);
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]

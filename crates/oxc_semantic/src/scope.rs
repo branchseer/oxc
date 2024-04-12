@@ -13,11 +13,14 @@ type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 type Bindings = FxIndexMap<CompactStr, SymbolId>;
 type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
+#[cfg(feature = "bincode")]
+use bincode::{Decode, Encode};
 
 /// Scope Tree
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
+#[cfg_attr(feature = "bincode", derive(Encode, Decode))]
 pub struct ScopeTree {
     /// Maps a scope to the parent scope it belongs in
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
@@ -30,6 +33,8 @@ pub struct ScopeTree {
     bindings: IndexVec<ScopeId, Bindings>,
     unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
 }
+
+// fn a()
 
 impl ScopeTree {
     pub fn len(&self) -> usize {
