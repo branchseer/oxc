@@ -95,7 +95,7 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
 
 /// Bumpalo Vec
 #[derive(Debug, PartialEq, Eq)]
-pub struct Vec<'alloc, T>(vec::Vec<T, &'alloc Bump>);
+pub struct Vec<'alloc, T>(pub(crate) vec::Vec<T, &'alloc Bump>);
 
 impl<'alloc, T> Vec<'alloc, T> {
     #[inline]
@@ -113,11 +113,6 @@ impl<'alloc, T> Vec<'alloc, T> {
         let mut vec = vec::Vec::new_in(&**allocator);
         vec.extend(iter);
         Self(vec)
-    }
-
-    #[inline]
-    pub fn into_allocator_slice(self) -> &'alloc [T] {
-        self.0.into_bump_slice()
     }
 }
 

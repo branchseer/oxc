@@ -29,7 +29,7 @@ impl<'alloc, T: Decode<&'alloc Allocator>> Decode<&'alloc Allocator> for Vec<'al
         if unty::type_equal::<T, u8>() {
             decoder.claim_container_read::<T>(len)?;
             // optimize for reading u8 vecs
-            let mut vec = bumpalo::vec![in allocator.deref(); 0u8; len];
+            let mut vec = allocator_api2::vec![in allocator.deref(); 0u8; len];
 
             decoder.reader().read(&mut vec)?;
             // Safety: Vec<T> is Vec<u8>
@@ -63,7 +63,7 @@ impl<'de, 'alloc, T: BorrowDecode<'de, &'alloc Allocator>> BorrowDecode<'de, &'a
         let allocator = *decoder.ctx();
         if unty::type_equal::<T, u8>() {
             // optimize for reading u8 vecs
-            let mut vec = bumpalo::vec![in allocator.deref(); 0u8; len];
+            let mut vec = allocator_api2::vec![in allocator.deref(); 0u8; len];
             decoder.reader().read(&mut vec)?;
             // Safety: Vec<T> is Vec<u8>
             #[allow(unsafe_code)]
@@ -95,7 +95,7 @@ impl<'alloc, T: Decode<&'alloc Allocator>> Decode<&'alloc Allocator> for Box<'al
         decoder: &mut D,
     ) -> Result<Self, bincode::error::DecodeError> {
         let t = T::decode(decoder)?;
-        Ok(Box(decoder.ctx().alloc(t)))
+        Ok(Box::new_in(t, decoder.ctx()))
     }
 }
 
@@ -106,7 +106,7 @@ impl<'de, 'alloc, T: BorrowDecode<'de, &'alloc Allocator>> BorrowDecode<'de, &'a
         decoder: &mut D,
     ) -> Result<Self, DecodeError> {
         let t = T::borrow_decode(decoder)?;
-        Ok(Box(decoder.ctx().alloc(t)))
+        Ok(Box::new_in(t, decoder.ctx()))
     }
 }
 

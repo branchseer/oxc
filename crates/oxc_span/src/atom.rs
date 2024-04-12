@@ -30,16 +30,25 @@ pub struct Atom<'a>(&'a str);
 
 #[cfg(feature = "bincode")]
 mod bincode_impls {
-    use bincode::{de::Decoder, error::DecodeError, impl_borrow_decode_with_ctx, Decode};
+    use bincode::{
+        de::{read::Reader as _, Decoder},
+        error::DecodeError,
+        impl_borrow_decode_with_ctx, Decode,
+    };
     use oxc_allocator::{Allocator, Vec};
     use simdutf8::basic::from_utf8;
 
     use super::Atom;
     impl<'a> Decode<&'a Allocator> for Atom<'a> {
         fn decode<D: Decoder<Ctx = &'a Allocator>>(decoder: &mut D) -> Result<Self, DecodeError> {
-            let bytes = Vec::<'a, u8>::decode(decoder)?;
-            let s = from_utf8(bytes.into_allocator_slice())
-                .map_err(|err| DecodeError::OtherString(err.to_string()))?;
+            let len = u64::decode(decoder)?;
+            let len = usize::try_from(len).map_err(|_| DecodeError::OutsideUsizeRange(len))?;
+            decoder.claim_container_read::<u8>(len)?;
+
+            let buf = decoder.ctx().alloc_slice_fill_default(len);
+
+            decoder.reader().read(buf)?;
+            let s = from_utf8(buf).map_err(|err| DecodeError::OtherString(err.to_string()))?;
             Ok(Self(s))
         }
     }
