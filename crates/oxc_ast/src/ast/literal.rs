@@ -17,7 +17,11 @@ use serde::Serialize;
 use tsify::Tsify;
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BooleanLiteral {
@@ -41,7 +45,11 @@ impl BooleanLiteral {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NullLiteral {
@@ -62,7 +70,11 @@ impl NullLiteral {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct NumericLiteral<'a> {
@@ -114,7 +126,11 @@ impl<'a> Hash for NumericLiteral<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct BigIntLiteral<'a> {
@@ -132,7 +148,11 @@ impl<'a> BigIntLiteral<'a> {
 }
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct RegExpLiteral<'a> {
@@ -145,7 +165,11 @@ pub struct RegExpLiteral<'a> {
 }
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
     pub pattern: Atom<'a>,
@@ -159,7 +183,11 @@ impl<'a> fmt::Display for RegExp<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 pub struct RegExpFlags(u8);
 
 bitflags! {
@@ -240,12 +268,20 @@ impl fmt::Display for RegExpFlags {
 }
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
 #[derive(Debug, Clone, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct StringLiteral<'a> {

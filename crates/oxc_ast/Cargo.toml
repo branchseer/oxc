@@ -46,4 +46,4 @@ serialize = [
   "oxc_span/serialize",
   "oxc_syntax/serialize",
 ]
-rkyv = ["dep:rkyv", "oxc_span/rkyv", "oxc_syntax/rkyv"]
+rkyv = ["dep:rkyv", "oxc_span/rkyv", "oxc_syntax/rkyv", "oxc_allocator/rkyv"]

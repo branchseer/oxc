@@ -128,9 +128,6 @@ mod tests {
 
     use crate::{Allocator, Box, Vec};
 
-    #[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)]
-    pub struct Atom<'a>(&'a str);
-
     #[test]
     fn rkyv_box() {
         let allocator = Allocator::default();

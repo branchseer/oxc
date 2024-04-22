@@ -26,7 +26,11 @@ export interface TSIndexSignatureName extends Span {
 "#;
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSThisParameter<'a> {
@@ -40,7 +44,11 @@ pub struct TSThisParameter<'a> {
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSEnumDeclaration<'a> {
@@ -53,7 +61,11 @@ pub struct TSEnumDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSEnumMember<'a> {
@@ -64,7 +76,11 @@ pub struct TSEnumMember<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSEnumMemberName<'a> {
@@ -77,7 +93,11 @@ pub enum TSEnumMemberName<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAnnotation<'a> {
@@ -87,7 +107,11 @@ pub struct TSTypeAnnotation<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSLiteralType<'a> {
@@ -97,7 +121,11 @@ pub struct TSLiteralType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSLiteral<'a> {
@@ -112,7 +140,11 @@ pub enum TSLiteral<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSType<'a> {
@@ -177,7 +209,11 @@ impl<'a> TSType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#handbook-content>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSConditionalType<'a> {
@@ -193,7 +229,11 @@ pub struct TSConditionalType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#unions>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSUnionType<'a> {
@@ -206,7 +246,11 @@ pub struct TSUnionType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSIntersectionType<'a> {
@@ -219,7 +263,11 @@ pub struct TSIntersectionType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/keyof-types.html>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeOperator<'a> {
@@ -230,7 +278,11 @@ pub struct TSTypeOperator<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSTypeOperatorOperator {
@@ -243,7 +295,11 @@ pub enum TSTypeOperatorOperator {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#the-array-type>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSArrayType<'a> {
@@ -256,7 +312,11 @@ pub struct TSArrayType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html#handbook-content>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSIndexedAccessType<'a> {
@@ -270,7 +330,11 @@ pub struct TSIndexedAccessType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTupleType<'a> {
@@ -280,7 +344,11 @@ pub struct TSTupleType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSNamedTupleMember<'a> {
@@ -292,7 +360,11 @@ pub struct TSNamedTupleMember<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSOptionalType<'a> {
@@ -302,7 +374,11 @@ pub struct TSOptionalType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSRestType<'a> {
@@ -312,7 +388,11 @@ pub struct TSRestType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSTupleElement<'a> {
@@ -323,7 +403,11 @@ pub enum TSTupleElement<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSAnyKeyword {
@@ -332,7 +416,11 @@ pub struct TSAnyKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSStringKeyword {
@@ -341,7 +429,11 @@ pub struct TSStringKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSBooleanKeyword {
@@ -350,7 +442,11 @@ pub struct TSBooleanKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSNumberKeyword {
@@ -359,7 +455,11 @@ pub struct TSNumberKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSNeverKeyword {
@@ -368,7 +468,11 @@ pub struct TSNeverKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSUnknownKeyword {
@@ -377,7 +481,11 @@ pub struct TSUnknownKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSNullKeyword {
@@ -386,7 +494,11 @@ pub struct TSNullKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSUndefinedKeyword {
@@ -395,7 +507,11 @@ pub struct TSUndefinedKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSVoidKeyword {
@@ -404,7 +520,11 @@ pub struct TSVoidKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSSymbolKeyword {
@@ -413,7 +533,11 @@ pub struct TSSymbolKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSThisType {
@@ -422,7 +546,11 @@ pub struct TSThisType {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSObjectKeyword {
@@ -431,7 +559,11 @@ pub struct TSObjectKeyword {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct TSBigIntKeyword {
@@ -443,7 +575,11 @@ pub struct TSBigIntKeyword {
 /// type D = B.a;
 /// type E = D.c.b.a;
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeReference<'a> {
@@ -457,7 +593,11 @@ pub struct TSTypeReference<'a> {
 ///     IdentifierReference
 ///     NamespaceName . IdentifierReference
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSTypeName<'a> {
@@ -501,7 +641,11 @@ impl GetSpan for TSTypeName<'_> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSQualifiedName<'a> {
@@ -512,7 +656,11 @@ pub struct TSQualifiedName<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameterInstantiation<'a> {
@@ -522,7 +670,11 @@ pub struct TSTypeParameterInstantiation<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameter<'a> {
@@ -537,7 +689,11 @@ pub struct TSTypeParameter<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameterDeclaration<'a> {
@@ -547,7 +703,11 @@ pub struct TSTypeParameterDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAliasDeclaration<'a> {
@@ -561,7 +721,11 @@ pub struct TSTypeAliasDeclaration<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSAccessibility {
@@ -571,7 +735,11 @@ pub enum TSAccessibility {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSClassImplements<'a> {
@@ -585,7 +753,11 @@ pub struct TSClassImplements<'a> {
 ///
 ///   interface `BindingIdentifier` `TypeParameters_opt` `InterfaceExtendsClause_opt` `ObjectType`
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInterfaceDeclaration<'a> {
@@ -600,7 +772,11 @@ pub struct TSInterfaceDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInterfaceBody<'a> {
@@ -610,7 +786,11 @@ pub struct TSInterfaceBody<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSPropertySignature<'a> {
@@ -624,7 +804,11 @@ pub struct TSPropertySignature<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSSignature<'a> {
@@ -636,7 +820,11 @@ pub enum TSSignature<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSIndexSignature<'a> {
@@ -648,7 +836,11 @@ pub struct TSIndexSignature<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSCallSignatureDeclaration<'a> {
@@ -661,7 +853,11 @@ pub struct TSCallSignatureDeclaration<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSMethodSignatureKind {
@@ -671,7 +867,11 @@ pub enum TSMethodSignatureKind {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSMethodSignature<'a> {
@@ -688,7 +888,11 @@ pub struct TSMethodSignature<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSConstructSignatureDeclaration<'a> {
@@ -700,7 +904,11 @@ pub struct TSConstructSignatureDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(
     feature = "serialize",
@@ -714,7 +922,11 @@ pub struct TSIndexSignatureName<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInterfaceHeritage<'a> {
@@ -725,7 +937,11 @@ pub struct TSInterfaceHeritage<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypePredicate<'a> {
@@ -737,7 +953,11 @@ pub struct TSTypePredicate<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSTypePredicateName<'a> {
@@ -746,7 +966,11 @@ pub enum TSTypePredicateName<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleDeclaration<'a> {
@@ -769,7 +993,11 @@ pub struct TSModuleDeclaration<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
 pub enum TSModuleDeclarationKind {
@@ -779,7 +1007,11 @@ pub enum TSModuleDeclarationKind {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSModuleDeclarationName<'a> {
@@ -797,7 +1029,11 @@ impl<'a> TSModuleDeclarationName<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSModuleDeclarationBody<'a> {
@@ -806,7 +1042,11 @@ pub enum TSModuleDeclarationBody<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleBlock<'a> {
@@ -816,7 +1056,11 @@ pub struct TSModuleBlock<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeLiteral<'a> {
@@ -826,7 +1070,11 @@ pub struct TSTypeLiteral<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInferType<'a> {
@@ -836,7 +1084,11 @@ pub struct TSInferType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeQuery<'a> {
@@ -847,7 +1099,11 @@ pub struct TSTypeQuery<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSTypeQueryExprName<'a> {
@@ -856,7 +1112,11 @@ pub enum TSTypeQueryExprName<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSImportType<'a> {
@@ -869,7 +1129,11 @@ pub struct TSImportType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSImportAttributes<'a> {
@@ -879,7 +1143,11 @@ pub struct TSImportAttributes<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSImportAttribute<'a> {
@@ -890,7 +1158,11 @@ pub struct TSImportAttribute<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum TSImportAttributeName<'a> {
@@ -899,7 +1171,11 @@ pub enum TSImportAttributeName<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSFunctionType<'a> {
@@ -912,7 +1188,11 @@ pub struct TSFunctionType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSConstructorType<'a> {
@@ -925,7 +1205,11 @@ pub struct TSConstructorType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSMappedType<'a> {
@@ -939,7 +1223,11 @@ pub struct TSMappedType<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum TSMappedTypeModifierOperator {
@@ -952,7 +1240,11 @@ pub enum TSMappedTypeModifierOperator {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTemplateLiteralType<'a> {
@@ -963,7 +1255,11 @@ pub struct TSTemplateLiteralType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSAsExpression<'a> {
@@ -974,7 +1270,11 @@ pub struct TSAsExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSSatisfiesExpression<'a> {
@@ -985,7 +1285,11 @@ pub struct TSSatisfiesExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAssertion<'a> {
@@ -996,7 +1300,11 @@ pub struct TSTypeAssertion<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSImportEqualsDeclaration<'a> {
@@ -1008,7 +1316,11 @@ pub struct TSImportEqualsDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged, rename_all = "camelCase"))]
 pub enum TSModuleReference<'a> {
@@ -1017,7 +1329,11 @@ pub enum TSModuleReference<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSExternalModuleReference<'a> {
@@ -1027,7 +1343,11 @@ pub struct TSExternalModuleReference<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSNonNullExpression<'a> {
@@ -1037,7 +1357,11 @@ pub struct TSNonNullExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct Decorator<'a> {
@@ -1068,7 +1392,11 @@ impl<'a> Decorator<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum ModifierKind {
@@ -1096,7 +1424,11 @@ impl ModifierKind {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct Modifier {
@@ -1106,7 +1438,11 @@ pub struct Modifier {
 }
 
 #[derive(Debug, Default, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Modifiers<'a>(Option<Vec<'a, Modifier>>);
@@ -1145,7 +1481,11 @@ impl<'a> Modifiers<'a> {
 ///
 /// `export = foo`
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSExportAssignment<'a> {
@@ -1158,7 +1498,11 @@ pub struct TSExportAssignment<'a> {
 ///
 /// `export as namespace foo`
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSNamespaceExportDeclaration<'a> {
@@ -1168,7 +1512,11 @@ pub struct TSNamespaceExportDeclaration<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInstantiationExpression<'a> {
@@ -1179,7 +1527,11 @@ pub struct TSInstantiationExpression<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub enum ImportOrExportKind {
@@ -1200,7 +1552,11 @@ impl ImportOrExportKind {
 // [`JSDoc`](https://github.com/microsoft/TypeScript/blob/54a554d8af2657630307cbfa8a3e4f3946e36507/src/compiler/types.ts#L393)
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSDocNullableType<'a> {
@@ -1211,7 +1567,11 @@ pub struct JSDocNullableType<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSDocUnknownType {

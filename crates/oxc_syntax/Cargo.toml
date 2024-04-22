@@ -32,7 +32,7 @@ phf              = { workspace = true, features = ["macros"] }
 serde        = { workspace = true, features = ["derive"], optional = true }
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
-rkyv         = { workspace = true, optional = true }
+rkyv         = { workspace = true, features = ["validation"], optional = true }
 
 [features]
 default   = []

@@ -20,7 +20,11 @@ pub const MAX_INLINE_LEN: usize = 16;
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for the
 /// lifetimeless form.
 #[derive(Clone, Eq)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Atom<'a>(&'a str);

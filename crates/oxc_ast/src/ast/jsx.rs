@@ -16,7 +16,11 @@ use super::{js::*, literal::*, ts::*};
 
 /// JSX Element
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXElement<'a> {
@@ -29,7 +33,11 @@ pub struct JSXElement<'a> {
 
 /// JSX Opening Element
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXOpeningElement<'a> {
@@ -43,7 +51,11 @@ pub struct JSXOpeningElement<'a> {
 
 /// JSX Closing Element
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXClosingElement<'a> {
@@ -54,7 +66,11 @@ pub struct JSXClosingElement<'a> {
 
 /// JSX Fragment
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXFragment<'a> {
@@ -66,7 +82,11 @@ pub struct JSXFragment<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXOpeningFragment {
@@ -75,7 +95,11 @@ pub struct JSXOpeningFragment {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXClosingFragment {
@@ -85,7 +109,11 @@ pub struct JSXClosingFragment {
 
 /// JSX Element Name
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXElementName<'a> {
@@ -99,7 +127,11 @@ pub enum JSXElementName<'a> {
 
 /// JSX Namespaced Name
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXNamespacedName<'a> {
@@ -117,7 +149,11 @@ impl<'a> std::fmt::Display for JSXNamespacedName<'a> {
 
 /// JSX Member Expression
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXMemberExpression<'a> {
@@ -137,7 +173,11 @@ impl<'a> JSXMemberExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXMemberExpressionObject<'a> {
@@ -146,7 +186,11 @@ pub enum JSXMemberExpressionObject<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXExpressionContainer<'a> {
@@ -156,7 +200,11 @@ pub struct JSXExpressionContainer<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXExpression<'a> {
@@ -165,7 +213,11 @@ pub enum JSXExpression<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXEmptyExpression {
@@ -177,7 +229,11 @@ pub struct JSXEmptyExpression {
 
 /// JSX Attributes
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXAttributeItem<'a> {
@@ -187,7 +243,11 @@ pub enum JSXAttributeItem<'a> {
 
 /// JSX Attribute
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXAttribute<'a> {
@@ -205,7 +265,11 @@ impl<'a> JSXAttribute<'a> {
 
 /// JSX Spread Attribute
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXSpreadAttribute<'a> {
@@ -216,7 +280,11 @@ pub struct JSXSpreadAttribute<'a> {
 
 /// JSX Attribute Name
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXAttributeName<'a> {
@@ -226,7 +294,11 @@ pub enum JSXAttributeName<'a> {
 
 /// JSX Attribute Value
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXAttributeValue<'a> {
@@ -237,7 +309,11 @@ pub enum JSXAttributeValue<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXIdentifier<'a> {
@@ -256,7 +332,11 @@ impl<'a> JSXIdentifier<'a> {
 
 /// JSX Child
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum JSXChild<'a> {
@@ -268,7 +348,11 @@ pub enum JSXChild<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXSpreadChild<'a> {
@@ -278,7 +362,11 @@ pub struct JSXSpreadChild<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct JSXText<'a> {

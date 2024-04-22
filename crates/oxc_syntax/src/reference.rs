@@ -4,7 +4,7 @@ use oxc_index::define_index_type;
 use serde::Serialize;
 
 define_index_type! {
-    #[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+    #[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize), archive(check_bytes))]
     pub struct ReferenceId = u32;
 }
 
@@ -22,7 +22,11 @@ export type ReferenceFlag = {
 "#;
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(
+    feature = "rkyv",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize),
+    archive(check_bytes)
+)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 pub struct ReferenceFlag(u8);
 

@@ -12,6 +12,9 @@
 #[cfg(feature = "serialize")]
 mod serialize;
 
+#[cfg(feature = "rkyv")]
+mod rkyv;
+
 pub mod ast;
 mod ast_builder;
 mod ast_kind;
@@ -79,4 +82,41 @@ fn lifetime_variance() {
     fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: ast::Program<'a>) -> ast::Program<'b> {
         program
     }
+}
+
+#[cfg(feature = "rkyv")]
+#[test]
+fn rkyv_smoke() {
+    use std::cell::Cell;
+
+    use oxc_allocator::{Allocator, Box, Vec};
+    use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
+
+    let allocator = Allocator::default();
+    let program = ast::Program {
+        span: oxc_span::SPAN,
+        source_type: oxc_span::SourceType::default(),
+        directives: Vec::new_in(&allocator),
+        hashbang: None,
+        body: Vec::from_iter_in(
+            [ast::Statement::ExpressionStatement(Box::new_in(
+                ast::ExpressionStatement {
+                    span: oxc_span::SPAN,
+                    expression: ast::Expression::Identifier(Box::new_in(
+                        ast::IdentifierReference {
+                            span: oxc_span::SPAN,
+                            name: "hello".into(),
+                            reference_id: Cell::new(Some(ReferenceId::from_raw(42))),
+                            reference_flag: ReferenceFlag::empty(),
+                        },
+                        &allocator,
+                    )),
+                },
+                &allocator,
+            ))],
+            &allocator,
+        ),
+    };
+    let bytes = ::rkyv::util::to_bytes::<_, 0>(&program).unwrap();
+    dbg!(bytes.len());
 }
