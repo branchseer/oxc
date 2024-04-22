@@ -15,10 +15,13 @@ export type SymbolId = number;
 export type SymbolFlags = unknown;
 "#;
 
+#[derive(Debug, Clone, Copy)]
+#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct SymbolFlags(u32);
+
 bitflags! {
-    #[derive(Debug, Clone, Copy)]
-    #[cfg_attr(feature = "serialize", derive(Serialize))]
-    pub struct SymbolFlags: u32 {
+     impl SymbolFlags: u32 {
         const None                    = 0;
         /// Variable (var) or parameter
         const FunctionScopedVariable  = 1 << 0;

@@ -1682,6 +1682,7 @@ version = "0.12.5"
 dependencies = [
  "compact_str",
  "miette",
+ "rkyv",
  "serde",
  "tsify",
  "wasm-bindgen",
@@ -1697,6 +1698,7 @@ dependencies = [
  "oxc_index",
  "oxc_span",
  "phf",
+ "rkyv",
  "rustc-hash",
  "serde",
  "tsify",

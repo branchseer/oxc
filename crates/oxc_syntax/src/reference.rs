@@ -20,10 +20,13 @@ export type ReferenceFlag = {
 }
 "#;
 
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct ReferenceFlag(u8);
+
 bitflags! {
-    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-    #[cfg_attr(feature = "serialize", derive(Serialize))]
-    pub struct ReferenceFlag: u8 {
+    impl ReferenceFlag: u8 {
         const None = 0;
         const Read = 1 << 0;
         const Write = 1 << 1;
