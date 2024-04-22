@@ -1313,6 +1313,7 @@ dependencies = [
  "oxc_index",
  "oxc_span",
  "oxc_syntax",
+ "rkyv",
  "ryu-js",
  "serde",
  "serde_json",

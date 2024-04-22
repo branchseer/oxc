@@ -5,6 +5,7 @@ use oxc_index::define_index_type;
 use serde::Serialize;
 
 define_index_type! {
+    #[cfg_attr(feature = "rkyv", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
     pub struct SymbolId = u32;
 }
 
