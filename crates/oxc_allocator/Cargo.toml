@@ -17,10 +17,15 @@ workspace = true
 [lib]
 doctest = false
 
+[features]
+rkyv = ["dep:rkyv", "dep:ptr_meta"]
+
 [dependencies]
 bumpalo        = { workspace = true, features = ["collections", "allocator-api2"] }
 serde          = { workspace = true }
 allocator-api2 = { workspace = true }
+rkyv           = { workspace = true, optional = true }
+ptr_meta       = { workspace = true, optional = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

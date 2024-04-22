@@ -22,6 +22,13 @@ use crate::Allocator;
 /// It is a memory leak if the boxed value has a `Drop` implementation.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
+impl<'alloc, T: ?Sized> Box<'alloc, T> {
+    #[allow(unsafe_code)]
+    pub(crate) unsafe fn from_raw(ptr: *mut T) -> Self {
+        Self(NonNull::new_unchecked(ptr), PhantomData)
+    }
+}
+
 impl<'alloc, T> Box<'alloc, T> {
     #[allow(unsafe_code)]
     pub fn unbox(self) -> T {

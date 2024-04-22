@@ -167,6 +167,8 @@ serde_yaml          = "0.9.34"
 similar             = "2.5.0"
 textwrap            = "0.16.0"
 unicode-width       = "0.1.11"
+rkyv                = "0.7.44"
+ptr_meta            = "0.1.4"
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi"]

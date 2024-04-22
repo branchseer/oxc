@@ -5,6 +5,9 @@ use std::{
 
 mod arena;
 
+#[cfg(feature = "rkyv")]
+mod rkyv;
+
 pub use arena::{Box, String, Vec};
 use bumpalo::Bump;
 
