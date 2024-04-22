@@ -1732,6 +1732,7 @@ pub struct CatchClause<'a> {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "bincode", derive(Decode, Encode), bincode(decode_context = "&'a Allocator"))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
 pub struct CatchParameter<'a> {

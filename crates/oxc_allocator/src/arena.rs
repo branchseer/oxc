@@ -114,6 +114,13 @@ impl<'alloc, T> Vec<'alloc, T> {
         vec.extend(iter);
         Self(vec)
     }
+
+    pub fn leak<'a>(self) -> &'a mut [T]
+    where
+        'alloc: 'a,
+    {
+        self.0.leak()
+    }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {

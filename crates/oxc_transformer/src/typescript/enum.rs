@@ -104,7 +104,7 @@ impl<'a> TypeScript<'a> {
         let mut default_init = self.ctx.ast.literal_number_expression(NumericLiteral {
             span: SPAN,
             value: 0.0,
-            raw: "0",
+            raw: "0".into(),
             base: NumberBase::Decimal,
         });
         let mut statements = self.ctx.ast.new_vec();
@@ -209,7 +209,7 @@ impl<'a> TypeScript<'a> {
                 let one = self.ctx.ast.literal_number_expression(NumericLiteral {
                     span: SPAN,
                     value: 1.0,
-                    raw: "1",
+                    raw: "1".into(),
                     base: NumberBase::Decimal,
                 });
 

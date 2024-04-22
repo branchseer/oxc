@@ -29,41 +29,20 @@ pub const MAX_INLINE_LEN: usize = 16;
 pub struct Atom<'a>(&'a str);
 
 #[cfg(feature = "bincode")]
-mod bincode_impls {
-    use bincode::{
-        de::{read::Reader as _, Decoder},
-        error::DecodeError,
-        impl_borrow_decode_with_ctx, Decode,
-    };
-    use oxc_allocator::Allocator;
+const _: () = {
+    use bincode::{de::Decoder, error::DecodeError, impl_borrow_decode_with_ctx};
+    use oxc_allocator::{Allocator, Vec};
     use simdutf8::basic::from_utf8;
 
-    use super::Atom;
     impl<'a> Decode<&'a Allocator> for Atom<'a> {
         fn decode<D: Decoder<Ctx = &'a Allocator>>(decoder: &mut D) -> Result<Self, DecodeError> {
-            let len = u64::decode(decoder)?;
-            let len = usize::try_from(len).map_err(|_| DecodeError::OutsideUsizeRange(len))?;
-            decoder.claim_container_read::<u8>(len)?;
-
-            let buf = decoder.ctx().alloc_slice_fill_default(len);
-
-            decoder.reader().read(buf)?;
-            let s = from_utf8(buf).map_err(|err| DecodeError::OtherString(err.to_string()))?;
+            let bytes = Vec::<'a, u8>::decode(decoder)?.leak::<'a>();
+            let s = from_utf8(bytes).map_err(|err| DecodeError::OtherString(err.to_string()))?;
             Ok(Self(s))
         }
     }
     impl_borrow_decode_with_ctx!(Atom<'a>, &'a Allocator, 'a);
-}
-
-#[cfg(feature = "serialize")]
-impl<'a> Serialize for Atom<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.as_str())
-    }
-}
+};
 
 impl<'a> Atom<'a> {
     #[inline]
