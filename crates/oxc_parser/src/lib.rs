@@ -72,11 +72,6 @@ mod ts;
 
 mod diagnostics;
 
-// Expose lexer only in benchmarks
-#[cfg(not(feature = "benchmarking"))]
-mod lexer;
-#[cfg(feature = "benchmarking")]
-#[doc(hidden)]
 pub mod lexer;
 
 use context::{Context, StatementContext};
@@ -195,21 +190,13 @@ mod parser_parse {
     ///
     /// `UniquePromise::new_for_tests` is a backdoor for unit tests and benchmarks, so they can create a
     /// `ParserImpl` or `Lexer`, and manipulate it directly, for testing/benchmarking purposes.
-    pub(crate) struct UniquePromise {
+    pub struct UniquePromise {
         _dummy: (),
     }
 
     impl UniquePromise {
         #[inline]
-        fn new() -> Self {
-            Self { _dummy: () }
-        }
-
-        /// Backdoor for tests/benchmarks to create a `UniquePromise` (see above).
-        /// This function must NOT be exposed outside of tests and benchmarks,
-        /// as it allows circumventing safety invariants of the parser.
-        #[cfg(any(test, feature = "benchmarking"))]
-        pub fn new_for_tests() -> Self {
+        pub unsafe fn new() -> Self {
             Self { _dummy: () }
         }
     }
@@ -220,7 +207,7 @@ mod parser_parse {
         /// Returns an empty `Program` on unrecoverable error,
         /// Recoverable errors are stored inside `errors`.
         pub fn parse(self) -> ParserReturn<'a> {
-            let unique = UniquePromise::new();
+            let unique = unsafe { UniquePromise::new() };
             let parser = ParserImpl::new(
                 self.allocator,
                 self.source_text,
@@ -237,7 +224,7 @@ mod parser_parse {
         ///
         /// * Syntax Error
         pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
-            let unique = UniquePromise::new();
+            let unique = unsafe { UniquePromise::new() };
             let parser = ParserImpl::new(
                 self.allocator,
                 self.source_text,
@@ -249,7 +236,7 @@ mod parser_parse {
         }
     }
 }
-use parser_parse::UniquePromise;
+pub use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.

@@ -105,7 +105,7 @@ impl<'a> Lexer<'a> {
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
     /// on a single thread at one time.
-    pub(super) fn new(
+    pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
@@ -128,18 +128,6 @@ impl<'a> Lexer<'a> {
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
         }
-    }
-
-    /// Backdoor to create a `Lexer` without holding a `UniquePromise`, for benchmarks.
-    /// This function must NOT be exposed in public API as it breaks safety invariants.
-    #[cfg(feature = "benchmarking")]
-    pub fn new_for_benchmarks(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests();
-        Self::new(allocator, source_text, source_type, unique)
     }
 
     /// Remaining string from `Source`

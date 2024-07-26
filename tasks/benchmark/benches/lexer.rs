@@ -1,6 +1,9 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_parser::lexer::{Kind, Lexer};
+use oxc_parser::{
+    lexer::{Kind, Lexer},
+    UniquePromise,
+};
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles};
 
@@ -32,7 +35,9 @@ fn bench_lexer(criterion: &mut Criterion) {
                 // so we do the same here.
                 let mut allocator = Allocator::default();
                 b.iter(|| {
-                    let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
+                    let mut lexer = Lexer::new(&allocator, source_text, source_type, unsafe {
+                        UniquePromise::new()
+                    });
                     while lexer.next_token().kind != Kind::Eof {}
                     allocator.reset();
                 });

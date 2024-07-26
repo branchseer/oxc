@@ -307,7 +307,7 @@ impl<'a> Lexer<'a> {
 
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
-    pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
+    pub fn next_template_substitution_tail(&mut self) -> Token {
         self.token.start = self.offset() - 1;
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
         self.lookahead.clear();
