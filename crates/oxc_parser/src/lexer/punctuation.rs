@@ -55,7 +55,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub(crate) fn next_right_angle(&mut self) -> Token {
+    pub fn next_right_angle(&mut self) -> Token {
         let kind = self.read_right_angle();
         self.lookahead.clear();
         self.finish_next(kind)
