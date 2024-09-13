@@ -16,7 +16,7 @@ enum SurrogatePair {
     HighLow(u32, u32),
 }
 
-impl<'a> Lexer<'a> {
+impl<'source, 'alloc> Lexer<'source, 'alloc> {
     pub(super) fn unicode_char_handler(&mut self) -> Kind {
         let c = self.peek().unwrap();
         match c {
@@ -50,7 +50,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     pub(super) fn identifier_unicode_escape_sequence(
         &mut self,
-        str: &mut String<'a>,
+        str: &mut String<'alloc>,
         check_identifier_start: bool,
     ) {
         let start = self.offset();
@@ -106,7 +106,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     fn string_unicode_escape_sequence(
         &mut self,
-        text: &mut String<'a>,
+        text: &mut String<'alloc>,
         is_valid_escape_sequence: &mut bool,
     ) {
         let value = match self.peek() {
@@ -214,7 +214,7 @@ impl<'a> Lexer<'a> {
     // EscapeSequence ::
     pub(super) fn read_string_escape_sequence(
         &mut self,
-        text: &mut String<'a>,
+        text: &mut String<'alloc>,
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {

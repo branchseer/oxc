@@ -14,7 +14,7 @@ const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
 static TEMPLATE_LITERAL_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'$' | b'`' | b'\r' | b'\\'));
 
-impl<'a> Lexer<'a> {
+impl<'source, 'alloc> Lexer<'source, 'alloc> {
     /// 12.8.6 Template Literal Lexical Components
 
     /// Read template literal component.
@@ -89,7 +89,7 @@ impl<'a> Lexer<'a> {
     /// * `pos` must not be before `self.source.position()`.
     unsafe fn template_literal_carriage_return(
         &mut self,
-        mut pos: SourcePosition<'a>,
+        mut pos: SourcePosition<'source>,
         substitute: Kind,
         tail: Kind,
     ) -> Kind {
@@ -131,7 +131,7 @@ impl<'a> Lexer<'a> {
     /// * `pos` must not be before `self.source.position()`.
     unsafe fn template_literal_backslash(
         &mut self,
-        pos: SourcePosition<'a>,
+        pos: SourcePosition<'source>,
         substitute: Kind,
         tail: Kind,
     ) -> Kind {
@@ -164,7 +164,7 @@ impl<'a> Lexer<'a> {
     /// Create arena string for modified template literal, containing the template literal up to `pos`.
     /// # SAFETY
     /// `pos` must not be before `self.source.position()`
-    unsafe fn template_literal_create_string(&self, pos: SourcePosition) -> String<'a> {
+    unsafe fn template_literal_create_string(&self, pos: SourcePosition) -> String<'alloc> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.
@@ -181,9 +181,9 @@ impl<'a> Lexer<'a> {
     /// `chunk_start` must not be after `pos`.
     unsafe fn template_literal_escaped(
         &mut self,
-        mut str: String<'a>,
-        pos: SourcePosition<'a>,
-        mut chunk_start: SourcePosition<'a>,
+        mut str: String<'alloc>,
+        pos: SourcePosition<'source>,
+        mut chunk_start: SourcePosition<'source>,
         mut is_valid_escape_sequence: bool,
         substitute: Kind,
         tail: Kind,
@@ -315,12 +315,16 @@ impl<'a> Lexer<'a> {
     }
 
     /// Save escaped template string
-    fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
+    fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'alloc str) {
         self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then_some(s));
         self.token.escaped = true;
     }
 
-    pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
+    pub(crate) fn get_template_string<'a>(&self, token: Token) -> Option<&'a str>
+    where
+        'source: 'a,
+        'alloc: 'a,
+    {
         if token.escaped {
             return self.escaped_templates[&token.start];
         }

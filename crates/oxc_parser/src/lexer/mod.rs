@@ -70,11 +70,11 @@ struct Lookahead<'a> {
     token: Token,
 }
 
-pub struct Lexer<'a> {
-    allocator: &'a Allocator,
+pub struct Lexer<'source, 'alloc> {
+    allocator: &'alloc Allocator,
 
     // Wrapper around source text. Must not be changed after initialization.
-    source: Source<'a>,
+    source: Source<'source>,
 
     source_type: SourceType,
 
@@ -82,32 +82,32 @@ pub struct Lexer<'a> {
 
     pub(crate) errors: Vec<OxcDiagnostic>,
 
-    lookahead: VecDeque<Lookahead<'a>>,
+    lookahead: VecDeque<Lookahead<'source>>,
 
     context: LexerContext,
 
     pub(crate) trivia_builder: TriviaBuilder,
 
     /// Data store for escaped strings, indexed by [Token::start] when [Token::escaped] is true
-    pub escaped_strings: FxHashMap<u32, &'a str>,
+    pub escaped_strings: FxHashMap<u32, &'alloc str>,
 
     /// Data store for escaped templates, indexed by [Token::start] when [Token::escaped] is true
     /// `None` is saved when the string contains an invalid escape sequence.
-    pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
+    pub escaped_templates: FxHashMap<u32, Option<&'alloc str>>,
 
     /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
 }
 
 #[allow(clippy::unused_self)]
-impl<'a> Lexer<'a> {
+impl<'source, 'alloc> Lexer<'source, 'alloc> {
     /// Create new `Lexer`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
     /// on a single thread at one time.
     pub fn new(
-        allocator: &'a Allocator,
-        source_text: &'a str,
+        allocator: &'alloc Allocator,
+        source_text: &'source str,
         source_type: SourceType,
         unique: UniquePromise,
     ) -> Self {
@@ -131,13 +131,13 @@ impl<'a> Lexer<'a> {
     }
 
     /// Remaining string from `Source`
-    pub fn remaining(&self) -> &'a str {
+    pub fn remaining(&self) -> &'source str {
         self.source.remaining()
     }
 
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
-    pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
+    pub fn checkpoint(&self) -> LexerCheckpoint<'source> {
         LexerCheckpoint {
             position: self.source.position(),
             token: self.token,
@@ -146,7 +146,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
-    pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
+    pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'source>) {
         self.errors.truncate(checkpoint.errors_pos);
         self.source.set_position(checkpoint.position);
         self.token = checkpoint.token;

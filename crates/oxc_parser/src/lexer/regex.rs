@@ -3,7 +3,7 @@ use oxc_syntax::identifier::is_line_terminator;
 use super::{Kind, Lexer, RegExpFlags, Token};
 use crate::diagnostics;
 
-impl<'a> Lexer<'a> {
+impl<'source, 'alloc> Lexer<'source, 'alloc> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
     /// See Section 12:
     ///   The `InputElementRegExp` goal symbol is used in all syntactic grammar contexts

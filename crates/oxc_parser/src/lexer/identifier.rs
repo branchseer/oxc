@@ -26,7 +26,7 @@ fn is_identifier_start_ascii_byte(byte: u8) -> bool {
     ASCII_ID_START_TABLE.matches(byte)
 }
 
-impl<'a> Lexer<'a> {
+impl<'source, 'alloc> Lexer<'source, 'alloc> {
     /// Handle identifier with ASCII start character.
     /// Returns text of the identifier, minus its first char.
     ///
@@ -48,7 +48,11 @@ impl<'a> Lexer<'a> {
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
     #[allow(clippy::missing_safety_doc)] // Clippy is wrong!
-    pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
+    pub(super) unsafe fn identifier_name_handler<'a>(&mut self) -> &str
+    where
+        'alloc: 'a,
+        'source: 'a,
+    {
         // Advance past 1st byte.
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = self.source.position().add(1);
@@ -97,7 +101,7 @@ impl<'a> Lexer<'a> {
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
     /// Any number of characters can have already been consumed from `self.source` prior to it.
     /// `self.source` should be positioned at start of Unicode character.
-    fn identifier_tail_unicode(&mut self, start_pos: SourcePosition) -> &'a str {
+    fn identifier_tail_unicode(&mut self, start_pos: SourcePosition) -> &str {
         let c = self.peek().unwrap();
         if is_identifier_part_unicode(c) {
             self.consume_char();
@@ -112,7 +116,7 @@ impl<'a> Lexer<'a> {
     ///
     /// First char should have been consumed from `self.source` prior to calling this.
     /// `start_pos` should be position of the start of the identifier (before first char was consumed).
-    pub(super) fn identifier_tail_after_unicode(&mut self, start_pos: SourcePosition) -> &'a str {
+    pub(super) fn identifier_tail_after_unicode(&mut self, start_pos: SourcePosition) -> &str {
         // Identifier contains a Unicode chars, so probably contains more.
         // So just iterate over chars now, instead of bytes.
         while let Some(c) = self.peek() {
@@ -145,7 +149,7 @@ impl<'a> Lexer<'a> {
     ///
     /// The `\` must not have be consumed from `lexer.source`.
     /// `start_pos` must be position of start of identifier.
-    fn identifier_backslash(&mut self, start_pos: SourcePosition, is_start: bool) -> &'a str {
+    fn identifier_backslash(&mut self, start_pos: SourcePosition, is_start: bool) -> &'alloc str {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
@@ -165,7 +169,11 @@ impl<'a> Lexer<'a> {
     /// `self.source` should be positioned *on* the `\` (i.e. `\` has not been consumed yet).
     /// `str` should contain the identifier up to before the escape.
     /// `is_start` should be `true` if this is first char in the identifier, `false` otherwise.
-    fn identifier_on_backslash(&mut self, mut str: String<'a>, mut is_start: bool) -> &'a str {
+    fn identifier_on_backslash(
+        &mut self,
+        mut str: String<'alloc>,
+        mut is_start: bool,
+    ) -> &'alloc str {
         'outer: loop {
             // Consume `\`
             self.consume_char();

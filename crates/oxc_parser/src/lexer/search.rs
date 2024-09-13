@@ -23,7 +23,7 @@ pub const SEARCH_BATCH_SIZE: usize = 32;
 /// assert_eq!(NOT_WHITESPACE.matches(b'X'), true);
 /// assert_eq!(NOT_WHITESPACE.matches(b' '), false);
 ///
-/// impl<'a> Lexer<'a> {
+/// impl<'source, 'alloc> Lexer<'source, 'alloc> {
 ///   fn eat_whitespace(&mut self) {
 ///     // NB: Using `byte_search!` macro with a `ByteMatchTable` is unsafe
 ///     unsafe {
@@ -146,7 +146,7 @@ pub(crate) use byte_match_table;
 /// assert_eq!(NOT_ASCII.matches(b'X'), false);
 /// assert_eq!(NOT_ASCII.matches(192), true);
 ///
-/// impl<'a> Lexer<'a> {
+/// impl<'source, 'alloc> Lexer<'source, 'alloc> {
 ///   fn eat_ascii(&mut self) {
 ///     // NB: Using `byte_search!` macro with a `SafeByteMatchTable` is safe
 ///     byte_search! {
@@ -259,7 +259,7 @@ pub(crate) use safe_byte_match_table;
 /// ```
 /// static NOT_STUFF_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| !is_stuff(b));
 ///
-/// impl<'a> Lexer<'a> {
+/// impl<'source, 'alloc> Lexer<'source, 'alloc> {
 ///   fn eat_stuff(&mut self) -> bool {
 ///     let matched_byte = byte_search! {
 ///       lexer: self,
@@ -286,7 +286,7 @@ pub(crate) use safe_byte_match_table;
 /// or provide the `SourcePosition` to start searching from:
 ///
 /// ```
-/// impl<'a> Lexer<'a> {
+/// impl<'source, 'alloc> Lexer<'source, 'alloc> {
 ///   fn eat_stuff(&mut self) -> bool {
 ///     let start = unsafe { self.source.position().add(1) };
 ///     let matched_byte = byte_search! {
@@ -312,7 +312,7 @@ pub(crate) use safe_byte_match_table;
 /// Can also add a block to decide whether to continue searching for some matches:
 ///
 /// ```
-/// impl<'a> Lexer<'a> {
+/// impl<'source, 'alloc> Lexer<'source, 'alloc> {
 ///   fn eat_stuff(&mut self) -> bool {
 ///     let matched_byte = byte_search! {
 ///       lexer: self,

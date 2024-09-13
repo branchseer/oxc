@@ -152,7 +152,7 @@ macro_rules! handle_string_literal_escape {
     }};
 }
 
-impl<'a> Lexer<'a> {
+impl<'source, 'alloc> Lexer<'source, 'alloc> {
     /// 12.9.4 String Literals
 
     /// Read string literal delimited with `"`.
@@ -176,7 +176,7 @@ impl<'a> Lexer<'a> {
     /// Save the string if it is escaped
     /// This reduces the overall memory consumption while keeping the `Token` size small
     /// Strings without escaped values can be retrieved as is from the token span
-    pub(super) fn save_string(&mut self, has_escape: bool, s: &'a str) {
+    pub(super) fn save_string(&mut self, has_escape: bool, s: &'alloc str) {
         if !has_escape {
             return;
         }
@@ -184,7 +184,11 @@ impl<'a> Lexer<'a> {
         self.token.escaped = true;
     }
 
-    pub(crate) fn get_string(&self, token: Token) -> &'a str {
+    pub(crate) fn get_string<'a>(&self, token: Token) -> &'a str
+    where
+        'alloc: 'a,
+        'source: 'a,
+    {
         if token.escaped {
             return self.escaped_strings[&token.start];
         }

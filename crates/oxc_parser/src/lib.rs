@@ -241,7 +241,7 @@ pub use parser_parse::UniquePromise;
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
 struct ParserImpl<'a> {
-    lexer: Lexer<'a>,
+    lexer: Lexer<'a, 'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,

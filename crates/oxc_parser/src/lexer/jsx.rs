@@ -11,7 +11,7 @@ use crate::diagnostics;
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-')));
 
-impl<'a> Lexer<'a> {
+impl<'source, 'alloc> Lexer<'source, 'alloc> {
     /// `JSXDoubleStringCharacters` ::
     ///   `JSXDoubleStringCharacter` `JSXDoubleStringCharactersopt`
     /// `JSXDoubleStringCharacter` ::

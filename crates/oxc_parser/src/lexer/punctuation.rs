@@ -1,6 +1,6 @@
 use super::{Kind, Lexer, Token};
 
-impl<'a> Lexer<'a> {
+impl<'source, 'alloc> Lexer<'source, 'alloc> {
     /// Section 12.8 Punctuators
     pub(super) fn read_dot(&mut self) -> Kind {
         if self.peek() == Some('.') && self.peek2() == Some('.') {
