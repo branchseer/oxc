@@ -11,6 +11,7 @@ use std::{
 
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
+use oxc_span::ast_alloc::Box;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
 use oxc_syntax::number::NumberBase;
 
@@ -168,7 +169,12 @@ impl<'a> fmt::Display for RegExpPattern<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Raw(it) | Self::Invalid(it) => write!(f, "{it}"),
-            Self::Pattern(it) => it.fmt(f),
+            Self::Pattern(it) => {
+                if let Some(it) = it.try_deref() {
+                    it.fmt(f)?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -185,10 +191,10 @@ impl ContentHash for RegExpFlags {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for RegExpFlags {
-    type Cloned = Self;
+impl<A> CloneIn<A> for RegExpFlags {
+    type Cloned<'a> = Self where A: 'a;
 
-    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+    fn clone_in<'alloc>(&self, _: &'alloc A) -> Self {
         *self
     }
 }

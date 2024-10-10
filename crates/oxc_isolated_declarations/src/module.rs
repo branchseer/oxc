@@ -19,7 +19,7 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.vec(),
             None,
             ImportOrExportKind::Value,
-            None::<WithClause>,
+            None::<Box<'a, WithClause>>,
         ))
     }
 
@@ -59,7 +59,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     let id = self.ast.binding_pattern_kind_binding_identifier(SPAN, &name);
                     let type_annotation = self
                         .infer_type_from_expression(expr)
-                        .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
+                        .map(|ts_type| self.ast.alloc_ts_type_annotation(SPAN, ts_type));
 
                     if type_annotation.is_none() {
                         self.error(default_export_inferred(expr.span()));

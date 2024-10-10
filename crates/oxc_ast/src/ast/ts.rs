@@ -12,7 +12,7 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::{Box, CloneIn, Vec};
+use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::scope::ScopeId;
@@ -22,6 +22,8 @@ use serde::Serialize;
 use tsify::Tsify;
 
 use super::{inherit_variants, js::*, jsx::*, literal::*};
+use derive_where::derive_where;
+use oxc_span::ast_alloc::AstAllocator;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -44,16 +46,16 @@ export interface TSIndexSignatureName extends Span {
 /// ## Reference
 /// * [TypeScript Handbook - `this` parameters](https://www.typescriptlang.org/docs/handbook/2/functions.html#this-parameters)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSThisParameter<'a> {
+pub struct TSThisParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub this_span: Span,
     /// Type type the `this` keyword will have in the function
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
 }
 
 /// Enum Declaration
@@ -78,16 +80,16 @@ pub struct TSThisParameter<'a> {
 /// * [TypeScript Handbook - Enums](https://www.typescriptlang.org/docs/handbook/enums.html)
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct TSEnumDeclaration<'a> {
+pub struct TSEnumDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
-    pub members: Vec<'a, TSEnumMember<'a>>,
+    pub members: A::Vec<'a, TSEnumMember<'a, A>>,
     /// `true` for const enums
     pub r#const: bool,
     pub declare: bool,
@@ -114,15 +116,15 @@ pub struct TSEnumDeclaration<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Enums](https://www.typescriptlang.org/docs/handbook/enums.html)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct TSEnumMember<'a> {
+pub struct TSEnumMember<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub id: TSEnumMemberName<'a>,
-    pub initializer: Option<Expression<'a>>,
+    pub id: TSEnumMemberName<'a, A>,
+    pub initializer: Option<Expression<'a, A>>,
 }
 
 inherit_variants! {
@@ -133,16 +135,16 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum TSEnumMemberName<'a> {
-    StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
-    StaticStringLiteral(Box<'a, StringLiteral<'a>>) = 65,
-    StaticTemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 66,
+pub enum TSEnumMemberName<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    StaticIdentifier(A::Box<'a, IdentifierName<'a>>) = 64,
+    StaticStringLiteral(A::Box<'a, StringLiteral<'a>>) = 65,
+    StaticTemplateLiteral(A::Box<'a, TemplateLiteral<'a, A>>) = 66,
     // Invalid Grammar `enum E { 1 }`
-    StaticNumericLiteral(Box<'a, NumericLiteral<'a>>) = 67,
+    StaticNumericLiteral(A::Box<'a, NumericLiteral<'a>>) = 67,
     // Invalid Grammar `enum E { [computed] }`
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
@@ -162,16 +164,16 @@ pub enum TSEnumMemberName<'a> {
 /// //            ^^^^^^^^ ^^^^^^^^
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeAnnotation<'a> {
+pub struct TSTypeAnnotation<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     /// starts at the `:` token and ends at the end of the type annotation
     pub span: Span,
     /// The actual type in the annotation
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: TSType<'a, A>,
 }
 
 /// TypeScript Literal Type
@@ -189,31 +191,31 @@ pub struct TSTypeAnnotation<'a> {
 /// //                   ^
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSLiteralType<'a> {
+pub struct TSLiteralType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub literal: TSLiteral<'a>,
+    pub literal: TSLiteral<'a, A>,
 }
 
 /// A literal in a [`TSLiteralType`].
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
-pub enum TSLiteral<'a> {
-    BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
-    NullLiteral(Box<'a, NullLiteral>) = 1,
-    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
-    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
-    RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
-    StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
-    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 7,
+pub enum TSLiteral<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    BooleanLiteral(A::Box<'a, BooleanLiteral>) = 0,
+    NullLiteral(A::Box<'a, NullLiteral>) = 1,
+    NumericLiteral(A::Box<'a, NumericLiteral<'a>>) = 2,
+    BigIntLiteral(A::Box<'a, BigIntLiteral<'a>>) = 3,
+    RegExpLiteral(A::Box<'a, RegExpLiteral<'a, A>>) = 4,
+    StringLiteral(A::Box<'a, StringLiteral<'a>>) = 5,
+    TemplateLiteral(A::Box<'a, TemplateLiteral<'a, A>>) = 6,
+    UnaryExpression(A::Box<'a, UnaryExpression<'a, A>>) = 7,
 }
 
 /// TypeScript Type
@@ -228,52 +230,52 @@ pub enum TSLiteral<'a> {
 /// //         ^^^^^^^^^^^^^^^ TSType::TSUnionType
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
-pub enum TSType<'a> {
+pub enum TSType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // Keyword
-    TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
-    TSBigIntKeyword(Box<'a, TSBigIntKeyword>) = 1,
-    TSBooleanKeyword(Box<'a, TSBooleanKeyword>) = 2,
-    TSIntrinsicKeyword(Box<'a, TSIntrinsicKeyword>) = 3,
-    TSNeverKeyword(Box<'a, TSNeverKeyword>) = 4,
-    TSNullKeyword(Box<'a, TSNullKeyword>) = 5,
-    TSNumberKeyword(Box<'a, TSNumberKeyword>) = 6,
-    TSObjectKeyword(Box<'a, TSObjectKeyword>) = 7,
-    TSStringKeyword(Box<'a, TSStringKeyword>) = 8,
-    TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 9,
-    TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 11,
-    TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 12,
-    TSVoidKeyword(Box<'a, TSVoidKeyword>) = 13,
+    TSAnyKeyword(A::Box<'a, TSAnyKeyword>) = 0,
+    TSBigIntKeyword(A::Box<'a, TSBigIntKeyword>) = 1,
+    TSBooleanKeyword(A::Box<'a, TSBooleanKeyword>) = 2,
+    TSIntrinsicKeyword(A::Box<'a, TSIntrinsicKeyword>) = 3,
+    TSNeverKeyword(A::Box<'a, TSNeverKeyword>) = 4,
+    TSNullKeyword(A::Box<'a, TSNullKeyword>) = 5,
+    TSNumberKeyword(A::Box<'a, TSNumberKeyword>) = 6,
+    TSObjectKeyword(A::Box<'a, TSObjectKeyword>) = 7,
+    TSStringKeyword(A::Box<'a, TSStringKeyword>) = 8,
+    TSSymbolKeyword(A::Box<'a, TSSymbolKeyword>) = 9,
+    TSUndefinedKeyword(A::Box<'a, TSUndefinedKeyword>) = 11,
+    TSUnknownKeyword(A::Box<'a, TSUnknownKeyword>) = 12,
+    TSVoidKeyword(A::Box<'a, TSVoidKeyword>) = 13,
     // Compound
-    TSArrayType(Box<'a, TSArrayType<'a>>) = 14,
-    TSConditionalType(Box<'a, TSConditionalType<'a>>) = 15,
-    TSConstructorType(Box<'a, TSConstructorType<'a>>) = 16,
-    TSFunctionType(Box<'a, TSFunctionType<'a>>) = 17,
-    TSImportType(Box<'a, TSImportType<'a>>) = 18,
-    TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 19,
-    TSInferType(Box<'a, TSInferType<'a>>) = 20,
-    TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 21,
-    TSLiteralType(Box<'a, TSLiteralType<'a>>) = 22,
-    TSMappedType(Box<'a, TSMappedType<'a>>) = 23,
-    TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 24,
-    TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 25,
-    TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 26,
-    TSThisType(Box<'a, TSThisType>) = 10,
-    TSTupleType(Box<'a, TSTupleType<'a>>) = 27,
-    TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 28,
-    TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 29,
-    TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 30,
-    TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 31,
-    TSTypeReference(Box<'a, TSTypeReference<'a>>) = 32,
-    TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
-    TSParenthesizedType(Box<'a, TSParenthesizedType<'a>>) = 34,
+    TSArrayType(A::Box<'a, TSArrayType<'a, A>>) = 14,
+    TSConditionalType(A::Box<'a, TSConditionalType<'a, A>>) = 15,
+    TSConstructorType(A::Box<'a, TSConstructorType<'a, A>>) = 16,
+    TSFunctionType(A::Box<'a, TSFunctionType<'a, A>>) = 17,
+    TSImportType(A::Box<'a, TSImportType<'a, A>>) = 18,
+    TSIndexedAccessType(A::Box<'a, TSIndexedAccessType<'a, A>>) = 19,
+    TSInferType(A::Box<'a, TSInferType<'a, A>>) = 20,
+    TSIntersectionType(A::Box<'a, TSIntersectionType<'a, A>>) = 21,
+    TSLiteralType(A::Box<'a, TSLiteralType<'a, A>>) = 22,
+    TSMappedType(A::Box<'a, TSMappedType<'a, A>>) = 23,
+    TSNamedTupleMember(A::Box<'a, TSNamedTupleMember<'a, A>>) = 24,
+    TSQualifiedName(A::Box<'a, TSQualifiedName<'a, A>>) = 25,
+    TSTemplateLiteralType(A::Box<'a, TSTemplateLiteralType<'a, A>>) = 26,
+    TSThisType(A::Box<'a, TSThisType>) = 10,
+    TSTupleType(A::Box<'a, TSTupleType<'a, A>>) = 27,
+    TSTypeLiteral(A::Box<'a, TSTypeLiteral<'a, A>>) = 28,
+    TSTypeOperatorType(A::Box<'a, TSTypeOperator<'a, A>>) = 29,
+    TSTypePredicate(A::Box<'a, TSTypePredicate<'a, A>>) = 30,
+    TSTypeQuery(A::Box<'a, TSTypeQuery<'a, A>>) = 31,
+    TSTypeReference(A::Box<'a, TSTypeReference<'a, A>>) = 32,
+    TSUnionType(A::Box<'a, TSUnionType<'a, A>>) = 33,
+    TSParenthesizedType(A::Box<'a, TSParenthesizedType<'a, A>>) = 34,
     // JSDoc
-    JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 35,
-    JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 36,
-    JSDocUnknownType(Box<'a, JSDocUnknownType>) = 37,
+    JSDocNullableType(A::Box<'a, JSDocNullableType<'a, A>>) = 35,
+    JSDocNonNullableType(A::Box<'a, JSDocNonNullableType<'a, A>>) = 36,
+    JSDocUnknownType(A::Box<'a, JSDocUnknownType>) = 37,
 }
 
 /// Macro for matching `TSType`'s variants.
@@ -337,23 +339,23 @@ pub use match_ts_type;
 /// * [TypeScript Handbook - Conditional Types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html)
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSConditionalType<'a> {
+pub struct TSConditionalType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The type before `extends` in the test expression.
-    pub check_type: TSType<'a>,
+    pub check_type: TSType<'a, A>,
     /// The type `check_type` is being tested against.
     #[scope(enter_before)]
-    pub extends_type: TSType<'a>,
+    pub extends_type: TSType<'a, A>,
     /// The type evaluated to if the test is true.
-    pub true_type: TSType<'a>,
+    pub true_type: TSType<'a, A>,
     /// The type evaluated to if the test is false.
     #[scope(exit_before)]
-    pub false_type: TSType<'a>,
+    pub false_type: TSType<'a, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -369,15 +371,15 @@ pub struct TSConditionalType<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Union Types](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#unions)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct TSUnionType<'a> {
+pub struct TSUnionType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The types in the union.
-    pub types: Vec<'a, TSType<'a>>,
+    pub types: A::Vec<'a, TSType<'a, A>>,
 }
 
 /// TypeScript Intersection Type
@@ -394,14 +396,14 @@ pub struct TSUnionType<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Intersection Types](https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct TSIntersectionType<'a> {
+pub struct TSIntersectionType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub types: Vec<'a, TSType<'a>>,
+    pub types: A::Vec<'a, TSType<'a, A>>,
 }
 
 /// Parenthesized Type
@@ -414,14 +416,14 @@ pub struct TSIntersectionType<'a> {
 /// //          ^^^^^^^^^^^^^^^^ type_annotation
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSParenthesizedType<'a> {
+pub struct TSParenthesizedType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: TSType<'a, A>,
 }
 
 /// TypeScript Type Operators
@@ -434,23 +436,23 @@ pub struct TSParenthesizedType<'a> {
 /// ## References
 /// * [TypeScript Handbook - Keyof Types](https://www.typescriptlang.org/docs/handbook/2/keyof-types.html)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeOperator<'a> {
+pub struct TSTypeOperator<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub operator: TSTypeOperatorOperator,
     /// The type being operated on
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: TSType<'a, A>,
 }
 
 /// Operator in a [`TSTypeOperator`].
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum TSTypeOperatorOperator {
     Keyof = 0,
@@ -470,14 +472,14 @@ pub enum TSTypeOperatorOperator {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#the-array-type>
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSArrayType<'a> {
+pub struct TSArrayType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub element_type: TSType<'a>,
+    pub element_type: TSType<'a, A>,
 }
 
 /// TypeScript Index Access Type
@@ -492,15 +494,15 @@ pub struct TSArrayType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html#handbook-content>
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSIndexedAccessType<'a> {
+pub struct TSIndexedAccessType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub object_type: TSType<'a>,
-    pub index_type: TSType<'a>,
+    pub object_type: TSType<'a, A>,
+    pub index_type: TSType<'a, A>,
 }
 
 /// TypeScript Tuple Type
@@ -513,14 +515,14 @@ pub struct TSIndexedAccessType<'a> {
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTupleType<'a> {
+pub struct TSTupleType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub element_types: Vec<'a, TSTupleElement<'a>>,
+    pub element_types: A::Vec<'a, TSTupleElement<'a, A>>,
 }
 
 /// TypeScript Named Tuple Member
@@ -534,14 +536,14 @@ pub struct TSTupleType<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Tuple Types](https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSNamedTupleMember<'a> {
+pub struct TSNamedTupleMember<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub element_type: TSTupleElement<'a>,
+    pub element_type: TSTupleElement<'a, A>,
     pub label: IdentifierName<'a>,
     pub optional: bool,
 }
@@ -556,14 +558,14 @@ pub struct TSNamedTupleMember<'a> {
 /// //          ^^^^^^ type_annotation
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSOptionalType<'a> {
+pub struct TSOptionalType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: TSType<'a, A>,
 }
 
 /// TypeScript Rest Type
@@ -575,14 +577,14 @@ pub struct TSOptionalType<'a> {
 /// //                     ^^^^^^^^ type_annotation
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSRestType<'a> {
+pub struct TSRestType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: TSType<'a, A>,
 }
 
 inherit_variants! {
@@ -594,15 +596,15 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
-pub enum TSTupleElement<'a> {
+pub enum TSTupleElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // Discriminants start at 64, so that `TSTupleElement::is_ts_type` is a single
     // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
-    TSOptionalType(Box<'a, TSOptionalType<'a>>) = 64,
-    TSRestType(Box<'a, TSRestType<'a>>) = 65,
+    TSOptionalType(A::Box<'a, TSOptionalType<'a, A>>) = 64,
+    TSRestType(A::Box<'a, TSRestType<'a, A>>) = 65,
     // `TSType` variants added here by `inherit_variants!` macro
     @inherit TSType
 }
@@ -620,7 +622,7 @@ pub enum TSTupleElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSAnyKeyword {
     #[serde(flatten)]
@@ -639,7 +641,7 @@ pub struct TSAnyKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSStringKeyword {
     #[serde(flatten)]
@@ -658,7 +660,7 @@ pub struct TSStringKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSBooleanKeyword {
     #[serde(flatten)]
@@ -677,7 +679,7 @@ pub struct TSBooleanKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSNumberKeyword {
     #[serde(flatten)]
@@ -697,7 +699,7 @@ pub struct TSNumberKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSNeverKeyword {
     #[serde(flatten)]
@@ -717,7 +719,7 @@ pub struct TSNeverKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSIntrinsicKeyword {
     #[serde(flatten)]
@@ -738,7 +740,7 @@ pub struct TSIntrinsicKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSUnknownKeyword {
     #[serde(flatten)]
@@ -758,7 +760,7 @@ pub struct TSUnknownKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSNullKeyword {
     #[serde(flatten)]
@@ -780,7 +782,7 @@ pub struct TSNullKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSUndefinedKeyword {
     #[serde(flatten)]
@@ -790,7 +792,7 @@ pub struct TSUndefinedKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSVoidKeyword {
     #[serde(flatten)]
@@ -800,7 +802,7 @@ pub struct TSVoidKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSSymbolKeyword {
     #[serde(flatten)]
@@ -810,7 +812,7 @@ pub struct TSSymbolKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSThisType {
     #[serde(flatten)]
@@ -820,7 +822,7 @@ pub struct TSThisType {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSObjectKeyword {
     #[serde(flatten)]
@@ -830,7 +832,7 @@ pub struct TSObjectKeyword {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TSBigIntKeyword {
     #[serde(flatten)]
@@ -846,28 +848,28 @@ pub struct TSBigIntKeyword {
 /// type E = D.c.b.a;
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeReference<'a> {
+pub struct TSTypeReference<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_name: TSTypeName<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_name: TSTypeName<'a, A>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
 }
 
 /// TypeName:
 ///     IdentifierReference
 ///     NamespaceName . IdentifierReference
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum TSTypeName<'a> {
-    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
-    QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
+pub enum TSTypeName<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    IdentifierReference(A::Box<'a, IdentifierReference<'a>>) = 0,
+    QualifiedName(A::Box<'a, TSQualifiedName<'a, A>>) = 1,
 }
 
 /// Macro for matching `TSTypeName`'s variants.
@@ -888,26 +890,26 @@ pub use match_ts_type_name;
 /// type Foo = A.B.C;
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSQualifiedName<'a> {
+pub struct TSQualifiedName<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub left: TSTypeName<'a>,
+    pub left: TSTypeName<'a, A>,
     pub right: IdentifierName<'a>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeParameterInstantiation<'a> {
+pub struct TSTypeParameterInstantiation<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub params: Vec<'a, TSType<'a>>,
+    pub params: A::Vec<'a, TSType<'a, A>>,
 }
 
 /// TypeScript Type Parameter
@@ -917,7 +919,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 /// ## Example
 /// ```ts
 /// //                 ______ constraint
-/// type Box<T extends string = 'foo'> = { value: T };
+/// type A::Box<T extends string = 'foo'> = { value: T };
 /// // name  ^                  ^^^^^ default
 ///
 /// function add<in T>(a: T, b: T): T { return a + b; }
@@ -928,19 +930,19 @@ pub struct TSTypeParameterInstantiation<'a> {
 /// * [TypeScript Handbook - Generics](https://www.typescriptlang.org/docs/handbook/2/generics.html)
 /// * [TypeScript Handbook - Variance Annotations](https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeParameter<'a> {
+pub struct TSTypeParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The name of the parameter, e.g. `T` in `type Foo<T> = ...`.
     pub name: BindingIdentifier<'a>,
     /// Constrains what types can be passed to the type parameter.
-    pub constraint: Option<TSType<'a>>,
+    pub constraint: Option<TSType<'a, A>>,
     /// Default value of the type parameter if no type is provided when using the type.
-    pub default: Option<TSType<'a>>,
+    pub default: Option<TSType<'a, A>>,
     /// Was an `in` modifier keyword present?
     pub r#in: bool,
     /// Was an `out` modifier keyword present?
@@ -950,14 +952,14 @@ pub struct TSTypeParameter<'a> {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeParameterDeclaration<'a> {
+pub struct TSTypeParameterDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub params: Vec<'a, TSTypeParameter<'a>>,
+    pub params: A::Vec<'a, TSTypeParameter<'a, A>>,
 }
 
 /// TypeScript Type Alias Declaration Statement
@@ -970,18 +972,18 @@ pub struct TSTypeParameterDeclaration<'a> {
 /// ```
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeAliasDeclaration<'a> {
+pub struct TSTypeAliasDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub type_annotation: TSType<'a>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub type_annotation: TSType<'a, A>,
     pub declare: bool,
     #[serde(skip)]
     #[clone_in(default)]
@@ -991,7 +993,7 @@ pub struct TSTypeAliasDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum TSAccessibility {
     Private = 0,
@@ -1010,15 +1012,15 @@ pub enum TSAccessibility {
 /// //            type_parameters ^^^^^^^^^^^^^^
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSClassImplements<'a> {
+pub struct TSClassImplements<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: TSTypeName<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub expression: TSTypeName<'a, A>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
 }
 
 /// TypeScriptInterface Declaration
@@ -1038,21 +1040,21 @@ pub struct TSClassImplements<'a> {
 /// * [TypeScript Handbook - Interfaces](https://www.typescriptlang.org/docs/handbook/2/objects.html#interfaces)
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSInterfaceDeclaration<'a> {
+pub struct TSInterfaceDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
     /// Other interfaces/types this interface extends.
     #[scope(enter_before)]
-    pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+    pub extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
     /// Type parameters that get bound to the interface.
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub body: Box<'a, TSInterfaceBody<'a>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub body: A::Box<'a, TSInterfaceBody<'a, A>>,
     /// `true` for `declare interface Foo {}`
     pub declare: bool,
     #[serde(skip)]
@@ -1062,14 +1064,14 @@ pub struct TSInterfaceDeclaration<'a> {
 
 /// Body of a [`TSInterfaceDeclaration`].
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSInterfaceBody<'a> {
+pub struct TSInterfaceBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: Vec<'a, TSSignature<'a>>,
+    pub body: A::Vec<'a, TSSignature<'a, A>>,
 }
 
 /// TypeScript Property Signature
@@ -1088,31 +1090,31 @@ pub struct TSInterfaceBody<'a> {
 /// }
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSPropertySignature<'a> {
+pub struct TSPropertySignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub computed: bool,
     pub optional: bool,
     pub readonly: bool,
-    pub key: PropertyKey<'a>,
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub key: PropertyKey<'a, A>,
+    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
-pub enum TSSignature<'a> {
-    TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 0,
-    TSPropertySignature(Box<'a, TSPropertySignature<'a>>) = 1,
-    TSCallSignatureDeclaration(Box<'a, TSCallSignatureDeclaration<'a>>) = 2,
-    TSConstructSignatureDeclaration(Box<'a, TSConstructSignatureDeclaration<'a>>) = 3,
-    TSMethodSignature(Box<'a, TSMethodSignature<'a>>) = 4,
+pub enum TSSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    TSIndexSignature(A::Box<'a, TSIndexSignature<'a, A>>) = 0,
+    TSPropertySignature(A::Box<'a, TSPropertySignature<'a, A>>) = 1,
+    TSCallSignatureDeclaration(A::Box<'a, TSCallSignatureDeclaration<'a, A>>) = 2,
+    TSConstructSignatureDeclaration(A::Box<'a, TSConstructSignatureDeclaration<'a, A>>) = 3,
+    TSMethodSignature(A::Box<'a, TSMethodSignature<'a, A>>) = 4,
 }
 
 /// An index signature within a class, type alias, etc.
@@ -1127,36 +1129,36 @@ pub enum TSSignature<'a> {
 /// }
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSIndexSignature<'a> {
+pub struct TSIndexSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
-    pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
+    pub parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+    pub type_annotation: A::Box<'a, TSTypeAnnotation<'a, A>>,
     pub readonly: bool,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSCallSignatureDeclaration<'a> {
+pub struct TSCallSignatureDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub this_param: Option<TSThisParameter<'a>>,
-    pub params: Box<'a, FormalParameters<'a>>,
-    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub this_param: Option<TSThisParameter<'a, A>>,
+    pub params: A::Box<'a, FormalParameters<'a, A>>,
+    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
 }
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMethodSignatureKind {
     Method = 0,
@@ -1177,21 +1179,21 @@ pub enum TSMethodSignatureKind {
 /// ```
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSMethodSignature<'a> {
+pub struct TSMethodSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub key: PropertyKey<'a>,
+    pub key: PropertyKey<'a, A>,
     pub computed: bool,
     pub optional: bool,
     pub kind: TSMethodSignatureKind,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
-    pub params: Box<'a, FormalParameters<'a>>,
-    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub this_param: Option<A::Box<'a, TSThisParameter<'a, A>>>,
+    pub params: A::Box<'a, FormalParameters<'a, A>>,
+    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1200,43 +1202,43 @@ pub struct TSMethodSignature<'a> {
 /// TypeScript Constructor Signature Declaration
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSConstructSignatureDeclaration<'a> {
+pub struct TSConstructSignatureDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub params: Box<'a, FormalParameters<'a>>,
-    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub params: A::Box<'a, FormalParameters<'a, A>>,
+    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize), serde(bound = ""))]
 #[serde(tag = "type", rename = "Identifier", rename_all = "camelCase")]
-pub struct TSIndexSignatureName<'a> {
+pub struct TSIndexSignatureName<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub name: Atom<'a>,
-    pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
+    pub type_annotation: A::Box<'a, TSTypeAnnotation<'a, A>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSInterfaceHeritage<'a> {
+pub struct TSInterfaceHeritage<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub expression: Expression<'a, A>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
 }
 
 /// TypeScript Type Predicate
@@ -1260,15 +1262,15 @@ pub struct TSInterfaceHeritage<'a> {
 /// * [TypeScript Handbook - Type Predicates](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)
 /// * [TypeScript Handbook - Assertion Functions](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#assertion-functions)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypePredicate<'a> {
+pub struct TSTypePredicate<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The identifier the predicate operates on
-    pub parameter_name: TSTypePredicateName<'a>,
+    pub parameter_name: TSTypePredicateName<'a, A>,
     /// Does this predicate include an `asserts` modifier?
     ///
     /// ## Example
@@ -1276,16 +1278,16 @@ pub struct TSTypePredicate<'a> {
     /// declare function isString(x: any): asserts x is string; // true
     /// ```
     pub asserts: bool,
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
-pub enum TSTypePredicateName<'a> {
-    Identifier(Box<'a, IdentifierName<'a>>) = 0,
+pub enum TSTypePredicateName<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    Identifier(A::Box<'a, IdentifierName<'a>>) = 0,
     This(TSThisType) = 1,
 }
 
@@ -1320,11 +1322,11 @@ pub enum TSTypePredicateName<'a> {
     flags(ScopeFlags::TsModuleBlock),
     strict_if(self.body.as_ref().is_some_and(TSModuleDeclarationBody::is_strict)),
 )]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSModuleDeclaration<'a> {
+pub struct TSModuleDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The name of the module/namespace being declared.
@@ -1332,7 +1334,7 @@ pub struct TSModuleDeclaration<'a> {
     /// Note that for `declare global {}`, no symbol will be created for the module name.
     pub id: TSModuleDeclarationName<'a>,
     #[scope(enter_before)]
-    pub body: Option<TSModuleDeclarationBody<'a>>,
+    pub body: Option<TSModuleDeclarationBody<'a, A>>,
     /// The keyword used to define this module declaration.
     ///
     /// Helps discriminate between global overrides vs module declarations vs namespace
@@ -1356,7 +1358,7 @@ pub struct TSModuleDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum TSModuleDeclarationKind {
     /// `declare global {}`
@@ -1390,7 +1392,7 @@ pub enum TSModuleDeclarationKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum TSModuleDeclarationName<'a> {
     Identifier(BindingIdentifier<'a>) = 0,
@@ -1398,38 +1400,38 @@ pub enum TSModuleDeclarationName<'a> {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum TSModuleDeclarationBody<'a> {
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
-    TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
+pub enum TSModuleDeclarationBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    TSModuleDeclaration(A::Box<'a, TSModuleDeclaration<'a, A>>) = 0,
+    TSModuleBlock(A::Box<'a, TSModuleBlock<'a, A>>) = 1,
 }
 
 // See serializer in serialize.rs
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSModuleBlock<'a> {
+pub struct TSModuleBlock<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[serde(skip)]
-    pub directives: Vec<'a, Directive<'a>>,
-    pub body: Vec<'a, Statement<'a>>,
+    pub directives: A::Vec<'a, Directive<'a>>,
+    pub body: A::Vec<'a, Statement<'a, A>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeLiteral<'a> {
+pub struct TSTypeLiteral<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub members: Vec<'a, TSSignature<'a>>,
+    pub members: A::Vec<'a, TSSignature<'a, A>>,
 }
 
 /// TypeScript `infer` type
@@ -1446,15 +1448,15 @@ pub struct TSTypeLiteral<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Inferring With Conditional Types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#inferring-within-conditional-types)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSInferType<'a> {
+pub struct TSInferType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The type bound when the
-    pub type_parameter: Box<'a, TSTypeParameter<'a>>,
+    pub type_parameter: A::Box<'a, TSTypeParameter<'a, A>>,
 }
 
 /// Type Query
@@ -1467,15 +1469,15 @@ pub struct TSInferType<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Typeof Type Operator](https://www.typescriptlang.org/docs/handbook/2/typeof-types.html)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeQuery<'a> {
+pub struct TSTypeQuery<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expr_name: TSTypeQueryExprName<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub expr_name: TSTypeQueryExprName<'a, A>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
 }
 
 inherit_variants! {
@@ -1485,61 +1487,61 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum TSTypeQueryExprName<'a> {
-    TSImportType(Box<'a, TSImportType<'a>>) = 2,
+pub enum TSTypeQueryExprName<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    TSImportType(A::Box<'a, TSImportType<'a, A>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSImportType<'a> {
+pub struct TSImportType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// `true` for `typeof import("foo")`
     pub is_type_of: bool,
-    pub parameter: TSType<'a>,
-    pub qualifier: Option<TSTypeName<'a>>,
-    pub attributes: Option<Box<'a, TSImportAttributes<'a>>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub parameter: TSType<'a, A>,
+    pub qualifier: Option<TSTypeName<'a, A>>,
+    pub attributes: Option<A::Box<'a, TSImportAttributes<'a, A>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSImportAttributes<'a> {
+pub struct TSImportAttributes<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
-    pub elements: Vec<'a, TSImportAttribute<'a>>,
+    pub elements: A::Vec<'a, TSImportAttribute<'a, A>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSImportAttribute<'a> {
+pub struct TSImportAttribute<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub name: TSImportAttributeName<'a>,
-    pub value: Expression<'a>,
+    pub value: Expression<'a, A>,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum TSImportAttributeName<'a> {
     Identifier(IdentifierName<'a>) = 0,
@@ -1555,11 +1557,11 @@ pub enum TSImportAttributeName<'a> {
 /// //             ^^^^ return_type
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSFunctionType<'a> {
+pub struct TSFunctionType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Generic type parameters
@@ -1568,36 +1570,36 @@ pub struct TSFunctionType<'a> {
     /// type T = <U>(x: U) => U;
     /// //        ^
     /// ```
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
     /// `this` parameter
     ///
     /// ```ts
     /// type T = (this: string, a: number) => void;
     /// //        ^^^^^^^^^^^^
     /// ```
-    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
+    pub this_param: Option<A::Box<'a, TSThisParameter<'a, A>>>,
     /// Function parameters. Akin to [`Function::params`].
-    pub params: Box<'a, FormalParameters<'a>>,
+    pub params: A::Box<'a, FormalParameters<'a, A>>,
     /// Return type of the function.
     /// ```ts
     /// type T = () => void;
     /// //             ^^^^
     /// ```
-    pub return_type: Box<'a, TSTypeAnnotation<'a>>,
+    pub return_type: A::Box<'a, TSTypeAnnotation<'a, A>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSConstructorType<'a> {
+pub struct TSConstructorType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub r#abstract: bool,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub params: Box<'a, FormalParameters<'a>>,
-    pub return_type: Box<'a, TSTypeAnnotation<'a>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub params: A::Box<'a, FormalParameters<'a, A>>,
+    pub return_type: A::Box<'a, TSTypeAnnotation<'a, A>>,
 }
 
 /// TypeScript Mapped Type
@@ -1623,17 +1625,17 @@ pub struct TSConstructorType<'a> {
 /// * [TypeScript Handbook - Mapped Types](https://www.typescriptlang.org/docs/handbook/2/mapped-types.html)
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSMappedType<'a> {
+pub struct TSMappedType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
-    pub type_parameter: Box<'a, TSTypeParameter<'a>>,
-    pub name_type: Option<TSType<'a>>,
-    pub type_annotation: Option<TSType<'a>>,
+    pub type_parameter: A::Box<'a, TSTypeParameter<'a, A>>,
+    pub name_type: Option<TSType<'a, A>>,
+    pub type_annotation: Option<TSType<'a, A>>,
     /// Optional modifier on type annotation
     ///
     /// ## Examples
@@ -1666,7 +1668,7 @@ pub struct TSMappedType<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMappedTypeModifierOperator {
     /// e.g. `?` in `{ [P in K]?: T }`
@@ -1693,29 +1695,29 @@ pub enum TSMappedTypeModifierOperator {
 /// ## Reference
 /// * [TypeScript Handbook - Template Literal Types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html#handbook-content)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTemplateLiteralType<'a> {
+pub struct TSTemplateLiteralType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The string parts of the template literal.
-    pub quasis: Vec<'a, TemplateElement<'a>>,
+    pub quasis: A::Vec<'a, TemplateElement<'a>>,
     /// The interpolated expressions in the template literal.
-    pub types: Vec<'a, TSType<'a>>,
+    pub types: A::Vec<'a, TSType<'a, A>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSAsExpression<'a> {
+pub struct TSAsExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
-    pub type_annotation: TSType<'a>,
+    pub expression: Expression<'a, A>,
+    pub type_annotation: TSType<'a, A>,
 }
 
 /// TypeScript `satisfies` Expression
@@ -1731,41 +1733,41 @@ pub struct TSAsExpression<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - The `satisfies` Operator](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html#the-satisfies-operator)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSSatisfiesExpression<'a> {
+pub struct TSSatisfiesExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The value expression being constrained.
-    pub expression: Expression<'a>,
+    pub expression: Expression<'a, A>,
     /// The type `expression` must satisfy.
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: TSType<'a, A>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSTypeAssertion<'a> {
+pub struct TSTypeAssertion<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
-    pub type_annotation: TSType<'a>,
+    pub expression: Expression<'a, A>,
+    pub type_annotation: TSType<'a, A>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSImportEqualsDeclaration<'a> {
+pub struct TSImportEqualsDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    pub module_reference: TSModuleReference<'a>,
+    pub module_reference: TSModuleReference<'a, A>,
     pub import_kind: ImportOrExportKind,
 }
 
@@ -1776,12 +1778,12 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
-pub enum TSModuleReference<'a> {
-    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 2,
+pub enum TSModuleReference<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    ExternalModuleReference(A::Box<'a, TSExternalModuleReference<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
@@ -1790,7 +1792,7 @@ pub enum TSModuleReference<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSExternalModuleReference<'a> {
     #[serde(flatten)]
@@ -1799,14 +1801,14 @@ pub struct TSExternalModuleReference<'a> {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSNonNullExpression<'a> {
+pub struct TSNonNullExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
+    pub expression: Expression<'a, A>,
 }
 
 /// Decorator
@@ -1834,28 +1836,28 @@ pub struct TSNonNullExpression<'a> {
 /// [`IdentifierReference`]: crate::ast::js::IdentifierReference
 /// [`CallExpression`]: crate::ast::js::CallExpression
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct Decorator<'a> {
+pub struct Decorator<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
+    pub expression: Expression<'a, A>,
 }
 
 /// Export Assignment in non-module files
 ///
 /// `export = foo`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSExportAssignment<'a> {
+pub struct TSExportAssignment<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
+    pub expression: Expression<'a, A>,
 }
 
 /// Namespace Export Declaration in declaration files
@@ -1864,7 +1866,7 @@ pub struct TSExportAssignment<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSNamespaceExportDeclaration<'a> {
     #[serde(flatten)]
@@ -1873,22 +1875,22 @@ pub struct TSNamespaceExportDeclaration<'a> {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSInstantiationExpression<'a> {
+pub struct TSInstantiationExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
-    pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
+    pub expression: Expression<'a, A>,
+    pub type_parameters: A::Box<'a, TSTypeParameterInstantiation<'a, A>>,
 }
 
 /// See [TypeScript - Type-Only Imports and Exports](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
     /// `import { foo } from './foo'`;
@@ -1901,35 +1903,35 @@ pub enum ImportOrExportKind {
 
 /// `type foo = ty?` or `type foo = ?ty`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct JSDocNullableType<'a> {
+pub struct JSDocNullableType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: TSType<'a, A>,
     /// Was `?` after the type annotation?
     pub postfix: bool,
 }
 
 /// `type foo = ty!` or `type foo = !ty`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct JSDocNonNullableType<'a> {
+pub struct JSDocNonNullableType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_annotation: TSType<'a>,
+    pub type_annotation: TSType<'a, A>,
     pub postfix: bool,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSDocUnknownType {
     #[serde(flatten)]

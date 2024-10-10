@@ -1,25 +1,25 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::Vec;
-use oxc_ast::ast::{Decorator, RegExpFlags};
-use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
-
 use crate::{
     diagnostics,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
     Context, ParserImpl,
 };
+use oxc_ast::ast::{Decorator, RegExpFlags};
+use oxc_diagnostics::Result;
+use oxc_span::ast_alloc::{AstNode, Vec as _};
+use oxc_span::{GetSpan, Span};
 
 #[derive(Clone, Copy)]
-pub struct ParserCheckpoint<'a> {
+pub struct ParserCheckpoint<'a, H> {
     lexer: LexerCheckpoint<'a>,
+    handler_checkpoint: H,
     cur_token: Token,
     prev_span_end: u32,
     errors_pos: usize,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     #[inline]
     pub(crate) fn start_span(&self) -> Span {
         let token = self.cur_token();
@@ -273,30 +273,34 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a, H::Checkpoint> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
+            handler_checkpoint: self.ast.handler.checkpoint(),
             cur_token: self.token,
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
         }
     }
 
-    pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
-            checkpoint;
+    pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a, H::Checkpoint>) {
+        let ParserCheckpoint {
+            lexer,
+            handler_checkpoint,
+            cur_token,
+            prev_span_end,
+            errors_pos: errors_lens,
+        } = checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_lens);
+        self.ast.handler.rewind(handler_checkpoint);
     }
 
     /// # Errors
-    pub(crate) fn try_parse<T>(
-        &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a>) -> Result<T>,
-    ) -> Option<T> {
+    pub(crate) fn try_parse<T>(&mut self, func: impl FnOnce(&mut Self) -> Result<T>) -> Option<T> {
         let checkpoint = self.checkpoint();
         let ctx = self.ctx;
         let result = func(self);
@@ -309,7 +313,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
+    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut Self) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);
@@ -329,17 +333,21 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
-    pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
-        let decorators = std::mem::take(&mut self.state.decorators);
+    pub(crate) fn consume_decorators(&mut self) -> A::Vec<'a, Decorator<'a, A>> {
+        let decorators = self.take_decorators();
         self.ast.vec_from_iter(decorators)
     }
 
-    pub(crate) fn parse_normal_list<F, T>(
+    pub(crate) fn take_decorators(&mut self) -> std::vec::Vec<Decorator<'a, A>> {
+        std::mem::take(&mut self.state.decorators)
+    }
+
+    pub(crate) fn parse_normal_list<F, T: AstNode>(
         &mut self,
         open: Kind,
         close: Kind,
         f: F,
-    ) -> Result<Vec<'a, T>>
+    ) -> Result<A::Vec<'a, T>>
     where
         F: Fn(&mut Self) -> Result<Option<T>>,
     {
@@ -360,13 +368,13 @@ impl<'a> ParserImpl<'a> {
         Ok(list)
     }
 
-    pub(crate) fn parse_delimited_list<F, T>(
+    pub(crate) fn parse_delimited_list<F, T: AstNode>(
         &mut self,
         close: Kind,
         separator: Kind,
         trailing_separator: bool,
         f: F,
-    ) -> Result<Vec<'a, T>>
+    ) -> Result<A::Vec<'a, T>>
     where
         F: Fn(&mut Self) -> Result<T>,
     {
@@ -393,16 +401,16 @@ impl<'a> ParserImpl<'a> {
         Ok(list)
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, R, A, B>(
+    pub(crate) fn parse_delimited_list_with_rest<E, R, X: AstNode, Y>(
         &mut self,
         close: Kind,
         parse_element: E,
         parse_rest: R,
-    ) -> Result<(Vec<'a, A>, Option<B>)>
+    ) -> Result<(A::Vec<'a, X>, Option<Y>)>
     where
-        E: Fn(&mut Self) -> Result<A>,
-        R: Fn(&mut Self) -> Result<B>,
-        B: GetSpan,
+        E: Fn(&mut Self) -> Result<X>,
+        R: Fn(&mut Self) -> Result<Y>,
+        Y: GetSpan,
     {
         let mut list = self.ast.vec();
         let mut rest = None;
@@ -431,4 +439,6 @@ impl<'a> ParserImpl<'a> {
         }
         Ok((list, rest))
     }
+
+    // pub(crate) fn cover
 }

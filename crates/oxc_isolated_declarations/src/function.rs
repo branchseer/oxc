@@ -115,7 +115,7 @@ impl<'a> IsolatedDeclarations<'a> {
             pattern = self.ast.binding_pattern(
                 // SAFETY: `ast.copy` is unsound! We need to fix.
                 unsafe { self.ast.copy(&pattern.kind) },
-                type_annotation,
+                type_annotation.map(|type_annotation| self.ast.alloc(type_annotation)),
                 // if it's assignment pattern, it's optional
                 pattern.optional || (!is_remaining_params_have_required && is_assignment_pattern),
             );

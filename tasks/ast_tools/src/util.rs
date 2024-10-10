@@ -148,10 +148,18 @@ impl TypeExt for Type {
                 match &seg1.arguments {
                     PathArguments::None => TypeIdentResult::Ident(&seg1.ident),
                     PathArguments::AngleBracketed(it) => {
-                        let args = &it.args.iter().collect_vec();
+                        let args = it.args.iter().collect_vec();
+                        let mut args = args.as_slice();
+                        if args.last().unwrap().to_token_stream().to_string() == "A" {
+                            // Ignore `A` in `Expression<'a, A>`
+                            args = &args[..args.len() - 1];
+                        }
                         assert!(args.len() < 3, "Max path arguments here is 2, eg `Box<'a, Adt>`");
                         if let Some(second) = args.get(1) {
-                            let GenericArgument::Type(second) = second else { panic!() };
+                            let GenericArgument::Type(second) = second else {
+                                dbg!(path.to_token_stream().to_string());
+                                panic!()
+                            };
                             let inner = second.get_ident();
                             if seg1.ident == "Box" {
                                 TypeIdentResult::boxed(inner)

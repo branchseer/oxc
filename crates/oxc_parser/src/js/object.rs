@@ -1,4 +1,3 @@
-use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
@@ -6,13 +5,13 @@ use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{diagnostics, lexer::Kind, modifiers::Modifier, Context, ParserImpl};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
     /// `ObjectLiteral`[Yield, Await] :
     ///     { }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
-    pub(crate) fn parse_object_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_object_expression(&mut self) -> Result<Expression<'a, A>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
         let object_expression_properties = self.context(Context::In, Context::empty(), |p| {
@@ -36,7 +35,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    fn parse_object_expression_property(&mut self) -> Result<ObjectPropertyKind<'a>> {
+    fn parse_object_expression_property(&mut self) -> Result<ObjectPropertyKind<'a, A>> {
         match self.cur_kind() {
             Kind::Dot3 => self.parse_spread_element().map(ObjectPropertyKind::SpreadProperty),
             _ => self.parse_property_definition().map(ObjectPropertyKind::ObjectProperty),
@@ -44,7 +43,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// `PropertyDefinition`[Yield, Await]
-    pub(crate) fn parse_property_definition(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
+    pub(crate) fn parse_property_definition(
+        &mut self,
+    ) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
         let peek_kind = self.peek_kind();
         let class_element_name = peek_kind.is_class_element_name_start();
         match self.cur_kind() {
@@ -102,11 +103,12 @@ impl<'a> ParserImpl<'a> {
 
                 if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::ShiftLeft) {
                     let method = self.parse_method(false, false)?;
+                    let expr = self.ast.expression_from_function(method);
                     return Ok(self.ast.alloc_object_property(
                         self.end_span(span),
                         PropertyKind::Init,
                         key,
-                        self.ast.expression_from_function(method),
+                        expr,
                         /* init */ None,
                         /* method */ true,
                         /* shorthand */ false,
@@ -121,7 +123,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   ... `AssignmentExpression`[+In, ?Yield, ?Await]
-    pub(crate) fn parse_spread_element(&mut self) -> Result<Box<'a, SpreadElement<'a>>> {
+    pub(crate) fn parse_spread_element(&mut self) -> Result<A::Box<'a, SpreadElement<'a, A>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher()?;
@@ -131,7 +133,7 @@ impl<'a> ParserImpl<'a> {
     /// `PropertyDefinition`[Yield, Await] :
     ///   `IdentifierReference`[?Yield, ?Await]
     ///   `CoverInitializedName`[?Yield, ?Await]
-    fn parse_property_definition_shorthand(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
+    fn parse_property_definition_shorthand(&mut self) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
         let span = self.start_span();
         let identifier = self.parse_identifier_reference()?;
         let key = self.ast.alloc_identifier_name(identifier.span, identifier.name.clone());
@@ -167,9 +169,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_property_definition_assignment(
         &mut self,
         span: Span,
-        key: PropertyKey<'a>,
+        key: PropertyKey<'a, A>,
         computed: bool,
-    ) -> Result<Box<'a, ObjectProperty<'a>>> {
+    ) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
         self.bump_any(); // bump `:`
         let value = self.parse_assignment_expression_or_higher()?;
         Ok(self.ast.alloc_object_property(
@@ -187,7 +189,7 @@ impl<'a> ParserImpl<'a> {
     /// `PropertyName`[Yield, Await] :
     ///    `LiteralPropertyName`
     ///    `ComputedPropertyName`[?Yield, ?Await]
-    pub(crate) fn parse_property_name(&mut self) -> Result<(PropertyKey<'a>, bool)> {
+    pub(crate) fn parse_property_name(&mut self) -> Result<(PropertyKey<'a, A>, bool)> {
         let mut computed = false;
         let key = match self.cur_kind() {
             Kind::Str => self.parse_literal_expression().map(PropertyKey::from)?,
@@ -206,7 +208,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// `ComputedPropertyName`[Yield, Await] : [ `AssignmentExpression`[+In, ?Yield, ?Await] ]
-    pub(crate) fn parse_computed_property_name(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_computed_property_name(&mut self) -> Result<Expression<'a, A>> {
         self.bump_any(); // advance `[`
 
         let expression = self.context(
@@ -221,7 +223,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   `MethodDefinition`[?Yield, ?Await]
-    fn parse_property_definition_method(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
+    fn parse_property_definition_method(&mut self) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
         let generator = self.eat(Kind::Star);
@@ -242,7 +244,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `MethodDefinition`[Yield, Await] :
     ///   get `ClassElementName`[?Yield, ?Await] ( ) { `FunctionBody`[~Yield, ~Await] }
-    fn parse_method_getter(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
+    fn parse_method_getter(&mut self) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
         let span = self.start_span();
         self.expect(Kind::Get)?;
         let (key, computed) = self.parse_property_name()?;
@@ -262,17 +264,18 @@ impl<'a> ParserImpl<'a> {
 
     /// `MethodDefinition`[Yield, Await] :
     /// set `ClassElementName`[?Yield, ?Await] ( `PropertySetParameterList` ) { `FunctionBody`[~Yield, ~Await] }
-    fn parse_method_setter(&mut self) -> Result<Box<'a, ObjectProperty<'a>>> {
+    fn parse_method_setter(&mut self) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
         let span = self.start_span();
         self.expect(Kind::Set)?;
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(false, false)?;
+        let expr = self.ast.expression_from_function(method);
 
         Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Set,
             key,
-            self.ast.expression_from_function(method),
+            expr,
             /* init */ None,
             /* method */ false,
             /* shorthand */ false,

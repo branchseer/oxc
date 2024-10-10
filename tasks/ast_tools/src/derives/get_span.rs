@@ -22,7 +22,7 @@ impl Derive for DeriveGetSpan {
         let self_type = quote!(&self);
         let result_type = quote!(Span);
         let result_expr = quote!(self.span);
-        let unbox = |it| quote!(#it.as_ref());
+        let unbox = |it| quote!(#it);
         let reference = |it| quote!(&#it);
 
         derive(
@@ -42,7 +42,7 @@ impl Derive for DeriveGetSpan {
             #![allow(clippy::match_same_arms)]
 
             ///@@line_break
-            use oxc_span::{Span, GetSpan};
+            use oxc_span::{ast_alloc::AstAllocator, Span, GetSpan};
         }
     }
 }
@@ -60,7 +60,7 @@ impl Derive for DeriveGetSpanMut {
         let self_type = quote!(&mut self);
         let result_type = quote!(&mut Span);
         let result_expr = quote!(&mut self.span);
-        let unbox = |it| quote!(&mut **#it);
+        let unbox = |it| quote!(#it);
         let reference = |it| quote!(&mut #it);
 
         derive(
@@ -80,7 +80,7 @@ impl Derive for DeriveGetSpanMut {
             #![allow(clippy::match_same_arms)]
 
             ///@@line_break
-            use oxc_span::{Span, GetSpanMut};
+            use oxc_span::{ast_alloc::AstAllocator, Span, GetSpanMut};
         }
     }
 }
@@ -129,8 +129,8 @@ fn derive_enum<U>(
 where
     U: Fn(TokenStream) -> TokenStream,
 {
-    let target_type = def.to_type();
-    let generics = def.generics();
+    let target_type = def.to_type_with_generic_allocator();
+    let generics = def.generics_decl_with_allocator();
 
     let matches = def.all_variants().map(|var| {
         let ident = var.ident();
@@ -164,8 +164,8 @@ fn derive_struct<R>(
 where
     R: Fn(TokenStream) -> TokenStream,
 {
-    let target_type = def.to_type();
-    let generics = def.generics();
+    let target_type = def.to_type_with_generic_allocator();
+    let generics = def.generics_decl_with_allocator();
 
     let span_field = def.fields.iter().find(|field| field.markers.span);
     let result_expr = if let Some(span_field) = span_field {

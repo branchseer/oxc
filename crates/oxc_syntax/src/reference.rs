@@ -162,10 +162,10 @@ impl ReferenceFlags {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for ReferenceFlags {
-    type Cloned = Self;
+impl<A> CloneIn<A> for ReferenceFlags {
+    type Cloned<'a> = Self where A: 'a;
 
-    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+    fn clone_in<'alloc>(&self, _: &'alloc A) -> Self {
         *self
     }
 }

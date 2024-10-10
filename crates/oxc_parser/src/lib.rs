@@ -84,19 +84,19 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use context::{Context, StatementContext};
-use oxc_allocator::Allocator;
-use oxc_ast::{
-    ast::{Expression, Program},
-    AstBuilder,
-};
-use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::{ModuleKind, SourceType, Span};
-
 use crate::{
     lexer::{Kind, Lexer, Token},
     state::ParserState,
 };
+use context::{Context, StatementContext};
+use oxc_allocator::Allocator;
+use oxc_ast::{
+    ast::{Expression, Program},
+    AstBuilderWithHandler, Visit,
+};
+use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_span::ast_alloc::AstAllocator;
+use oxc_span::{ModuleKind, SourceType, Span};
 
 /// Maximum length of source which can be parsed (in bytes).
 /// ~4 GiB on 64-bit systems, ~2 GiB on 32-bit systems.
@@ -135,7 +135,7 @@ pub(crate) const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
 /// [`program`]: ParserReturn::program
 /// [`errors`]: ParserReturn::errors
 /// [`panicked`]: ParserReturn::panicked
-pub struct ParserReturn<'a> {
+pub struct ParserReturn<'a, H = (), A: AstAllocator = Allocator> {
     /// The parsed AST.
     ///
     /// Will be empty (e.g. no statements, directives, etc) if the parser panicked.
@@ -147,7 +147,7 @@ pub struct ParserReturn<'a> {
     ///
     /// To ensure a valid AST, check that [`errors`](ParserReturn::errors) is empty. Then, run
     /// semantic analysis with syntax error checking enabled.
-    pub program: Program<'a>,
+    pub program: Program<'a, A>,
 
     /// Syntax errors encountered while parsing.
     ///
@@ -168,6 +168,8 @@ pub struct ParserReturn<'a> {
     /// [`program`]: ParserReturn::program
     /// [`errors`]: ParserReturn::errors
     pub panicked: bool,
+
+    pub handler: H,
 }
 
 /// Parse options
@@ -198,6 +200,8 @@ pub struct ParseOptions {
     ///
     /// [`ParenthesizedExpression`]: oxc_ast::ast::ParenthesizedExpression
     pub preserve_parens: bool,
+
+    pub allow_skip_ambient: bool,
 }
 
 impl Default for ParseOptions {
@@ -206,6 +210,7 @@ impl Default for ParseOptions {
             parse_regular_expression: false,
             allow_return_outside_function: false,
             preserve_parens: true,
+            allow_skip_ambient: false,
         }
     }
 }
@@ -240,8 +245,23 @@ impl<'a> Parser<'a> {
     }
 }
 
+pub trait Handler<'a, A: AstAllocator>: oxc_ast::handle::Handler<'a, A> {
+    type Checkpoint;
+    fn checkpoint(&self) -> Self::Checkpoint;
+    fn rewind(&mut self, check_point: Self::Checkpoint);
+    // fn cover(&mut self, span: Span);
+}
+
+impl<'a, A: AstAllocator> Handler<'a, A> for () {
+    type Checkpoint = ();
+    fn checkpoint(&self) {}
+    #[inline]
+    fn rewind(&mut self, _: ()) {}
+}
+
 mod parser_parse {
     use super::*;
+    use oxc_span::ast_alloc::VoidAllocator;
 
     /// `UniquePromise` is a way to use the type system to enforce the invariant that only
     /// a single `ParserImpl`, `Lexer` and `lexer::Source` can exist at any time on a thread.
@@ -282,15 +302,34 @@ mod parser_parse {
         ///
         /// See the [module-level documentation](crate) for examples and more information.
         pub fn parse(self) -> ParserReturn<'a> {
+            let ast_allocator = self.allocator;
+            self.parse_with(ast_allocator, ())
+        }
+
+        fn parse_with<A: AstAllocator, H: Handler<'a, A>>(
+            self,
+            ast_allocator: &'a A,
+            handler: H,
+        ) -> ParserReturn<'a, H, A> {
             let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
+            let parser = ParserImpl::<'a, H, A>::new(
                 self.allocator,
+                ast_allocator,
                 self.source_text,
                 self.source_type,
                 self.options,
+                handler,
                 unique,
             );
             parser.parse()
+        }
+
+        pub fn parse_with_handler<H: Handler<'a, VoidAllocator>>(
+            self,
+            handler: H,
+        ) -> ParserReturn<'a, H, VoidAllocator> {
+            static VOID_ALLOCATOR: VoidAllocator = VoidAllocator::new();
+            self.parse_with(&VOID_ALLOCATOR, handler)
         }
 
         /// Parse a single [`Expression`].
@@ -314,11 +353,13 @@ mod parser_parse {
         /// If the source code being parsed has syntax errors.
         pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
             let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
+            let parser = ParserImpl::<'a>::new(
+                self.allocator,
                 self.allocator,
                 self.source_text,
                 self.source_type,
                 self.options,
+                (),
                 unique,
             );
             parser.parse_expression()
@@ -329,7 +370,7 @@ use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
-struct ParserImpl<'a> {
+struct ParserImpl<'a, H, A: AstAllocator> {
     options: ParseOptions,
 
     lexer: Lexer<'a>,
@@ -351,19 +392,19 @@ struct ParserImpl<'a> {
     prev_token_end: u32,
 
     /// Parser state
-    state: ParserState<'a>,
+    state: ParserState<'a, A>,
 
     /// Parsing context
     ctx: Context,
 
     /// Ast builder for creating AST nodes
-    ast: AstBuilder<'a>,
+    ast: AstBuilderWithHandler<'a, H, A>,
 
     /// Precomputed typescript detection
     is_ts: bool,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, A: AstAllocator, H: Handler<'a, A>> ParserImpl<'a, H, A> {
     /// Create a new `ParserImpl`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
@@ -371,9 +412,11 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub fn new(
         allocator: &'a Allocator,
+        ast_allocator: &'a A,
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
+        handler: H,
         unique: UniquePromise,
     ) -> Self {
         Self {
@@ -384,9 +427,9 @@ impl<'a> ParserImpl<'a> {
             errors: vec![],
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::default(),
+            state: ParserState::<A>::default(),
             ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
+            ast: AstBuilderWithHandler::new(ast_allocator, handler),
             is_ts: source_type.is_typescript(),
         }
     }
@@ -396,12 +439,14 @@ impl<'a> ParserImpl<'a> {
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
     #[inline]
-    pub fn parse(mut self) -> ParserReturn<'a> {
+    pub fn parse(mut self) -> ParserReturn<'a, H, A> {
         let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
             Err(error) => {
                 self.error(self.overlong_error().unwrap_or(error));
+                let scope_token = self.ast.enter_scope();
                 let program = self.ast.program(
+                    scope_token,
                     Span::default(),
                     self.source_type,
                     self.source_text,
@@ -427,10 +472,12 @@ impl<'a> ParserImpl<'a> {
         }
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
-        ParserReturn { program, errors, irregular_whitespaces, panicked }
+        ParserReturn { program, errors, irregular_whitespaces, panicked, handler: self.ast.handler }
     }
 
-    pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+    pub fn parse_expression(
+        mut self,
+    ) -> std::result::Result<Expression<'a, A>, Vec<OxcDiagnostic>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
@@ -442,9 +489,11 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    fn parse_program(&mut self) -> Result<Program<'a>> {
+    fn parse_program(&mut self) -> Result<Program<'a, A>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
+
+        let scope = self.ast.enter_scope();
 
         let hashbang = self.parse_hashbang();
         let (directives, statements) =
@@ -455,6 +504,7 @@ impl<'a> ParserImpl<'a> {
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
         Ok(self.ast.program(
+            scope,
             span,
             self.source_type,
             self.source_text,
@@ -668,6 +718,41 @@ mod test {
         }
     }
 
+    #[test]
+    fn ts_skip_ambient_block() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
+        let source = r#"
+            interface A { {} `{${{}}{${1}}}` }
+            declare class B { {} `{${{}}{${1}}}` }
+            declare enum C { {} `{${{}}{${1}}}` }
+            declare namespace C { {} `{${{}}{${1}}}` }
+        "#;
+        let mut options = ParseOptions::default();
+        options.allow_skip_ambient = true;
+        let ret = Parser::new(&allocator, source, source_type).with_options(options).parse();
+        assert_eq!(ret.errors.len(), 0);
+        assert_eq!(ret.program.body.len(), 4);
+    }
+
+    #[test]
+    fn ts_skip_ambient_type() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
+        let source = r#"
+            type A = { {} `{${{}}{${1}}}` }
+            type B = [ {} `{${{}}{${1}}}` ]
+            type C = ( {} `{${{}}{${1}}}` )
+            type D = Foo<{} `{${{}}{${1}}}`>
+        "#;
+
+        let mut options = ParseOptions::default();
+        options.allow_skip_ambient = true;
+        let ret = Parser::new(&allocator, source, source_type).with_options(options).parse();
+        assert_eq!(ret.errors.len(), 0);
+        assert_eq!(ret.program.body.len(), 4);
+    }
+
     // Source with length MAX_LEN + 1 fails to parse.
     // Skip this test on 32-bit systems as impossible to allocate a string longer than `isize::MAX`.
     #[cfg(target_pointer_width = "64")]
@@ -694,6 +779,15 @@ mod test {
         assert!(ret.panicked);
         assert_eq!(ret.errors.len(), 1);
         assert_eq!(ret.errors.first().unwrap().to_string(), "Source length exceeds 4 GiB limit");
+    }
+
+    #[test]
+    fn a() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::ts();
+        let source = "function foo(x: string | undefined) { }";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        dbg!(ret.program);
     }
 
     // Source with length MAX_LEN parses OK.

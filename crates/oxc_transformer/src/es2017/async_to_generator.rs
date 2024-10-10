@@ -195,7 +195,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator {
         }
         let babel_helpers_id = ctx.scopes().find_binding(ctx.current_scope_id(), "babelHelpers");
         let callee = Self::get_helper_callee(babel_helpers_id, ctx);
-        let body = ctx.ast.function_body(
+        let body = ctx.ast.alloc_function_body(
             SPAN,
             ctx.ast.move_vec(&mut arrow.body.directives),
             ctx.ast.move_vec(&mut arrow.body.statements),

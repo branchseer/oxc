@@ -11,9 +11,9 @@ use crate::number::*;
 #[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
-impl<'alloc> CloneIn<'alloc> for NumberBase {
-    type Cloned = NumberBase;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+impl CloneIn for NumberBase {
+    type Cloned<'a> = NumberBase;
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         match self {
             Self::Float => NumberBase::Float,
             Self::Decimal => NumberBase::Decimal,
@@ -24,9 +24,9 @@ impl<'alloc> CloneIn<'alloc> for NumberBase {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for BigintBase {
-    type Cloned = BigintBase;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+impl CloneIn for BigintBase {
+    type Cloned<'a> = BigintBase;
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         match self {
             Self::Decimal => BigintBase::Decimal,
             Self::Binary => BigintBase::Binary,
@@ -36,9 +36,9 @@ impl<'alloc> CloneIn<'alloc> for BigintBase {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for AssignmentOperator {
-    type Cloned = AssignmentOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+impl CloneIn for AssignmentOperator {
+    type Cloned<'a> = AssignmentOperator;
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         match self {
             Self::Assign => AssignmentOperator::Assign,
             Self::Addition => AssignmentOperator::Addition,
@@ -60,9 +60,9 @@ impl<'alloc> CloneIn<'alloc> for AssignmentOperator {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for BinaryOperator {
-    type Cloned = BinaryOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+impl CloneIn for BinaryOperator {
+    type Cloned<'a> = BinaryOperator;
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         match self {
             Self::Equality => BinaryOperator::Equality,
             Self::Inequality => BinaryOperator::Inequality,
@@ -90,9 +90,9 @@ impl<'alloc> CloneIn<'alloc> for BinaryOperator {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for LogicalOperator {
-    type Cloned = LogicalOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+impl CloneIn for LogicalOperator {
+    type Cloned<'a> = LogicalOperator;
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         match self {
             Self::Or => LogicalOperator::Or,
             Self::And => LogicalOperator::And,
@@ -101,9 +101,9 @@ impl<'alloc> CloneIn<'alloc> for LogicalOperator {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for UnaryOperator {
-    type Cloned = UnaryOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+impl CloneIn for UnaryOperator {
+    type Cloned<'a> = UnaryOperator;
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         match self {
             Self::UnaryNegation => UnaryOperator::UnaryNegation,
             Self::UnaryPlus => UnaryOperator::UnaryPlus,
@@ -116,9 +116,9 @@ impl<'alloc> CloneIn<'alloc> for UnaryOperator {
     }
 }
 
-impl<'alloc> CloneIn<'alloc> for UpdateOperator {
-    type Cloned = UpdateOperator;
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+impl CloneIn for UpdateOperator {
+    type Cloned<'a> = UpdateOperator;
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         match self {
             Self::Increment => UpdateOperator::Increment,
             Self::Decrement => UpdateOperator::Decrement,

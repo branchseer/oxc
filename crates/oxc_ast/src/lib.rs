@@ -2,6 +2,7 @@
 // TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
 // module and the generated one.
 #![allow(clippy::self_named_module_files)]
+#![recursion_limit = "256"]
 
 //! # Oxc AST
 //!
@@ -36,34 +37,41 @@ pub mod precedence;
 mod trivia;
 
 mod generated {
-    #[cfg(debug_assertions)]
     pub mod assert_layouts;
     pub mod ast_builder;
     pub mod ast_kind;
     pub mod derive_clone_in;
     pub mod derive_content_eq;
     pub mod derive_content_hash;
+
     pub mod derive_get_span;
+
+    pub mod handle;
+
     pub mod derive_get_span_mut;
     pub mod visit;
     pub mod visit_mut;
 }
 
+pub use generated::handle;
+
 pub mod visit {
     pub use crate::generated::{visit::*, visit_mut::*};
 }
 
-pub use generated::{ast_builder, ast_kind};
-pub use num_bigint::BigUint;
-
 pub use crate::{
     ast::comment::{Comment, CommentKind, CommentPosition},
-    ast_builder::AstBuilder,
+    ast_builder::{AstBuilder, AstBuilderWithHandler},
     ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
     trivia::{comments_range, has_comments_between, CommentsRange},
     visit::{Visit, VisitMut},
 };
+pub use generated::{ast_builder, ast_kind};
+pub use num_bigint::BigUint;
+use oxc_span::ast_alloc::AstAllocator;
+
+impl<'a, A: AstAllocator> handle::Handler<'a, A> for () {}
 
 // After experimenting with two types of boxed enum variants:
 //   1.
@@ -110,9 +118,14 @@ fn size_asserts() {
 
 #[test]
 fn lifetime_variance() {
-    use crate::ast;
+    type Node<'a, A = oxc_allocator::Allocator> = <A as AstAllocator>::Vec<'a, u8>;
 
-    fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: ast::Program<'a>) -> ast::Program<'b> {
+    // Variance infer doesn't work on concrete GAT types.
+    // The struct below doesn't pass the variance test but the type alias above does.
+    // Could be a rust compiler limitation.
+    // struct Node<'a, A: AstAllocator = oxc_allocator::Allocator>(A::Vec<'a, u8>);
+
+    fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: Node<'a>) -> Node<'b> {
         program
     }
 }

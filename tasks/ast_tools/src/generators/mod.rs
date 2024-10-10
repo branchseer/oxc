@@ -12,7 +12,7 @@ mod visit;
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
-pub use visit::{VisitGenerator, VisitMutGenerator};
+pub use visit::{HandleGenerator, VisitGenerator, VisitMutGenerator};
 
 /// Inserts a newline in the `TokenStream`.
 #[expect(unused)]

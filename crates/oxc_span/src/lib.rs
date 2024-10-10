@@ -7,6 +7,7 @@ mod compact_str;
 mod source_type;
 mod span;
 
+pub mod ast_alloc;
 pub mod cmp;
 pub mod hash;
 

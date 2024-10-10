@@ -10,9 +10,11 @@
 use std::hash::Hash;
 
 use bitflags::bitflags;
-use oxc_allocator::{Box, CloneIn};
+use derive_where::derive_where;
+use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_regular_expression::ast::Pattern;
+use oxc_span::ast_alloc::AstAllocator;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
@@ -26,7 +28,7 @@ use tsify::Tsify;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct BooleanLiteral {
     #[serde(flatten)]
@@ -40,7 +42,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct NullLiteral {
     #[serde(flatten)]
@@ -53,7 +55,7 @@ pub struct NullLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct NumericLiteral<'a> {
     #[serde(flatten)]
@@ -71,7 +73,7 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct BigIntLiteral<'a> {
     #[serde(flatten)]
@@ -87,29 +89,29 @@ pub struct BigIntLiteral<'a> {
 ///
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct RegExpLiteral<'a> {
+pub struct RegExpLiteral<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     // valid regex is printed as {}
     // invalid regex is printed as null, which we can't implement yet
     pub value: EmptyObject,
-    pub regex: RegExp<'a>,
+    pub regex: RegExp<'a, A>,
 }
 
 /// A regular expression
 ///
 /// <https://tc39.es/ecma262/multipage/text-processing.html#sec-regexp-regular-expression-objects>
 #[ast]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct RegExp<'a> {
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+pub struct RegExp<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// The regex pattern between the slashes
-    pub pattern: RegExpPattern<'a>,
+    pub pattern: RegExpPattern<'a, A>,
     /// Regex flags after the closing slash
     pub flags: RegExpFlags,
 }
@@ -118,10 +120,10 @@ pub struct RegExp<'a> {
 ///
 /// This pattern may or may not be parsed.
 #[ast]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub enum RegExpPattern<'a> {
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+pub enum RegExpPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// Unparsed pattern. Contains string slice of the pattern.
     /// Pattern was not parsed, so may be valid or invalid.
     Raw(&'a str) = 0,
@@ -130,13 +132,13 @@ pub enum RegExpPattern<'a> {
     Invalid(&'a str) = 1,
     /// A parsed pattern. Read [Pattern] for more details.
     /// Pattern was parsed and found to be valid.
-    Pattern(Box<'a, Pattern<'a>>) = 2,
+    Pattern(A::Box<'a, Pattern<'a, A>>) = 2,
 }
 
 #[ast]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub struct EmptyObject;
 
 /// String literal
@@ -145,7 +147,7 @@ pub struct EmptyObject;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct StringLiteral<'a> {
     #[serde(flatten)]

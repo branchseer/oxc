@@ -1,8 +1,3 @@
-use oxc_allocator::Box;
-use oxc_ast::ast::*;
-use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
-
 use crate::{
     diagnostics,
     js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
@@ -10,8 +5,13 @@ use crate::{
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
     ParserImpl,
 };
+use oxc_allocator::Allocator;
+use oxc_ast::ast::*;
+use oxc_diagnostics::Result;
+use oxc_span::ast_alloc::{Box, Vec};
+use oxc_span::{cast_ref, GetSpan, Span};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     /** ------------------- Enum ------------------ */
 
     pub(crate) fn is_at_enum_declaration(&mut self) -> bool {
@@ -23,17 +23,25 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: Span,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Declaration<'a>> {
+    ) -> Result<Declaration<'a, A>> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier()?;
-        self.expect(Kind::LCurly)?;
-        let members = self.parse_delimited_list(
-            Kind::RCurly,
-            Kind::Comma,
-            /* trailing_separator */ true,
-            Self::parse_ts_enum_member,
-        )?;
-        self.expect(Kind::RCurly)?;
+        let scope_token = self.ast.enter_scope();
+        let declare = modifiers.contains_declare();
+        let members = if self.options.allow_skip_ambient && declare {
+            self.skip_ambient_curly()?;
+            self.ast.vec()
+        } else {
+            self.expect(Kind::LCurly)?;
+            let members = self.parse_delimited_list(
+                Kind::RCurly,
+                Kind::Comma,
+                /* trailing_separator */ true,
+                Self::parse_ts_enum_member,
+            )?;
+            self.expect(Kind::RCurly)?;
+            members
+        };
         let span = self.end_span(span);
         self.verify_modifiers(
             modifiers,
@@ -41,15 +49,16 @@ impl<'a> ParserImpl<'a> {
             diagnostics::modifier_cannot_be_used_here,
         );
         Ok(self.ast.declaration_ts_enum(
+            scope_token,
             span,
             id,
             members,
             modifiers.contains_const(),
-            modifiers.contains_declare(),
+            declare,
         ))
     }
 
-    pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
+    pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a, A>> {
         let span = self.start_span();
         let id = self.parse_ts_enum_member_name()?;
 
@@ -67,7 +76,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.ts_enum_member(span, id, initializer))
     }
 
-    fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
+    fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a, A>> {
         match self.cur_kind() {
             Kind::LBrack => {
                 let node = self.parse_computed_property_name()?;
@@ -80,7 +89,8 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
                 let node = self.parse_template_literal(false)?;
-                if !node.expressions.is_empty() {
+                if node.expressions.specialize_ref().is_ok_and(|expressions| expressions.is_empty())
+                {
                     self.error(diagnostics::computed_property_names_not_allowed_in_enums(
                         node.span(),
                     ));
@@ -99,10 +109,19 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn check_invalid_ts_enum_computed_property(&mut self, property: &Expression<'a>) {
+    fn check_invalid_ts_enum_computed_property(&mut self, property: &Expression<'a, A>) {
         match property {
             Expression::StringLiteral(_) => {}
-            Expression::TemplateLiteral(template) if template.expressions.is_empty() => {}
+            Expression::TemplateLiteral(template)
+                if template
+                    .try_deref()
+                    .map(|template| {
+                        cast_ref!(&template, TemplateLiteral<'a, A as Allocator>)
+                            .unwrap()
+                            .expressions
+                            .is_empty()
+                    })
+                    .unwrap_or(true) => {}
             Expression::NumericLiteral(_) => {
                 self.error(diagnostics::enum_member_cannot_have_numeric_name(property.span()));
             }
@@ -115,7 +134,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_annotation(
         &mut self,
-    ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
+    ) -> Result<Option<A::Box<'a, TSTypeAnnotation<'a, A>>>> {
         if !self.is_ts {
             return Ok(None);
         }
@@ -132,14 +151,15 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: Span,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Declaration<'a>> {
+    ) -> Result<Declaration<'a, A>> {
         self.expect(Kind::Type)?;
 
         let id = self.parse_binding_identifier()?;
         let params = self.parse_ts_type_parameters()?;
         self.expect(Kind::Eq)?;
 
-        let annotation = self.parse_ts_type()?;
+        let scope_token = self.ast.enter_scope();
+        let annotation = self.parse_ts_type_skipping_ambient()?;
 
         self.asi()?;
         let span = self.end_span(span);
@@ -151,6 +171,7 @@ impl<'a> ParserImpl<'a> {
         );
 
         Ok(self.ast.declaration_ts_type_alias(
+            scope_token,
             span,
             id,
             params,
@@ -165,11 +186,12 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: Span,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Declaration<'a>> {
+    ) -> Result<Declaration<'a, A>> {
         self.expect(Kind::Interface)?; // bump interface
         let id = self.parse_binding_identifier()?;
         let type_parameters = self.parse_ts_type_parameters()?;
         let (extends, _) = self.parse_heritage_clause()?;
+        let scope_token = self.ast.enter_scope();
         let body = self.parse_ts_interface_body()?;
         let extends = extends.map(|e| self.ast.ts_interface_heritages(e));
 
@@ -180,6 +202,7 @@ impl<'a> ParserImpl<'a> {
         );
 
         Ok(self.ast.declaration_ts_interface(
+            scope_token,
             self.end_span(span),
             id,
             extends,
@@ -189,10 +212,14 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    fn parse_ts_interface_body(&mut self) -> Result<Box<'a, TSInterfaceBody<'a>>> {
+    fn parse_ts_interface_body(&mut self) -> Result<A::Box<'a, TSInterfaceBody<'a, A>>> {
         let span = self.start_span();
-        let body_list =
-            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature)?;
+        let body_list = if self.options.allow_skip_ambient {
+            self.skip_ambient_curly()?;
+            self.ast.vec()
+        } else {
+            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature)?
+        };
         Ok(self.ast.alloc_ts_interface_body(self.end_span(span), body_list))
     }
 
@@ -204,7 +231,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_ts_type_signature(&mut self) -> Result<Option<TSSignature<'a>>> {
+    pub(crate) fn parse_ts_type_signature(&mut self) -> Result<Option<TSSignature<'a, A>>> {
         if self.is_at_ts_index_signature_member() {
             return self.parse_ts_index_signature_member().map(Some);
         }
@@ -279,8 +306,16 @@ impl<'a> ParserImpl<'a> {
 
     /** ----------------------- Namespace & Module ----------------------- */
 
-    fn parse_ts_module_block(&mut self) -> Result<Box<'a, TSModuleBlock<'a>>> {
+    fn parse_ts_module_block(&mut self, declare: bool) -> Result<A::Box<'a, TSModuleBlock<'a, A>>> {
         let span = self.start_span();
+        if self.options.allow_skip_ambient && declare {
+            self.skip_ambient_curly()?;
+            return Ok(self.ast.alloc_ts_module_block(
+                self.end_span(span),
+                self.ast.vec(),
+                self.ast.vec(),
+            ));
+        }
         self.expect(Kind::LCurly)?;
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ false)?;
@@ -293,7 +328,8 @@ impl<'a> ParserImpl<'a> {
         span: Span,
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
+    ) -> Result<A::Box<'a, TSModuleDeclaration<'a, A>>> {
+        let declare = modifiers.contains_declare();
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::EXPORT,
@@ -304,6 +340,7 @@ impl<'a> ParserImpl<'a> {
             _ => self.parse_binding_identifier().map(TSModuleDeclarationName::Identifier),
         }?;
 
+        let scope_token = self.ast.enter_scope();
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
             let decl = self.parse_ts_namespace_or_module_declaration_body(
@@ -313,7 +350,7 @@ impl<'a> ParserImpl<'a> {
             )?;
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl))
         } else if self.at(Kind::LCurly) {
-            let block = self.parse_ts_module_block()?;
+            let block = self.parse_ts_module_block(declare)?;
             Some(TSModuleDeclarationBody::TSModuleBlock(block))
         } else {
             None
@@ -326,11 +363,12 @@ impl<'a> ParserImpl<'a> {
         );
 
         Ok(self.ast.alloc_ts_module_declaration(
+            scope_token,
             self.end_span(span),
             id,
             body,
             kind,
-            modifiers.contains_declare(),
+            declare,
         ))
     }
 
@@ -339,7 +377,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_declaration_statement(
         &mut self,
         start_span: Span,
-    ) -> Result<Statement<'a>> {
+    ) -> Result<Statement<'a, A>> {
         let reserved_ctx = self.ctx;
         let modifiers = self.eat_modifiers_before_declaration()?;
         self.ctx = self
@@ -348,14 +386,14 @@ impl<'a> ParserImpl<'a> {
             .and_await(modifiers.contains_async());
         let result = self.parse_declaration(start_span, &modifiers);
         self.ctx = reserved_ctx;
-        result.map(Statement::from)
+        Ok(self.ast.statement_declaration(result?))
     }
 
     pub(crate) fn parse_declaration(
         &mut self,
         start_span: Span,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Declaration<'a>> {
+    ) -> Result<Declaration<'a, A>> {
         match self.cur_kind() {
             Kind::Namespace => {
                 let kind = TSModuleDeclarationKind::Namespace;
@@ -415,7 +453,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Box<'a, Function<'a>>> {
+    ) -> Result<A::Box<'a, Function<'a, A>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;
         let func_kind = FunctionKind::TSDeclaration;
@@ -423,7 +461,7 @@ impl<'a> ParserImpl<'a> {
         self.parse_function(start_span, id, r#async, false, func_kind, modifiers)
     }
 
-    pub(crate) fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a, A>> {
         let span = self.start_span();
         self.expect(Kind::LAngle)?;
         let type_annotation = self.parse_ts_type()?;
@@ -436,7 +474,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_import_equals_declaration(
         &mut self,
         span: Span,
-    ) -> Result<Declaration<'a>> {
+    ) -> Result<Declaration<'a, A>> {
         let import_kind = if !self.peek_at(Kind::Eq) && self.eat(Kind::Type) {
             ImportOrExportKind::Type
         } else {
@@ -471,7 +509,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    pub(crate) fn parse_ts_this_parameter(&mut self) -> Result<TSThisParameter<'a>> {
+    pub(crate) fn parse_ts_this_parameter(&mut self) -> Result<TSThisParameter<'a, A>> {
         let span = self.start_span();
         self.parse_class_element_modifiers(true);
         self.eat_decorators()?;

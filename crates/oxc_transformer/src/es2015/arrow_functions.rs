@@ -124,7 +124,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-arrow-functions>
 //! * Arrow function specification: <https://tc39.es/ecma262/#sec-arrow-function-definitions>
 
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
@@ -391,7 +391,7 @@ impl<'a> ArrowFunctions<'a> {
             arrow_function_expr.r#async,
             false,
             arrow_function_expr.type_parameters,
-            None::<TSThisParameter<'a>>,
+            None::<Box<'a, TSThisParameter<'a>>>,
             arrow_function_expr.params,
             arrow_function_expr.return_type,
             Some(body),

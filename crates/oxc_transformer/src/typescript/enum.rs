@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, Span, SPAN};
@@ -116,10 +116,10 @@ impl<'a> TypeScriptEnum<'a> {
             false,
             false,
             false,
-            None::<TSTypeParameterDeclaration>,
-            None::<TSThisParameter>,
+            None::<Box<'a, TSTypeParameterDeclaration>>,
+            None::<Box<'a, TSThisParameter>>,
             params,
-            None::<TSTypeAnnotation>,
+            None::<Box<'a, TSTypeAnnotation>>,
             Some(body),
         );
         function.scope_id.set(Some(func_scope_id));

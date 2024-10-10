@@ -60,7 +60,7 @@ fn derive_enum(def: &EnumDef) -> TokenStream {
         }
     };
 
-    impl_clone_in(&ty_ident, def.has_lifetime, &alloc_ident, &body)
+    impl_clone_in(&ty_ident, def.has_lifetime, def.has_generic_allocator, &alloc_ident, &body)
 }
 
 fn derive_struct(def: &StructDef) -> TokenStream {
@@ -81,29 +81,30 @@ fn derive_struct(def: &StructDef) -> TokenStream {
         (format_ident!("allocator"), quote!(#ty_ident { #(#fields),* }))
     };
 
-    impl_clone_in(&ty_ident, def.has_lifetime, &alloc_ident, &body)
+    impl_clone_in(&ty_ident, def.has_lifetime, def.has_generic_allocator, &alloc_ident, &body)
 }
 
 fn impl_clone_in(
     ty_ident: &Ident,
     has_lifetime: bool,
+    _has_generic_allocator: bool,
     alloc_ident: &Ident,
     body: &TokenStream,
 ) -> TokenStream {
     if has_lifetime {
         quote! {
-            impl <'old_alloc, 'new_alloc> CloneIn<'new_alloc> for #ty_ident<'old_alloc> {
-                type Cloned = #ty_ident<'new_alloc>;
-                fn clone_in(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
+            impl <'old_alloc> CloneIn for #ty_ident<'old_alloc> {
+                type Cloned<'a> = #ty_ident<'a>;
+                fn clone_in<'new_alloc>(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
                     #body
                 }
             }
         }
     } else {
         quote! {
-            impl <'alloc> CloneIn<'alloc> for #ty_ident {
-                type Cloned = #ty_ident;
-                fn clone_in(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {
+            impl CloneIn for #ty_ident {
+                type Cloned<'a> = #ty_ident;
+                fn clone_in<'new_alloc>(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
                     #body
                 }
             }

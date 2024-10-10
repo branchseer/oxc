@@ -29,7 +29,9 @@ oxc_syntax = { workspace = true }
 
 assert-unchecked = { workspace = true }
 bitflags = { workspace = true }
+cfg-if = { workspace = true }
 cow-utils = { workspace = true }
+derive-where = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 rustc-hash = { workspace = true }
@@ -45,3 +47,4 @@ serde_json = { workspace = true }
 [features]
 # Expose Lexer for benchmarks
 benchmarking = []
+

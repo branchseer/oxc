@@ -1,7 +1,7 @@
-use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::ast_alloc::Box;
+use oxc_span::{GetSpan as _, Span};
 
 use super::FunctionKind;
 use crate::{
@@ -21,7 +21,7 @@ impl FunctionKind {
     }
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async)
@@ -29,7 +29,7 @@ impl<'a> ParserImpl<'a> {
                 && !self.peek_token().is_on_new_line
     }
 
-    pub(crate) fn parse_function_body(&mut self) -> Result<Box<'a, FunctionBody<'a>>> {
+    pub(crate) fn parse_function_body(&mut self) -> Result<A::Box<'a, FunctionBody<'a, A>>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
 
@@ -44,7 +44,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
-    ) -> Result<(Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>)> {
+    ) -> Result<(Option<TSThisParameter<'a, A>>, A::Box<'a, FormalParameters<'a, A>>)> {
         let span = self.start_span();
         self.expect(Kind::LParen)?;
         let this_param = if self.is_ts && self.at(Kind::This) {
@@ -62,6 +62,7 @@ impl<'a> ParserImpl<'a> {
             Self::parse_rest_parameter,
         )?;
         self.expect(Kind::RParen)?;
+        let rest = rest.map(|rest| self.ast.alloc(rest));
         let formal_parameters =
             self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);
         Ok((this_param, formal_parameters))
@@ -79,7 +80,7 @@ impl<'a> ParserImpl<'a> {
         modifiers
     }
 
-    fn parse_formal_parameter(&mut self) -> Result<FormalParameter<'a>> {
+    fn parse_formal_parameter(&mut self) -> Result<FormalParameter<'a, A>> {
         let span = self.start_span();
         self.eat_decorators()?;
         let modifiers = self.parse_parameter_modifiers();
@@ -95,7 +96,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    fn parse_rest_parameter(&mut self) -> Result<BindingRestElement<'a>> {
+    fn parse_rest_parameter(&mut self) -> Result<BindingRestElement<'a, A>> {
         let element = self.parse_rest_element()?;
         if self.at(Kind::Comma) {
             if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
@@ -118,7 +119,7 @@ impl<'a> ParserImpl<'a> {
         generator: bool,
         func_kind: FunctionKind,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Box<'a, Function<'a>>> {
+    ) -> Result<A::Box<'a, Function<'a, A>>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
 
@@ -130,6 +131,7 @@ impl<'a> ParserImpl<'a> {
         let return_type =
             self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true)?;
 
+        let scope_token = self.ast.enter_scope();
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()?) } else { None };
 
         self.ctx =
@@ -170,6 +172,7 @@ impl<'a> ParserImpl<'a> {
         );
 
         Ok(self.ast.alloc_function(
+            scope_token,
             function_type,
             self.end_span(span),
             id,
@@ -177,7 +180,7 @@ impl<'a> ParserImpl<'a> {
             r#async,
             modifiers.contains_declare(),
             type_parameters,
-            this_param,
+            this_param.map(|this_param| self.ast.alloc(this_param)),
             params,
             return_type,
             body,
@@ -188,20 +191,23 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_function_declaration(
         &mut self,
         stmt_ctx: StatementContext,
-    ) -> Result<Statement<'a>> {
+    ) -> Result<Statement<'a, A>> {
         let func_kind = FunctionKind::Declaration;
         let decl = self.parse_function_impl(func_kind)?;
-        if stmt_ctx.is_single_statement() {
-            if decl.r#async {
-                self.error(diagnostics::async_function_declaration(Span::new(
-                    decl.span.start,
-                    decl.params.span.end,
-                )));
-            } else if decl.generator {
-                self.error(diagnostics::generator_function_declaration(Span::new(
-                    decl.span.start,
-                    decl.params.span.end,
-                )));
+
+        if let Some(decl) = decl.try_deref() {
+            if stmt_ctx.is_single_statement() {
+                if decl.r#async {
+                    self.error(diagnostics::async_function_declaration(Span::new(
+                        decl.span.start,
+                        decl.params.span().end,
+                    )));
+                } else if decl.generator {
+                    self.error(diagnostics::generator_function_declaration(Span::new(
+                        decl.span.start,
+                        decl.params.span().end,
+                    )));
+                }
             }
         }
 
@@ -213,7 +219,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_function_impl(
         &mut self,
         func_kind: FunctionKind,
-    ) -> Result<Box<'a, Function<'a>>> {
+    ) -> Result<A::Box<'a, Function<'a, A>>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
         self.expect(Kind::Function)?;
@@ -229,7 +235,7 @@ impl<'a> ParserImpl<'a> {
         start_span: Span,
         func_kind: FunctionKind,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Box<'a, Function<'a>>> {
+    ) -> Result<A::Box<'a, Function<'a, A>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;
         let generator = self.eat(Kind::Star);
@@ -242,7 +248,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: Span,
         r#async: bool,
-    ) -> Result<Expression<'a>> {
+    ) -> Result<Expression<'a, A>> {
         let func_kind = FunctionKind::Expression;
         self.expect(Kind::Function)?;
 
@@ -266,7 +272,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         r#async: bool,
         generator: bool,
-    ) -> Result<Box<'a, Function<'a>>> {
+    ) -> Result<A::Box<'a, Function<'a, A>>> {
         let span = self.start_span();
         self.parse_function(
             span,
@@ -282,7 +288,7 @@ impl<'a> ParserImpl<'a> {
     /// yield
     /// yield [no `LineTerminator` here] `AssignmentExpression`
     /// yield [no `LineTerminator` here] * `AssignmentExpression`
-    pub(crate) fn parse_yield_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_yield_expression(&mut self) -> Result<Expression<'a, A>> {
         let span = self.start_span();
         self.bump_any(); // advance `yield`
 

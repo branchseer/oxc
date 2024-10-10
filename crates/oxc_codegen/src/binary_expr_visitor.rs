@@ -194,7 +194,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         true
     }
 
-    pub fn visit_right_and_finish(&self, p: &mut Codegen) {
+    pub fn visit_right_and_finish(&self, p: &mut Codegen<'a>) {
         p.print_soft_space();
         self.operator.gen(p);
         p.print_soft_space();

@@ -367,9 +367,21 @@ pub trait GetSpan {
     fn span(&self) -> Span;
 }
 
+impl<'a, T: GetSpan + ?Sized> GetSpan for oxc_allocator::Box<'a, T> {
+    fn span(&self) -> Span {
+        self.as_ref().span()
+    }
+}
+
 /// Get mutable ref to span for an AST node
 pub trait GetSpanMut {
     fn span_mut(&mut self) -> &mut Span;
+}
+
+impl<'a, T: GetSpanMut + ?Sized> GetSpanMut for oxc_allocator::Box<'a, T> {
+    fn span_mut(&mut self) -> &mut Span {
+        self.as_mut().span_mut()
+    }
 }
 
 impl GetSpan for Span {
@@ -386,11 +398,11 @@ impl GetSpanMut for Span {
     }
 }
 
-impl<'a> CloneIn<'a> for Span {
-    type Cloned = Self;
+impl<A> CloneIn<A> for Span {
+    type Cloned<'a> = Self where A: 'a;
 
     #[inline]
-    fn clone_in(&self, _: &'a Allocator) -> Self {
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc A) -> Self {
         *self
     }
 }

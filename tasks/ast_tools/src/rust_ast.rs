@@ -5,8 +5,8 @@ use syn::{
     parse::{Parse, ParseBuffer},
     parse_quote,
     punctuated::Punctuated,
-    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Path, Token, Type,
-    Variant, Visibility,
+    Attribute, GenericParam, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Path,
+    Token, Type, Variant, Visibility,
 };
 
 use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result};
@@ -69,7 +69,14 @@ impl Enum {
 
     pub fn as_type(&self) -> Type {
         let ident = self.ident();
-        let generics = &self.item.generics;
+        let mut generics = self.item.generics.clone();
+        for generic_param in generics.params.iter_mut() {
+            // Remove `: AstAllocator` in `A: AstAllocator`
+            let GenericParam::Type(type_param) = generic_param else {
+                continue;
+            };
+            type_param.bounds.clear();
+        }
         parse_quote!(#ident #generics)
     }
 }
@@ -306,6 +313,7 @@ impl Module {
         let mut file = std::fs::File::open(&self.file).normalize().map_err(|err| {
             format!("Error reading file: {}, reason: {}", &self.file.to_string_lossy(), err)
         })?;
+        dbg!(&self.file);
         let mut content = String::new();
         file.read_to_string(&mut content).normalize()?;
         let file = parse_file(content.as_str()).normalize()?;
@@ -447,7 +455,7 @@ pub fn analyze(ast_ref: &AstRef) -> Result<()> {
             };
             Some(attr)
         }
-        AstType::Macro(_) => None,
+        AstType::Macro(_) => unreachable!(),
     };
 
     match ast_attr {

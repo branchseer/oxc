@@ -7,7 +7,7 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::{Box, CloneIn, Vec};
+use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, SourceType, Span};
 use oxc_syntax::{
@@ -23,7 +23,10 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+use derive_where::derive_where;
+
 use super::{macros::inherit_variants, *};
+use oxc_span::ast_alloc::AstAllocator;
 
 /// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source, directives, top-level statements, and scope information.
 #[ast(visit)]
@@ -31,11 +34,11 @@ use super::{macros::inherit_variants, *};
     flags(ScopeFlags::Top),
     strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)),
 )]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct Program<'a> {
+pub struct Program<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub source_type: SourceType,
@@ -43,10 +46,10 @@ pub struct Program<'a> {
     pub source_text: &'a str,
     /// Sorted comments
     #[serde(skip)]
-    pub comments: Vec<'a, Comment>,
+    pub comments: A::Vec<'a, Comment>,
     pub hashbang: Option<Hashbang<'a>>,
-    pub directives: Vec<'a, Directive<'a>>,
-    pub body: Vec<'a, Statement<'a>>,
+    pub directives: A::Vec<'a, Directive<'a>>,
+    pub body: A::Vec<'a, Statement<'a, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -59,95 +62,95 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum Expression<'a> {
+pub enum Expression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// See [`BooleanLiteral`] for AST node details.
-    BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+    BooleanLiteral(A::Box<'a, BooleanLiteral>) = 0,
     /// See [`NullLiteral`] for AST node details.
-    NullLiteral(Box<'a, NullLiteral>) = 1,
+    NullLiteral(A::Box<'a, NullLiteral>) = 1,
     /// See [`NumericLiteral`] for AST node details.
-    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+    NumericLiteral(A::Box<'a, NumericLiteral<'a>>) = 2,
     /// See [`BigIntLiteral`] for AST node details.
-    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+    BigIntLiteral(A::Box<'a, BigIntLiteral<'a>>) = 3,
     /// See [`RegExpLiteral`] for AST node details.
-    RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+    RegExpLiteral(A::Box<'a, RegExpLiteral<'a, A>>) = 4,
     /// See [`StringLiteral`] for AST node details.
-    StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+    StringLiteral(A::Box<'a, StringLiteral<'a>>) = 5,
     /// See [`TemplateLiteral`] for AST node details.
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
+    TemplateLiteral(A::Box<'a, TemplateLiteral<'a, A>>) = 6,
 
     /// See [`IdentifierReference`] for AST node details.
-    Identifier(Box<'a, IdentifierReference<'a>>) = 7,
+    Identifier(A::Box<'a, IdentifierReference<'a>>) = 7,
 
     /// See [`MetaProperty`] for AST node details.
-    MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
+    MetaProperty(A::Box<'a, MetaProperty<'a>>) = 8,
     /// See [`Super`] for AST node details.
-    Super(Box<'a, Super>) = 9,
+    Super(A::Box<'a, Super>) = 9,
 
     /// See [`ArrayExpression`] for AST node details.
-    ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+    ArrayExpression(A::Box<'a, ArrayExpression<'a, A>>) = 10,
     /// See [`ArrowFunctionExpression`] for AST node details.
-    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+    ArrowFunctionExpression(A::Box<'a, ArrowFunctionExpression<'a, A>>) = 11,
     /// See [`AssignmentExpression`] for AST node details.
-    AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+    AssignmentExpression(A::Box<'a, AssignmentExpression<'a, A>>) = 12,
     /// See [`AwaitExpression`] for AST node details.
-    AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+    AwaitExpression(A::Box<'a, AwaitExpression<'a, A>>) = 13,
     /// See [`BinaryExpression`] for AST node details.
-    BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+    BinaryExpression(A::Box<'a, BinaryExpression<'a, A>>) = 14,
     /// See [`CallExpression`] for AST node details.
-    CallExpression(Box<'a, CallExpression<'a>>) = 15,
+    CallExpression(A::Box<'a, CallExpression<'a, A>>) = 15,
     /// See [`ChainExpression`] for AST node details.
-    ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+    ChainExpression(A::Box<'a, ChainExpression<'a, A>>) = 16,
     /// See [`Class`] for AST node details.
-    ClassExpression(Box<'a, Class<'a>>) = 17,
+    ClassExpression(A::Box<'a, Class<'a, A>>) = 17,
     /// See [`ConditionalExpression`] for AST node details.
-    ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+    ConditionalExpression(A::Box<'a, ConditionalExpression<'a, A>>) = 18,
     /// See [`Function`] for AST node details.
     #[visit(args(flags = ScopeFlags::Function))]
-    FunctionExpression(Box<'a, Function<'a>>) = 19,
+    FunctionExpression(A::Box<'a, Function<'a, A>>) = 19,
     /// See [`ImportExpression`] for AST node details.
-    ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+    ImportExpression(A::Box<'a, ImportExpression<'a, A>>) = 20,
     /// See [`LogicalExpression`] for AST node details.
-    LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+    LogicalExpression(A::Box<'a, LogicalExpression<'a, A>>) = 21,
     /// See [`NewExpression`] for AST node details.
-    NewExpression(Box<'a, NewExpression<'a>>) = 22,
+    NewExpression(A::Box<'a, NewExpression<'a, A>>) = 22,
     /// See [`ObjectExpression`] for AST node details.
-    ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+    ObjectExpression(A::Box<'a, ObjectExpression<'a, A>>) = 23,
     /// See [`ParenthesizedExpression`] for AST node details.
-    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+    ParenthesizedExpression(A::Box<'a, ParenthesizedExpression<'a, A>>) = 24,
     /// See [`SequenceExpression`] for AST node details.
-    SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+    SequenceExpression(A::Box<'a, SequenceExpression<'a, A>>) = 25,
     /// See [`TaggedTemplateExpression`] for AST node details.
-    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+    TaggedTemplateExpression(A::Box<'a, TaggedTemplateExpression<'a, A>>) = 26,
     /// See [`ThisExpression`] for AST node details.
-    ThisExpression(Box<'a, ThisExpression>) = 27,
+    ThisExpression(A::Box<'a, ThisExpression>) = 27,
     /// See [`UnaryExpression`] for AST node details.
-    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+    UnaryExpression(A::Box<'a, UnaryExpression<'a, A>>) = 28,
     /// See [`UpdateExpression`] for AST node details.
-    UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+    UpdateExpression(A::Box<'a, UpdateExpression<'a, A>>) = 29,
     /// See [`YieldExpression`] for AST node details.
-    YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+    YieldExpression(A::Box<'a, YieldExpression<'a, A>>) = 30,
     /// See [`PrivateInExpression`] for AST node details.
-    PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
+    PrivateInExpression(A::Box<'a, PrivateInExpression<'a, A>>) = 31,
 
     /// See [`JSXElement`] for AST node details.
-    JSXElement(Box<'a, JSXElement<'a>>) = 32,
+    JSXElement(A::Box<'a, JSXElement<'a, A>>) = 32,
     /// See [`JSXFragment`] for AST node details.
-    JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
+    JSXFragment(A::Box<'a, JSXFragment<'a, A>>) = 33,
 
     /// See [`TSAsExpression`] for AST node details.
-    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+    TSAsExpression(A::Box<'a, TSAsExpression<'a, A>>) = 34,
     /// See [`TSSatisfiesExpression`] for AST node details.
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+    TSSatisfiesExpression(A::Box<'a, TSSatisfiesExpression<'a, A>>) = 35,
     /// See [`TSTypeAssertion`] for AST node details.
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+    TSTypeAssertion(A::Box<'a, TSTypeAssertion<'a, A>>) = 36,
     /// See [`TSNonNullExpression`] for AST node details.
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+    TSNonNullExpression(A::Box<'a, TSNonNullExpression<'a, A>>) = 37,
     /// See [`TSInstantiationExpression`] for AST node details.
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+    TSInstantiationExpression(A::Box<'a, TSInstantiationExpression<'a, A>>) = 38,
 
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
@@ -211,7 +214,7 @@ pub use match_expression;
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize), serde(bound = ""))]
 #[serde(tag = "type", rename = "Identifier")]
 pub struct IdentifierName<'a> {
     #[serde(flatten)]
@@ -227,7 +230,7 @@ pub struct IdentifierName<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize), serde(bound = ""))]
 #[serde(tag = "type", rename = "Identifier")]
 pub struct IdentifierReference<'a> {
     #[serde(flatten)]
@@ -252,7 +255,7 @@ pub struct IdentifierReference<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize), serde(bound = ""))]
 #[serde(tag = "type", rename = "Identifier")]
 pub struct BindingIdentifier<'a> {
     #[serde(flatten)]
@@ -278,7 +281,7 @@ pub struct BindingIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize), serde(bound = ""))]
 #[serde(tag = "type", rename = "Identifier")]
 pub struct LabelIdentifier<'a> {
     #[serde(flatten)]
@@ -292,7 +295,7 @@ pub struct LabelIdentifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct ThisExpression {
     #[serde(flatten)]
@@ -303,15 +306,15 @@ pub struct ThisExpression {
 ///
 /// Represents an array literal, which can include elements, spread elements, or null values.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct ArrayExpression<'a> {
+pub struct ArrayExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<SpreadElement | Expression | null>")]
-    pub elements: Vec<'a, ArrayExpressionElement<'a>>,
+    pub elements: A::Vec<'a, ArrayExpressionElement<'a, A>>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     #[serde(skip)]
@@ -325,13 +328,13 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize), serde(bound = ""))]
 #[serde(untagged)]
-pub enum ArrayExpressionElement<'a> {
+pub enum ArrayExpressionElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `...[3, 4]` in `const array = [1, 2, ...[3, 4], null];`
-    SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
+    SpreadElement(A::Box<'a, SpreadElement<'a, A>>) = 64,
     /// `<empty>` in `const array = [1, , 2];`
     ///
     /// Array hole for sparse arrays
@@ -357,47 +360,47 @@ pub struct Elision {
 ///
 /// Represents an object literal, which can include properties, spread properties, or computed properties and trailing comma.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ObjectExpression<'a> {
+pub struct ObjectExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Properties declared in the object
-    pub properties: Vec<'a, ObjectPropertyKind<'a>>,
+    pub properties: A::Vec<'a, ObjectPropertyKind<'a, A>>,
     #[serde(skip)]
     pub trailing_comma: Option<Span>,
 }
 
 /// Represents a property in an object literal.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum ObjectPropertyKind<'a> {
+pub enum ObjectPropertyKind<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `a: 1` in `const obj = { a: 1 };`
-    ObjectProperty(Box<'a, ObjectProperty<'a>>) = 0,
+    ObjectProperty(A::Box<'a, ObjectProperty<'a, A>>) = 0,
     /// `...{ a: 1 }` in `const obj = { ...{ a: 1 } };`
-    SpreadProperty(Box<'a, SpreadElement<'a>>) = 1,
+    SpreadProperty(A::Box<'a, SpreadElement<'a, A>>) = 1,
 }
 
 /// `a: 1` in `const obj = { a: 1 };`
 ///
 /// Represents a property in an object literal.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ObjectProperty<'a> {
+pub struct ObjectProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub kind: PropertyKind,
-    pub key: PropertyKey<'a>,
-    pub value: Expression<'a>,
-    pub init: Option<Expression<'a>>, // for `CoverInitializedName`
+    pub key: PropertyKey<'a, A>,
+    pub value: Expression<'a, A>,
+    pub init: Option<Expression<'a, A>>, // for `CoverInitializedName`
     pub method: bool,
     pub shorthand: bool,
     pub computed: bool,
@@ -410,15 +413,15 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum PropertyKey<'a> {
+pub enum PropertyKey<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `a` in `const obj = { a: 1 }; obj.a;`
-    StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
+    StaticIdentifier(A::Box<'a, IdentifierName<'a>>) = 64,
     /// `#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
-    PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
+    PrivateIdentifier(A::Box<'a, PrivateIdentifier<'a>>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
@@ -428,7 +431,7 @@ pub enum PropertyKey<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum PropertyKind {
     /// `a: 1` in `const obj = { a: 1 };`
@@ -443,31 +446,31 @@ pub enum PropertyKind {
 ///
 /// Represents a template literal, which can include quasi elements and expression elements.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct TemplateLiteral<'a> {
+pub struct TemplateLiteral<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub quasis: Vec<'a, TemplateElement<'a>>,
-    pub expressions: Vec<'a, Expression<'a>>,
+    pub quasis: A::Vec<'a, TemplateElement<'a>>,
+    pub expressions: A::Vec<'a, Expression<'a, A>>,
 }
 
 /// `` foo`Hello, ${name}` `` in `` const foo = foo`Hello, ${name}` ``
 ///
 /// Represents a tagged template expression, which can include a tag and a quasi.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TaggedTemplateExpression<'a> {
+pub struct TaggedTemplateExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub tag: Expression<'a>,
-    pub quasi: TemplateLiteral<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub tag: Expression<'a, A>,
+    pub quasi: TemplateLiteral<'a, A>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
 }
 
 /// `Hello, ` in `` `Hello, ${name}` ``
@@ -476,7 +479,7 @@ pub struct TaggedTemplateExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct TemplateElement<'a> {
     #[serde(flatten)]
@@ -489,7 +492,7 @@ pub struct TemplateElement<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
     /// For example, \t produces two characters – a backslash and a t.
@@ -506,17 +509,17 @@ pub struct TemplateElementValue<'a> {
 ///
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum MemberExpression<'a> {
+pub enum MemberExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `ar[0]` in `const ar = [1, 2]; ar[0];`
-    ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
+    ComputedMemberExpression(A::Box<'a, ComputedMemberExpression<'a, A>>) = 48,
     /// `console.log` in `console.log('Hello, World!');`
-    StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
+    StaticMemberExpression(A::Box<'a, StaticMemberExpression<'a, A>>) = 49,
     /// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
-    PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
+    PrivateFieldExpression(A::Box<'a, PrivateFieldExpression<'a, A>>) = 50,
 }
 
 /// Macro for matching `MemberExpression`'s variants.
@@ -534,15 +537,15 @@ pub use match_member_expression;
 ///
 /// Represents a computed member access expression, which can include an object and an expression.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ComputedMemberExpression<'a> {
+pub struct ComputedMemberExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub object: Expression<'a>,
-    pub expression: Expression<'a>,
+    pub object: Expression<'a, A>,
+    pub expression: Expression<'a, A>,
     pub optional: bool, // for optional chaining
 }
 
@@ -550,14 +553,14 @@ pub struct ComputedMemberExpression<'a> {
 ///
 /// Represents a static member access expression, which can include an object and a property.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct StaticMemberExpression<'a> {
+pub struct StaticMemberExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub object: Expression<'a>,
+    pub object: Expression<'a, A>,
     pub property: IdentifierName<'a>,
     pub optional: bool, // for optional chaining
 }
@@ -566,14 +569,14 @@ pub struct StaticMemberExpression<'a> {
 ///
 /// Represents a private field access expression, which can include an object and a private identifier.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct PrivateFieldExpression<'a> {
+pub struct PrivateFieldExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub object: Expression<'a>,
+    pub object: Expression<'a, A>,
     pub field: PrivateIdentifier<'a>,
     pub optional: bool, // for optional chaining
 }
@@ -595,16 +598,16 @@ pub struct PrivateFieldExpression<'a> {
 /// //            ^^^^^^^^^^^^^^ type_parameters
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct CallExpression<'a> {
+pub struct CallExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub callee: Expression<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    pub arguments: Vec<'a, Argument<'a>>,
+    pub callee: Expression<'a, A>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub arguments: A::Vec<'a, Argument<'a, A>>,
     pub optional: bool, // for optional chaining
 }
 
@@ -621,16 +624,16 @@ pub struct CallExpression<'a> {
 /// //                 type_parameters
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct NewExpression<'a> {
+pub struct NewExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub callee: Expression<'a>,
-    pub arguments: Vec<'a, Argument<'a>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub callee: Expression<'a, A>,
+    pub arguments: A::Vec<'a, Argument<'a, A>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
 }
 
 /// `import.meta` in `console.log(import.meta);`
@@ -639,7 +642,7 @@ pub struct NewExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct MetaProperty<'a> {
     #[serde(flatten)]
@@ -652,15 +655,15 @@ pub struct MetaProperty<'a> {
 ///
 /// Represents a spread element, which can include an argument.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct SpreadElement<'a> {
+pub struct SpreadElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The expression being spread.
-    pub argument: Expression<'a>,
+    pub argument: Expression<'a, A>,
 }
 
 inherit_variants! {
@@ -670,13 +673,13 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum Argument<'a> {
+pub enum Argument<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `...[1, 2]` in `const arr = [...[1, 2]];`
-    SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
+    SpreadElement(A::Box<'a, SpreadElement<'a, A>>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
@@ -686,111 +689,111 @@ pub enum Argument<'a> {
 ///
 /// Represents an update expression, which can include an operator and an argument. The following syntaxes are supported. `++a`, `a++`, `--a`, `a--`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct UpdateExpression<'a> {
+pub struct UpdateExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub operator: UpdateOperator,
     pub prefix: bool,
-    pub argument: SimpleAssignmentTarget<'a>,
+    pub argument: SimpleAssignmentTarget<'a, A>,
 }
 
 /// `typeof` in `typeof a === "string"`
 ///
 /// Represents a unary expression, which can include an operator and an argument. The following syntaxes are supported. `+a`, `-a`, `~a`, `!a`, `delete a`, `void a`, `typeof a`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct UnaryExpression<'a> {
+pub struct UnaryExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub operator: UnaryOperator,
-    pub argument: Expression<'a>,
+    pub argument: Expression<'a, A>,
 }
 
 /// `1 + 1` in `const two = 1 + 1;`
 ///
 /// Represents a binary expression, which can include a left expression, an operator, and a right expression.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct BinaryExpression<'a> {
+pub struct BinaryExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub left: Expression<'a>,
+    pub left: Expression<'a, A>,
     pub operator: BinaryOperator,
-    pub right: Expression<'a>,
+    pub right: Expression<'a, A>,
 }
 
 /// `#brand in obj` in `class Foo { #brand; static isFoo(obj) { return #brand in obj; } }`
 ///
 /// Represents a private in expression, which can include a private identifier, an operator, and a expression.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct PrivateInExpression<'a> {
+pub struct PrivateInExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub left: PrivateIdentifier<'a>,
     pub operator: BinaryOperator, // BinaryOperator::In
-    pub right: Expression<'a>,
+    pub right: Expression<'a, A>,
 }
 
 /// `||` in `const foo = bar || 2;`
 ///
 /// Represents a logical expression, which can include a left expression, an operator, and a right expression. The following syntaxes are supported. `||`, `&&` and `??`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct LogicalExpression<'a> {
+pub struct LogicalExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub left: Expression<'a>,
+    pub left: Expression<'a, A>,
     pub operator: LogicalOperator,
-    pub right: Expression<'a>,
+    pub right: Expression<'a, A>,
 }
 
 /// `bar ? 1 : 2` in `const foo = bar ? 1 : 2;`
 ///
 /// Represents a conditional expression, which can include a test, a consequent, and an alternate.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ConditionalExpression<'a> {
+pub struct ConditionalExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub test: Expression<'a>,
-    pub consequent: Expression<'a>,
-    pub alternate: Expression<'a>,
+    pub test: Expression<'a, A>,
+    pub consequent: Expression<'a, A>,
+    pub alternate: Expression<'a, A>,
 }
 
 /// `foo = 1` in `let foo; foo = 1;`
 ///
 /// Represents an assignment expression, which can include an operator, a target, and a expression.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct AssignmentExpression<'a> {
+pub struct AssignmentExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub operator: AssignmentOperator,
-    pub left: AssignmentTarget<'a>,
-    pub right: Expression<'a>,
+    pub left: AssignmentTarget<'a, A>,
+    pub right: Expression<'a, A>,
 }
 
 inherit_variants! {
@@ -801,11 +804,11 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum AssignmentTarget<'a> {
+pub enum AssignmentTarget<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // `SimpleAssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit SimpleAssignmentTarget
     // `AssignmentTargetPattern` variants added here by `inherit_variants!` macro
@@ -820,17 +823,17 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum SimpleAssignmentTarget<'a> {
-    AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>>) = 0,
-    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 1,
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 2,
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 5,
+pub enum SimpleAssignmentTarget<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    AssignmentTargetIdentifier(A::Box<'a, IdentifierReference<'a>>) = 0,
+    TSAsExpression(A::Box<'a, TSAsExpression<'a, A>>) = 1,
+    TSSatisfiesExpression(A::Box<'a, TSSatisfiesExpression<'a, A>>) = 2,
+    TSNonNullExpression(A::Box<'a, TSNonNullExpression<'a, A>>) = 3,
+    TSTypeAssertion(A::Box<'a, TSTypeAssertion<'a, A>>) = 4,
+    TSInstantiationExpression(A::Box<'a, TSInstantiationExpression<'a, A>>) = 5,
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
 }
@@ -875,13 +878,13 @@ macro_rules! match_simple_assignment_target {
 pub use match_simple_assignment_target;
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum AssignmentTargetPattern<'a> {
-    ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>) = 8,
-    ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>) = 9,
+pub enum AssignmentTargetPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    ArrayAssignmentTarget(A::Box<'a, ArrayAssignmentTarget<'a, A>>) = 8,
+    ObjectAssignmentTarget(A::Box<'a, ObjectAssignmentTarget<'a, A>>) = 9,
 }
 
 /// Macro for matching `AssignmentTargetPattern`'s variants.
@@ -897,17 +900,17 @@ pub use match_assignment_target_pattern;
 ///
 /// Represents an array assignment target, which can include elements and a rest element.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ArrayAssignmentTarget<'a> {
+pub struct ArrayAssignmentTarget<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>")]
-    pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
+    pub elements: A::Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>>,
     #[serde(skip)]
-    pub rest: Option<AssignmentTargetRest<'a>>,
+    pub rest: Option<AssignmentTargetRest<'a, A>>,
     #[serde(skip)]
     pub trailing_comma: Option<Span>,
 }
@@ -916,32 +919,32 @@ pub struct ArrayAssignmentTarget<'a> {
 ///
 /// Represents an object assignment target, which can include properties and a rest element.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ObjectAssignmentTarget<'a> {
+pub struct ObjectAssignmentTarget<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<AssignmentTargetProperty | AssignmentTargetRest>")]
-    pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
+    pub properties: A::Vec<'a, AssignmentTargetProperty<'a, A>>,
     #[serde(skip)]
-    pub rest: Option<AssignmentTargetRest<'a>>,
+    pub rest: Option<AssignmentTargetRest<'a, A>>,
 }
 
 /// `rest` in `[foo, ...rest] = arr;`
 ///
 /// Represents a rest element in an array assignment target, which can include a target.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize), serde(bound = ""))]
 #[serde(tag = "type", rename = "RestElement")]
-pub struct AssignmentTargetRest<'a> {
+pub struct AssignmentTargetRest<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[serde(rename = "argument")]
-    pub target: AssignmentTarget<'a>,
+    pub target: AssignmentTarget<'a, A>,
 }
 
 inherit_variants! {
@@ -951,81 +954,81 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum AssignmentTargetMaybeDefault<'a> {
-    AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>) = 16,
+pub enum AssignmentTargetMaybeDefault<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    AssignmentTargetWithDefault(A::Box<'a, AssignmentTargetWithDefault<'a, A>>) = 16,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
 }
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct AssignmentTargetWithDefault<'a> {
+pub struct AssignmentTargetWithDefault<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub binding: AssignmentTarget<'a>,
-    pub init: Expression<'a>,
+    pub binding: AssignmentTarget<'a, A>,
+    pub init: Expression<'a, A>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum AssignmentTargetProperty<'a> {
-    AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a>>) = 0,
-    AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>) = 1,
+pub enum AssignmentTargetProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    AssignmentTargetPropertyIdentifier(A::Box<'a, AssignmentTargetPropertyIdentifier<'a, A>>) = 0,
+    AssignmentTargetPropertyProperty(A::Box<'a, AssignmentTargetPropertyProperty<'a, A>>) = 1,
 }
 
 /// `foo` in `({ foo } = obj);`
 ///
 /// Represents an assignment target property identifier, which can include a binding and an init expression.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct AssignmentTargetPropertyIdentifier<'a> {
+pub struct AssignmentTargetPropertyIdentifier<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub binding: IdentifierReference<'a>,
-    pub init: Option<Expression<'a>>,
+    pub init: Option<Expression<'a, A>>,
 }
 
 /// `foo: bar` in `({ foo: bar } = obj);`
 ///
 /// Represents an assignment target property property, which can include a name and a binding.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct AssignmentTargetPropertyProperty<'a> {
+pub struct AssignmentTargetPropertyProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub name: PropertyKey<'a>,
-    pub binding: AssignmentTargetMaybeDefault<'a>,
+    pub name: PropertyKey<'a, A>,
+    pub binding: AssignmentTargetMaybeDefault<'a, A>,
 }
 
 /// `a++, b++` in `let a = 1, b = 2; let result = (a++, b++);`
 ///
 /// Represents a sequence expression, which can include expressions.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct SequenceExpression<'a> {
+pub struct SequenceExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expressions: Vec<'a, Expression<'a>>,
+    pub expressions: A::Vec<'a, Expression<'a, A>>,
 }
 
 /// `super` in `class C extends B { constructor() { super(); } }`
@@ -1034,7 +1037,7 @@ pub struct SequenceExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct Super {
     #[serde(flatten)]
@@ -1045,28 +1048,28 @@ pub struct Super {
 ///
 /// Represents an await expression, which can include an argument.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct AwaitExpression<'a> {
+pub struct AwaitExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub argument: Expression<'a>,
+    pub argument: Expression<'a, A>,
 }
 
 /// `foo?.bar` in `foo?.bar;`
 ///
 /// Represents a chain expression, which can include an expression.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ChainExpression<'a> {
+pub struct ChainExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: ChainElement<'a>,
+    pub expression: ChainElement<'a, A>,
 }
 
 inherit_variants! {
@@ -1076,12 +1079,12 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum ChainElement<'a> {
-    CallExpression(Box<'a, CallExpression<'a>>) = 0,
+pub enum ChainElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    CallExpression(A::Box<'a, CallExpression<'a, A>>) = 0,
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
 }
@@ -1091,14 +1094,14 @@ pub enum ChainElement<'a> {
 ///
 /// Represents a parenthesized expression, which can include an expression.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ParenthesizedExpression<'a> {
+pub struct ParenthesizedExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
+    pub expression: Expression<'a, A>,
 }
 
 inherit_variants! {
@@ -1109,30 +1112,30 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum Statement<'a> {
+pub enum Statement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // Statements
-    BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
-    BreakStatement(Box<'a, BreakStatement<'a>>) = 1,
-    ContinueStatement(Box<'a, ContinueStatement<'a>>) = 2,
-    DebuggerStatement(Box<'a, DebuggerStatement>) = 3,
-    DoWhileStatement(Box<'a, DoWhileStatement<'a>>) = 4,
-    EmptyStatement(Box<'a, EmptyStatement>) = 5,
-    ExpressionStatement(Box<'a, ExpressionStatement<'a>>) = 6,
-    ForInStatement(Box<'a, ForInStatement<'a>>) = 7,
-    ForOfStatement(Box<'a, ForOfStatement<'a>>) = 8,
-    ForStatement(Box<'a, ForStatement<'a>>) = 9,
-    IfStatement(Box<'a, IfStatement<'a>>) = 10,
-    LabeledStatement(Box<'a, LabeledStatement<'a>>) = 11,
-    ReturnStatement(Box<'a, ReturnStatement<'a>>) = 12,
-    SwitchStatement(Box<'a, SwitchStatement<'a>>) = 13,
-    ThrowStatement(Box<'a, ThrowStatement<'a>>) = 14,
-    TryStatement(Box<'a, TryStatement<'a>>) = 15,
-    WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
-    WithStatement(Box<'a, WithStatement<'a>>) = 17,
+    BlockStatement(A::Box<'a, BlockStatement<'a, A>>) = 0,
+    BreakStatement(A::Box<'a, BreakStatement<'a>>) = 1,
+    ContinueStatement(A::Box<'a, ContinueStatement<'a>>) = 2,
+    DebuggerStatement(A::Box<'a, DebuggerStatement>) = 3,
+    DoWhileStatement(A::Box<'a, DoWhileStatement<'a, A>>) = 4,
+    EmptyStatement(A::Box<'a, EmptyStatement>) = 5,
+    ExpressionStatement(A::Box<'a, ExpressionStatement<'a, A>>) = 6,
+    ForInStatement(A::Box<'a, ForInStatement<'a, A>>) = 7,
+    ForOfStatement(A::Box<'a, ForOfStatement<'a, A>>) = 8,
+    ForStatement(A::Box<'a, ForStatement<'a, A>>) = 9,
+    IfStatement(A::Box<'a, IfStatement<'a, A>>) = 10,
+    LabeledStatement(A::Box<'a, LabeledStatement<'a, A>>) = 11,
+    ReturnStatement(A::Box<'a, ReturnStatement<'a, A>>) = 12,
+    SwitchStatement(A::Box<'a, SwitchStatement<'a, A>>) = 13,
+    ThrowStatement(A::Box<'a, ThrowStatement<'a, A>>) = 14,
+    TryStatement(A::Box<'a, TryStatement<'a, A>>) = 15,
+    WhileStatement(A::Box<'a, WhileStatement<'a, A>>) = 16,
+    WithStatement(A::Box<'a, WithStatement<'a, A>>) = 17,
     // `Declaration` variants added here by `inherit_variants!` macro
     @inherit Declaration
     // `ModuleDeclaration` variants added here by `inherit_variants!` macro
@@ -1146,7 +1149,7 @@ pub enum Statement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct Directive<'a> {
     #[serde(flatten)]
@@ -1163,7 +1166,7 @@ pub struct Directive<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct Hashbang<'a> {
     #[serde(flatten)]
@@ -1176,14 +1179,14 @@ pub struct Hashbang<'a> {
 /// Represents a block statement, which can include a body.
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct BlockStatement<'a> {
+pub struct BlockStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: Vec<'a, Statement<'a>>,
+    pub body: A::Vec<'a, Statement<'a, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1191,21 +1194,21 @@ pub struct BlockStatement<'a> {
 
 /// Declarations and the Variable Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum Declaration<'a> {
-    VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+pub enum Declaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    VariableDeclaration(A::Box<'a, VariableDeclaration<'a, A>>) = 32,
     #[visit(args(flags = ScopeFlags::Function))]
-    FunctionDeclaration(Box<'a, Function<'a>>) = 33,
-    ClassDeclaration(Box<'a, Class<'a>>) = 34,
+    FunctionDeclaration(A::Box<'a, Function<'a, A>>) = 33,
+    ClassDeclaration(A::Box<'a, Class<'a, A>>) = 34,
 
-    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 35,
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
-    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 39,
+    TSTypeAliasDeclaration(A::Box<'a, TSTypeAliasDeclaration<'a, A>>) = 35,
+    TSInterfaceDeclaration(A::Box<'a, TSInterfaceDeclaration<'a, A>>) = 36,
+    TSEnumDeclaration(A::Box<'a, TSEnumDeclaration<'a, A>>) = 37,
+    TSModuleDeclaration(A::Box<'a, TSModuleDeclaration<'a, A>>) = 38,
+    TSImportEqualsDeclaration(A::Box<'a, TSImportEqualsDeclaration<'a, A>>) = 39,
 }
 
 /// Macro for matching `Declaration`'s variants.
@@ -1228,22 +1231,22 @@ pub use match_declaration;
 ///
 /// Represents a variable declaration, which can include a kind, declarations, and modifiers.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct VariableDeclaration<'a> {
+pub struct VariableDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub kind: VariableDeclarationKind,
-    pub declarations: Vec<'a, VariableDeclarator<'a>>,
+    pub declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
     pub declare: bool,
 }
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum VariableDeclarationKind {
     Var = 0,
@@ -1263,17 +1266,17 @@ pub enum VariableDeclarationKind {
 /// //  ^^^ id   ^ init
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct VariableDeclarator<'a> {
+pub struct VariableDeclarator<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[serde(skip)]
     pub kind: VariableDeclarationKind,
-    pub id: BindingPattern<'a>,
-    pub init: Option<Expression<'a>>,
+    pub id: BindingPattern<'a, A>,
+    pub init: Option<Expression<'a, A>>,
     pub definite: bool,
 }
 
@@ -1281,7 +1284,7 @@ pub struct VariableDeclarator<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct EmptyStatement {
     #[serde(flatten)]
@@ -1290,70 +1293,70 @@ pub struct EmptyStatement {
 
 /// Expression Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ExpressionStatement<'a> {
+pub struct ExpressionStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expression: Expression<'a>,
+    pub expression: Expression<'a, A>,
 }
 
 /// If Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct IfStatement<'a> {
+pub struct IfStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub test: Expression<'a>,
-    pub consequent: Statement<'a>,
-    pub alternate: Option<Statement<'a>>,
+    pub test: Expression<'a, A>,
+    pub consequent: Statement<'a, A>,
+    pub alternate: Option<Statement<'a, A>>,
 }
 
 /// Do-While Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct DoWhileStatement<'a> {
+pub struct DoWhileStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: Statement<'a>,
-    pub test: Expression<'a>,
+    pub body: Statement<'a, A>,
+    pub test: Expression<'a, A>,
 }
 
 /// While Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct WhileStatement<'a> {
+pub struct WhileStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub test: Expression<'a>,
-    pub body: Statement<'a>,
+    pub test: Expression<'a, A>,
+    pub body: Statement<'a, A>,
 }
 
 /// For Statement
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ForStatement<'a> {
+pub struct ForStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub init: Option<ForStatementInit<'a>>,
-    pub test: Option<Expression<'a>>,
-    pub update: Option<Expression<'a>>,
-    pub body: Statement<'a>,
+    pub init: Option<ForStatementInit<'a, A>>,
+    pub test: Option<Expression<'a, A>>,
+    pub update: Option<Expression<'a, A>>,
+    pub body: Statement<'a, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1366,12 +1369,12 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum ForStatementInit<'a> {
-    VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
+pub enum ForStatementInit<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    VariableDeclaration(A::Box<'a, VariableDeclaration<'a, A>>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
@@ -1380,16 +1383,16 @@ pub enum ForStatementInit<'a> {
 /// For-In Statement
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ForInStatement<'a> {
+pub struct ForInStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub left: ForStatementLeft<'a>,
-    pub right: Expression<'a>,
-    pub body: Statement<'a>,
+    pub left: ForStatementLeft<'a, A>,
+    pub right: Expression<'a, A>,
+    pub body: Statement<'a, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1402,12 +1405,12 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum ForStatementLeft<'a> {
-    VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
+pub enum ForStatementLeft<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    VariableDeclaration(A::Box<'a, VariableDeclaration<'a, A>>) = 16,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
 }
@@ -1415,17 +1418,17 @@ pub enum ForStatementLeft<'a> {
 /// For-Of Statement
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ForOfStatement<'a> {
+pub struct ForOfStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub r#await: bool,
-    pub left: ForStatementLeft<'a>,
-    pub right: Expression<'a>,
-    pub body: Statement<'a>,
+    pub left: ForStatementLeft<'a, A>,
+    pub right: Expression<'a, A>,
+    pub body: Statement<'a, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1435,7 +1438,7 @@ pub struct ForOfStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct ContinueStatement<'a> {
     #[serde(flatten)]
@@ -1447,7 +1450,7 @@ pub struct ContinueStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct BreakStatement<'a> {
     #[serde(flatten)]
@@ -1457,70 +1460,70 @@ pub struct BreakStatement<'a> {
 
 /// Return Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ReturnStatement<'a> {
+pub struct ReturnStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub argument: Option<Expression<'a>>,
+    pub argument: Option<Expression<'a, A>>,
 }
 
 /// With Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct WithStatement<'a> {
+pub struct WithStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub object: Expression<'a>,
-    pub body: Statement<'a>,
+    pub object: Expression<'a, A>,
+    pub body: Statement<'a, A>,
 }
 
 /// Switch Statement
 #[ast(visit)]
 #[scope]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct SwitchStatement<'a> {
+pub struct SwitchStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub discriminant: Expression<'a>,
+    pub discriminant: Expression<'a, A>,
     #[scope(enter_before)]
-    pub cases: Vec<'a, SwitchCase<'a>>,
+    pub cases: A::Vec<'a, SwitchCase<'a, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct SwitchCase<'a> {
+pub struct SwitchCase<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub test: Option<Expression<'a>>,
-    pub consequent: Vec<'a, Statement<'a>>,
+    pub test: Option<Expression<'a, A>>,
+    pub consequent: A::Vec<'a, Statement<'a, A>>,
 }
 
 /// Labelled Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct LabeledStatement<'a> {
+pub struct LabeledStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub label: LabelIdentifier<'a>,
-    pub body: Statement<'a>,
+    pub body: Statement<'a, A>,
 }
 
 /// Throw Statement
@@ -1531,15 +1534,15 @@ pub struct LabeledStatement<'a> {
 /// //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ argument
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ThrowStatement<'a> {
+pub struct ThrowStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The expression being thrown, e.g. `err` in `throw err;`
-    pub argument: Expression<'a>,
+    pub argument: Expression<'a, A>,
 }
 
 /// Try Statement
@@ -1558,20 +1561,20 @@ pub struct ThrowStatement<'a> {
 /// }
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct TryStatement<'a> {
+pub struct TryStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Statements in the `try` block
-    pub block: Box<'a, BlockStatement<'a>>,
+    pub block: A::Box<'a, BlockStatement<'a, A>>,
     /// The `catch` clause, including the parameter and the block statement
-    pub handler: Option<Box<'a, CatchClause<'a>>>,
+    pub handler: Option<A::Box<'a, CatchClause<'a, A>>>,
     /// The `finally` clause
     #[visit(as(FinallyClause))]
-    pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
+    pub finalizer: Option<A::Box<'a, BlockStatement<'a, A>>>,
 }
 
 /// Catch Clause in a [`try/catch` statement](TryStatement).
@@ -1588,17 +1591,17 @@ pub struct TryStatement<'a> {
 /// ```
 #[ast(visit)]
 #[scope(flags(ScopeFlags::CatchClause))]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct CatchClause<'a> {
+pub struct CatchClause<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The caught error parameter, e.g. `e` in `catch (e) {}`
-    pub param: Option<CatchParameter<'a>>,
+    pub param: Option<CatchParameter<'a, A>>,
     /// The statements run when an error is caught
-    pub body: Box<'a, BlockStatement<'a>>,
+    pub body: A::Box<'a, BlockStatement<'a, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1618,15 +1621,15 @@ pub struct CatchClause<'a> {
 /// //            ^^^^^^^  pattern
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct CatchParameter<'a> {
+pub struct CatchParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The bound error
-    pub pattern: BindingPattern<'a>,
+    pub pattern: BindingPattern<'a, A>,
 }
 
 /// Debugger Statement
@@ -1639,7 +1642,7 @@ pub struct CatchParameter<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct DebuggerStatement {
     #[serde(flatten)]
@@ -1649,93 +1652,93 @@ pub struct DebuggerStatement {
 /// Destructuring Binding Patterns
 /// * <https://tc39.es/ecma262/#prod-BindingPattern>
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
-pub struct BindingPattern<'a> {
+pub struct BindingPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // serde(flatten) the attributes because estree has no `BindingPattern`
     #[serde(flatten)]
     #[tsify(type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)")]
     #[span]
-    pub kind: BindingPatternKind<'a>,
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub kind: BindingPatternKind<'a, A>,
+    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     pub optional: bool,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum BindingPatternKind<'a> {
+pub enum BindingPatternKind<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `const a = 1`
-    BindingIdentifier(Box<'a, BindingIdentifier<'a>>) = 0,
+    BindingIdentifier(A::Box<'a, BindingIdentifier<'a>>) = 0,
     /// `const {a} = 1`
-    ObjectPattern(Box<'a, ObjectPattern<'a>>) = 1,
+    ObjectPattern(A::Box<'a, ObjectPattern<'a, A>>) = 1,
     /// `const [a] = 1`
-    ArrayPattern(Box<'a, ArrayPattern<'a>>) = 2,
+    ArrayPattern(A::Box<'a, ArrayPattern<'a, A>>) = 2,
     /// A defaulted binding pattern, i.e.:
     /// `const {a = 1} = 1`
     /// the assignment pattern is `a = 1`
     /// it has an inner left that has a BindingIdentifier
-    AssignmentPattern(Box<'a, AssignmentPattern<'a>>) = 3,
+    AssignmentPattern(A::Box<'a, AssignmentPattern<'a, A>>) = 3,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct AssignmentPattern<'a> {
+pub struct AssignmentPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub left: BindingPattern<'a>,
-    pub right: Expression<'a>,
+    pub left: BindingPattern<'a, A>,
+    pub right: Expression<'a, A>,
 }
 
 // See serializer in serialize.rs
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ObjectPattern<'a> {
+pub struct ObjectPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<BindingProperty | BindingRestElement>")]
-    pub properties: Vec<'a, BindingProperty<'a>>,
+    pub properties: A::Vec<'a, BindingProperty<'a, A>>,
     #[serde(skip)]
-    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
+    pub rest: Option<A::Box<'a, BindingRestElement<'a, A>>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct BindingProperty<'a> {
+pub struct BindingProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub key: PropertyKey<'a>,
-    pub value: BindingPattern<'a>,
+    pub key: PropertyKey<'a, A>,
+    pub value: BindingPattern<'a, A>,
     pub shorthand: bool,
     pub computed: bool,
 }
 
 // See serializer in serialize.rs
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ArrayPattern<'a> {
+pub struct ArrayPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<BindingPattern | BindingRestElement | null>")]
-    pub elements: Vec<'a, Option<BindingPattern<'a>>>,
+    pub elements: A::Vec<'a, Option<BindingPattern<'a, A>>>,
     #[serde(skip)]
-    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
+    pub rest: Option<A::Box<'a, BindingRestElement<'a, A>>>,
 }
 
 /// A `...rest` binding in an [array](ArrayPattern) or [object](ObjectPattern) destructure.
@@ -1748,14 +1751,14 @@ pub struct ArrayPattern<'a> {
 /// //               ^^^^^^  argument
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize), serde(bound = ""))]
 #[serde(tag = "type", rename = "RestElement")]
-pub struct BindingRestElement<'a> {
+pub struct BindingRestElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub argument: BindingPattern<'a>,
+    pub argument: BindingPattern<'a, A>,
 }
 
 /// Function Statement or Expression
@@ -1799,11 +1802,11 @@ pub struct BindingRestElement<'a> {
     flags(flags),
     strict_if(self.is_strict()),
 )]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
-pub struct Function<'a> {
+pub struct Function<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub r#type: FunctionType,
     #[serde(flatten)]
     pub span: Span,
@@ -1818,7 +1821,7 @@ pub struct Function<'a> {
     pub generator: bool,
     pub r#async: bool,
     pub declare: bool,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
     ///
     /// The JavaScript specification states that you cannot have a parameter called `this`,
@@ -1835,13 +1838,13 @@ pub struct Function<'a> {
     ///     return this.admin;
     /// });
     /// ```
-    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
+    pub this_param: Option<A::Box<'a, TSThisParameter<'a, A>>>,
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
-    pub params: Box<'a, FormalParameters<'a>>,
+    pub params: A::Box<'a, FormalParameters<'a, A>>,
     /// The TypeScript return type annotation.
-    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     /// The function body.
     ///
     /// [`None`] for function declarations, e.g.
@@ -1854,7 +1857,7 @@ pub struct Function<'a> {
     ///     return a;
     /// }
     /// ```
-    pub body: Option<Box<'a, FunctionBody<'a>>>,
+    pub body: Option<A::Box<'a, FunctionBody<'a, A>>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1863,7 +1866,7 @@ pub struct Function<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum FunctionType {
     FunctionDeclaration = 0,
     FunctionExpression = 1,
@@ -1875,30 +1878,30 @@ pub enum FunctionType {
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
 // See serializer in serialize.rs
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct FormalParameters<'a> {
+pub struct FormalParameters<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub kind: FormalParameterKind,
     #[tsify(type = "Array<FormalParameter | FormalParameterRest>")]
-    pub items: Vec<'a, FormalParameter<'a>>,
+    pub items: A::Vec<'a, FormalParameter<'a, A>>,
     #[serde(skip)]
-    pub rest: Option<Box<'a, BindingRestElement<'a>>>,
+    pub rest: Option<A::Box<'a, BindingRestElement<'a, A>>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct FormalParameter<'a> {
+pub struct FormalParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub decorators: Vec<'a, Decorator<'a>>,
-    pub pattern: BindingPattern<'a>,
+    pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub pattern: BindingPattern<'a, A>,
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
     pub r#override: bool,
@@ -1907,7 +1910,7 @@ pub struct FormalParameter<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter = 0,
@@ -1921,15 +1924,15 @@ pub enum FormalParameterKind {
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct FunctionBody<'a> {
+pub struct FunctionBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub directives: Vec<'a, Directive<'a>>,
-    pub statements: Vec<'a, Statement<'a>>,
+    pub directives: A::Vec<'a, Directive<'a>>,
+    pub statements: A::Vec<'a, Statement<'a, A>>,
 }
 
 /// Arrow Function Definitions
@@ -1938,21 +1941,21 @@ pub struct FunctionBody<'a> {
     flags(ScopeFlags::Function | ScopeFlags::Arrow),
     strict_if(self.body.has_use_strict_directive()),
 )]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct ArrowFunctionExpression<'a> {
+pub struct ArrowFunctionExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
     pub r#async: bool,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub params: Box<'a, FormalParameters<'a>>,
-    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub params: A::Box<'a, FormalParameters<'a, A>>,
+    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     /// See `expression` for whether this arrow expression returns an expression.
-    pub body: Box<'a, FunctionBody<'a>>,
+    pub body: A::Box<'a, FunctionBody<'a, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1960,25 +1963,25 @@ pub struct ArrowFunctionExpression<'a> {
 
 /// Generator Function Definitions
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct YieldExpression<'a> {
+pub struct YieldExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub delegate: bool,
-    pub argument: Option<Expression<'a>>,
+    pub argument: Option<Expression<'a, A>>,
 }
 
 /// Class Definitions
 #[ast(visit)]
 #[scope(flags(ScopeFlags::StrictMode))]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
-pub struct Class<'a> {
+pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub r#type: ClassType,
     #[serde(flatten)]
     pub span: Span,
@@ -1992,11 +1995,11 @@ pub struct Class<'a> {
     /// @Bar() // <-- Decorator
     /// class Foo {}
     /// ```
-    pub decorators: Vec<'a, Decorator<'a>>,
+    pub decorators: A::Vec<'a, Decorator<'a, A>>,
     /// Class identifier, AKA the name
     pub id: Option<BindingIdentifier<'a>>,
     #[scope(enter_before)]
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
     /// Super class. When present, this will usually be an [`IdentifierReference`].
     ///
     /// ## Example
@@ -2005,7 +2008,7 @@ pub struct Class<'a> {
     /// //                ^^^
     /// ```
     #[visit(as(ClassHeritage))]
-    pub super_class: Option<Expression<'a>>,
+    pub super_class: Option<Expression<'a, A>>,
     /// Type parameters passed to super class.
     ///
     /// ## Example
@@ -2013,7 +2016,7 @@ pub struct Class<'a> {
     /// class Foo<T> extends Bar<T> {}
     /// //                       ^
     /// ```
-    pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub super_type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
     /// Interface implementation clause for TypeScript classes.
     ///
     /// ## Example
@@ -2022,8 +2025,8 @@ pub struct Class<'a> {
     /// class Foo implements Bar {}
     /// //                   ^^^
     /// ```
-    pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
-    pub body: Box<'a, ClassBody<'a>>,
+    pub implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+    pub body: A::Box<'a, ClassBody<'a, A>>,
     /// Whether the class is abstract
     ///
     /// ## Example
@@ -2049,7 +2052,7 @@ pub struct Class<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum ClassType {
     /// Class declaration statement
     /// ```ts
@@ -2065,14 +2068,14 @@ pub enum ClassType {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ClassBody<'a> {
+pub struct ClassBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: Vec<'a, ClassElement<'a>>,
+    pub body: A::Vec<'a, ClassElement<'a, A>>,
 }
 
 /// Class Body Element
@@ -2094,18 +2097,18 @@ pub struct ClassBody<'a> {
 /// }
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum ClassElement<'a> {
-    StaticBlock(Box<'a, StaticBlock<'a>>) = 0,
+pub enum ClassElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    StaticBlock(A::Box<'a, StaticBlock<'a, A>>) = 0,
     /// Class Methods
     ///
     /// Includes static and non-static methods, constructors, getters, and setters.
-    MethodDefinition(Box<'a, MethodDefinition<'a>>) = 1,
-    PropertyDefinition(Box<'a, PropertyDefinition<'a>>) = 2,
-    AccessorProperty(Box<'a, AccessorProperty<'a>>) = 3,
+    MethodDefinition(A::Box<'a, MethodDefinition<'a, A>>) = 1,
+    PropertyDefinition(A::Box<'a, PropertyDefinition<'a, A>>) = 2,
+    AccessorProperty(A::Box<'a, AccessorProperty<'a, A>>) = 3,
     /// Index Signature
     ///
     /// ## Example
@@ -2114,30 +2117,30 @@ pub enum ClassElement<'a> {
     ///   [keys: string]: string
     /// }
     /// ```
-    TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 4,
+    TSIndexSignature(A::Box<'a, TSIndexSignature<'a, A>>) = 4,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
-pub struct MethodDefinition<'a> {
+pub struct MethodDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// Method definition type
     ///
     /// This will always be true when an `abstract` modifier is used on the method.
     pub r#type: MethodDefinitionType,
     #[serde(flatten)]
     pub span: Span,
-    pub decorators: Vec<'a, Decorator<'a>>,
-    pub key: PropertyKey<'a>,
+    pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub key: PropertyKey<'a, A>,
     #[visit(args(flags = match self.kind {
         MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
         MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
         MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
         MethodDefinitionKind::Method => ScopeFlags::Function,
     }))]
-    pub value: Box<'a, Function<'a>>, // FunctionExpression
+    pub value: A::Box<'a, Function<'a, A>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
     pub computed: bool,
     pub r#static: bool,
@@ -2149,27 +2152,27 @@ pub struct MethodDefinition<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum MethodDefinitionType {
     MethodDefinition = 0,
     TSAbstractMethodDefinition = 1,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
-pub struct PropertyDefinition<'a> {
+pub struct PropertyDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub r#type: PropertyDefinitionType,
     #[serde(flatten)]
     pub span: Span,
     /// Decorators applied to the property.
     ///
     /// See [`Decorator`] for more information.
-    pub decorators: Vec<'a, Decorator<'a>>,
+    pub decorators: A::Vec<'a, Decorator<'a, A>>,
     /// The expression used to declare the property.
-    pub key: PropertyKey<'a>,
+    pub key: PropertyKey<'a, A>,
     /// Initialized value in the declaration.
     ///
     /// ## Example
@@ -2183,7 +2186,7 @@ pub struct PropertyDefinition<'a> {
     ///   }
     /// }
     /// ```
-    pub value: Option<Expression<'a>>,
+    pub value: Option<Expression<'a, A>>,
     /// Property was declared with a computed key
     ///
     /// ## Example
@@ -2219,7 +2222,7 @@ pub struct PropertyDefinition<'a> {
     /// Type annotation on the property.
     ///
     /// Will only ever be [`Some`] for TypeScript files.
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     /// Accessibility modifier.
     ///
     /// Only ever [`Some`] for TypeScript files.
@@ -2240,7 +2243,7 @@ pub struct PropertyDefinition<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum PropertyDefinitionType {
     PropertyDefinition = 0,
     TSAbstractPropertyDefinition = 1,
@@ -2249,7 +2252,7 @@ pub enum PropertyDefinitionType {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub enum MethodDefinitionKind {
     /// Class constructor
@@ -2268,7 +2271,7 @@ pub enum MethodDefinitionKind {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct PrivateIdentifier<'a> {
     #[serde(flatten)]
@@ -2291,14 +2294,14 @@ pub struct PrivateIdentifier<'a> {
 /// ```
 #[ast(visit)]
 #[scope(flags(ScopeFlags::ClassStaticBlock))]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct StaticBlock<'a> {
+pub struct StaticBlock<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: Vec<'a, Statement<'a>>,
+    pub body: A::Vec<'a, Statement<'a, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -2328,26 +2331,26 @@ pub struct StaticBlock<'a> {
 /// export as namespace d;    // TSNamespaceExportDeclaration
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum ModuleDeclaration<'a> {
+pub enum ModuleDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `import hello from './world.js';`
     /// `import * as t from './world.js';`
-    ImportDeclaration(Box<'a, ImportDeclaration<'a>>) = 64,
+    ImportDeclaration(A::Box<'a, ImportDeclaration<'a, A>>) = 64,
     /// `export * as numbers from '../numbers.js'`
-    ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
+    ExportAllDeclaration(A::Box<'a, ExportAllDeclaration<'a, A>>) = 65,
     /// `export default 5;`
-    ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
+    ExportDefaultDeclaration(A::Box<'a, ExportDefaultDeclaration<'a, A>>) = 66,
     /// `export {five} from './numbers.js';`
     /// `export {six, seven};`
-    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
+    ExportNamedDeclaration(A::Box<'a, ExportNamedDeclaration<'a, A>>) = 67,
 
     /// `export = 5;`
-    TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
+    TSExportAssignment(A::Box<'a, TSExportAssignment<'a, A>>) = 68,
     /// `export as namespace React;`
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+    TSNamespaceExportDeclaration(A::Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
 }
 
 /// Macro for matching `ModuleDeclaration`'s variants.
@@ -2367,7 +2370,7 @@ pub use match_module_declaration;
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum AccessorPropertyType {
     AccessorProperty = 0,
     TSAbstractAccessorProperty = 1,
@@ -2382,22 +2385,22 @@ pub enum AccessorPropertyType {
 /// }
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
-pub struct AccessorProperty<'a> {
+pub struct AccessorProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub r#type: AccessorPropertyType,
     #[serde(flatten)]
     pub span: Span,
     /// Decorators applied to the accessor property.
     ///
     /// See [`Decorator`] for more information.
-    pub decorators: Vec<'a, Decorator<'a>>,
+    pub decorators: A::Vec<'a, Decorator<'a, A>>,
     /// The expression used to declare the property.
-    pub key: PropertyKey<'a>,
+    pub key: PropertyKey<'a, A>,
     /// Initialized value in the declaration, if present.
-    pub value: Option<Expression<'a>>,
+    pub value: Option<Expression<'a, A>>,
     /// Property was declared with a computed key
     pub computed: bool,
     /// Property was declared with a `static` modifier
@@ -2407,7 +2410,7 @@ pub struct AccessorProperty<'a> {
     /// Type annotation on the property.
     ///
     /// Will only ever be [`Some`] for TypeScript files.
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     /// Accessibility modifier.
     ///
     /// Only ever [`Some`] for TypeScript files.
@@ -2426,47 +2429,47 @@ pub struct AccessorProperty<'a> {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ImportExpression<'a> {
+pub struct ImportExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub source: Expression<'a>,
-    pub arguments: Vec<'a, Expression<'a>>,
+    pub source: Expression<'a, A>,
+    pub arguments: A::Vec<'a, Expression<'a, A>>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct ImportDeclaration<'a> {
+pub struct ImportDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
+    pub specifiers: Option<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>>,
     pub source: StringLiteral<'a>,
     /// Some(vec![]) for empty assertion
-    pub with_clause: Option<Box<'a, WithClause<'a>>>,
+    pub with_clause: Option<A::Box<'a, WithClause<'a, A>>>,
     /// `import type { foo } from 'bar'`
     pub import_kind: ImportOrExportKind,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum ImportDeclarationSpecifier<'a> {
+pub enum ImportDeclarationSpecifier<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
-    ImportSpecifier(Box<'a, ImportSpecifier<'a>>) = 0,
+    ImportSpecifier(A::Box<'a, ImportSpecifier<'a>>) = 0,
     /// import local from "source"
-    ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>) = 1,
+    ImportDefaultSpecifier(A::Box<'a, ImportDefaultSpecifier<'a>>) = 1,
     /// import * as local from "source"
-    ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>) = 2,
+    ImportNamespaceSpecifier(A::Box<'a, ImportNamespaceSpecifier<'a>>) = 2,
 }
 
 // import {imported} from "source"
@@ -2474,7 +2477,7 @@ pub enum ImportDeclarationSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct ImportSpecifier<'a> {
     #[serde(flatten)]
@@ -2505,7 +2508,7 @@ pub struct ImportSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct ImportDefaultSpecifier<'a> {
     #[serde(flatten)]
@@ -2523,7 +2526,7 @@ pub struct ImportDefaultSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct ImportNamespaceSpecifier<'a> {
     #[serde(flatten)]
@@ -2532,21 +2535,21 @@ pub struct ImportNamespaceSpecifier<'a> {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct WithClause<'a> {
+pub struct WithClause<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
-    pub with_entries: Vec<'a, ImportAttribute<'a>>,
+    pub with_entries: A::Vec<'a, ImportAttribute<'a>>,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct ImportAttribute<'a> {
     #[serde(flatten)]
@@ -2558,7 +2561,7 @@ pub struct ImportAttribute<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum ImportAttributeKey<'a> {
     Identifier(IdentifierName<'a>) = 0,
@@ -2577,20 +2580,20 @@ pub enum ImportAttributeKey<'a> {
 /// // export_kind           source
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct ExportNamedDeclaration<'a> {
+pub struct ExportNamedDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub declaration: Option<Declaration<'a>>,
-    pub specifiers: Vec<'a, ExportSpecifier<'a>>,
+    pub declaration: Option<Declaration<'a, A>>,
+    pub specifiers: A::Vec<'a, ExportSpecifier<'a>>,
     pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
-    pub with_clause: Option<Box<'a, WithClause<'a>>>,
+    pub with_clause: Option<A::Box<'a, WithClause<'a, A>>>,
 }
 
 /// Export Default Declaration
@@ -2603,14 +2606,14 @@ pub struct ExportNamedDeclaration<'a> {
 /// export default AssignmentExpression
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct ExportDefaultDeclaration<'a> {
+pub struct ExportDefaultDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub declaration: ExportDefaultDeclarationKind<'a>,
+    pub declaration: ExportDefaultDeclarationKind<'a, A>,
     pub exported: ModuleExportName<'a>, // the `default` Keyword
 }
 
@@ -2624,18 +2627,18 @@ pub struct ExportDefaultDeclaration<'a> {
 /// //                       ^^^^^^^^^^^^^^^ source
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct ExportAllDeclaration<'a> {
+pub struct ExportAllDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// If this declaration is re-named
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
-    pub with_clause: Option<Box<'a, WithClause<'a>>>, // Some(vec![]) for empty assertion
+    pub with_clause: Option<A::Box<'a, WithClause<'a, A>>>, // Some(vec![]) for empty assertion
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 
@@ -2653,7 +2656,7 @@ pub struct ExportAllDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct ExportSpecifier<'a> {
     #[serde(flatten)]
@@ -2670,16 +2673,16 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum ExportDefaultDeclarationKind<'a> {
+pub enum ExportDefaultDeclarationKind<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[visit(args(flags = ScopeFlags::Function))]
-    FunctionDeclaration(Box<'a, Function<'a>>) = 64,
-    ClassDeclaration(Box<'a, Class<'a>>) = 65,
+    FunctionDeclaration(A::Box<'a, Function<'a, A>>) = 64,
+    ClassDeclaration(A::Box<'a, Class<'a, A>>) = 65,
 
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
+    TSInterfaceDeclaration(A::Box<'a, TSInterfaceDeclaration<'a, A>>) = 66,
 
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
@@ -2694,9 +2697,9 @@ pub enum ExportDefaultDeclarationKind<'a> {
 /// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
 /// * <https://github.com/tc39/ecma262/pull/2154>
 #[ast(visit)]
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum ModuleExportName<'a> {
     IdentifierName(IdentifierName<'a>) = 0,

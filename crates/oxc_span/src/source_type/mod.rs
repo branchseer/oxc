@@ -5,7 +5,7 @@ mod error;
 
 use std::{hash::Hash, path::Path};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 #[cfg(feature = "serialize")]
 use {serde::Serialize, tsify::Tsify};
@@ -79,11 +79,11 @@ impl Default for SourceType {
     }
 }
 
-impl<'a> CloneIn<'a> for SourceType {
-    type Cloned = Self;
+impl<A> CloneIn<A> for SourceType {
+    type Cloned<'a> = Self where A: 'a;
 
     #[inline]
-    fn clone_in(&self, _: &'a Allocator) -> Self {
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc A) -> Self {
         *self
     }
 }

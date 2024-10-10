@@ -108,7 +108,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.binding_pattern(
                     // SAFETY: `ast.copy` is unsound! We need to fix.
                     unsafe { self.ast.copy(&decl.id.kind) },
-                    Some(self.ast.ts_type_annotation(SPAN, ts_type)),
+                    Some(self.ast.alloc_ts_type_annotation(SPAN, ts_type)),
                     decl.id.optional,
                 )
             },

@@ -47,6 +47,8 @@ bitflags! {
         ///   * ambient variable declaration => `declare var $: any`
         ///   * ambient class declaration => `declare class C { foo(); } , etc..`
         const Ambient = 1 << 6;
+
+        const SkipAmient = 1 << 7;
     }
 }
 
@@ -90,6 +92,11 @@ impl Context {
     #[inline]
     pub(crate) fn has_ambient(self) -> bool {
         self.contains(Self::Ambient)
+    }
+
+    #[inline]
+    pub(crate) fn has_skip_ambient(self) -> bool {
+        self.contains(Self::SkipAmient)
     }
 
     #[inline]
@@ -144,6 +151,11 @@ impl Context {
     #[inline]
     pub(crate) fn and_ambient(self, include: bool) -> Self {
         self.and(Self::Ambient, include)
+    }
+
+    #[inline]
+    pub(crate) fn and_skip_ambient(self, include: bool) -> Self {
+        self.and(Self::SkipAmient, include)
     }
 
     #[inline]

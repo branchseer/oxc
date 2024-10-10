@@ -1,6 +1,7 @@
 use std::{borrow::Cow, cell::Cell, fmt};
 
 use oxc_allocator::{Box, FromIn, Vec};
+use oxc_span::ast_alloc::AstAllocator;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
@@ -35,6 +36,12 @@ impl<'a> Program<'a> {
 
     pub fn is_strict(&self) -> bool {
         self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)
+    }
+}
+
+impl<'a, A: AstAllocator> Expression<'a, A> {
+    pub fn is_identifier_reference(&self) -> bool {
+        matches!(self, Expression::Identifier(_))
     }
 }
 
@@ -223,10 +230,6 @@ impl<'a> Expression<'a> {
             };
         }
         expr
-    }
-
-    pub fn is_identifier_reference(&self) -> bool {
-        matches!(self, Expression::Identifier(_))
     }
 
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
@@ -897,6 +900,16 @@ impl<'a> BindingPattern<'a> {
     }
 }
 
+impl<'a, A: AstAllocator> BindingPatternKind<'a, A> {
+    pub fn is_binding_identifier(&self) -> bool {
+        matches!(self, Self::BindingIdentifier(_))
+    }
+
+    pub fn is_assignment_pattern(&self) -> bool {
+        matches!(self, Self::AssignmentPattern(_))
+    }
+}
+
 impl<'a> BindingPatternKind<'a> {
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
         match self {
@@ -920,14 +933,6 @@ impl<'a> BindingPatternKind<'a> {
             Self::AssignmentPattern(pattern) => pattern.left.kind.is_destructuring_pattern(),
             Self::BindingIdentifier(_) => false,
         }
-    }
-
-    pub fn is_binding_identifier(&self) -> bool {
-        matches!(self, Self::BindingIdentifier(_))
-    }
-
-    pub fn is_assignment_pattern(&self) -> bool {
-        matches!(self, Self::AssignmentPattern(_))
     }
 }
 

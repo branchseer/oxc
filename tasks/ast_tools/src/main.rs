@@ -21,7 +21,7 @@ use derives::{DeriveCloneIn, DeriveContentEq, DeriveContentHash, DeriveGetSpan, 
 use fmt::cargo_fmt;
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
-    VisitGenerator, VisitMutGenerator,
+    HandleGenerator, VisitGenerator, VisitMutGenerator,
 };
 use passes::{CalcLayout, Linker};
 use util::{write_all_to, NormalizeError};
@@ -80,6 +80,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .generate(AstBuilderGenerator)
         .generate(VisitGenerator)
         .generate(VisitMutGenerator)
+        .generate(HandleGenerator)
         .run()?;
 
     if !cli_options.dry_run {

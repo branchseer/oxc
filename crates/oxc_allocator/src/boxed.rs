@@ -142,7 +142,7 @@ impl<'alloc, T: ?Sized + Debug> Debug for Box<'alloc, T> {
 #[cfg(any(feature = "serialize", test))]
 impl<'alloc, T> Serialize for Box<'alloc, T>
 where
-    T: Serialize,
+    T: Serialize + ?Sized,
 {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where

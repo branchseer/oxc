@@ -490,10 +490,14 @@ impl<'a> IsolatedDeclarations<'a> {
         });
     }
 
-    fn get_assignable_properties_for_namespaces(
-        stmts: &'a oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> FxHashMap<&'a str, FxHashSet<Atom>> {
-        let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
+    fn get_assignable_properties_for_namespaces<'b>(
+        stmts: &'b oxc_allocator::Vec<'a, Statement<'a>>,
+    ) -> FxHashMap<&'b str, FxHashSet<Atom<'b>>>
+    where
+        'a: 'b,
+    {
+        let mut assignable_properties_for_namespace =
+            FxHashMap::<&'b str, FxHashSet<Atom<'b>>>::default();
         for stmt in stmts {
             let decl = match stmt {
                 Statement::ExportNamedDeclaration(decl) => {

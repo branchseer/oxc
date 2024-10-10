@@ -1,24 +1,25 @@
-use oxc_allocator::Box;
+use cfg_if::cfg_if;
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
+use oxc_span::ast_alloc::{AstAllocator, Box};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
 use super::Tristate;
 use crate::{diagnostics, lexer::Kind, ParserImpl};
 
-type ArrowFunctionHead<'a> = (
-    Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    Box<'a, FormalParameters<'a>>,
-    Option<Box<'a, TSTypeAnnotation<'a>>>,
+type ArrowFunctionHead<'a, A: AstAllocator> = (
+    Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    A::Box<'a, FormalParameters<'a, A>>,
+    Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     bool,
     Span,
 );
 
-impl<'a> ParserImpl<'a> {
+impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     pub(super) fn try_parse_parenthesized_arrow_function_expression(
         &mut self,
-    ) -> Result<Option<Expression<'a>>> {
+    ) -> Result<Option<Expression<'a, A>>> {
         match self.is_parenthesized_arrow_function_expression() {
             Tristate::False => Ok(None),
             Tristate::True => self.parse_parenthesized_arrow_function(),
@@ -28,7 +29,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(super) fn try_parse_async_simple_arrow_function_expression(
         &mut self,
-    ) -> Result<Option<Expression<'a>>> {
+    ) -> Result<Option<Expression<'a, A>>> {
         if self.at(Kind::Async)
             && self.is_un_parenthesized_async_arrow_function_worker() == Tristate::True
         {
@@ -202,18 +203,22 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_simple_arrow_function_expression(
         &mut self,
         span: Span,
-        ident: Expression<'a>,
+        ident: Expression<'a, A>,
         r#async: bool,
-    ) -> Result<Expression<'a>> {
+    ) -> Result<Expression<'a, A>> {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
         let params = {
             let ident = match ident {
-                Expression::Identifier(ident) => {
-                    let name = ident.name.clone();
-                    BindingIdentifier::new(ident.span, name)
-                }
+                Expression::Identifier(ident) => BindingIdentifier::new(
+                    ident.span(),
+                    if let Some(ident) = ident.try_deref() {
+                        ident.name.clone()
+                    } else {
+                        Atom::empty()
+                    },
+                ),
                 _ => unreachable!(),
             };
             let params_span = self.end_span(ident.span);
@@ -241,7 +246,7 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a>> {
+    fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a, A>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
 
@@ -279,14 +284,16 @@ impl<'a> ParserImpl<'a> {
     fn parse_arrow_function_body(
         &mut self,
         span: Span,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+        params: A::Box<'a, FormalParameters<'a, A>>,
+        return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
         r#async: bool,
-    ) -> Result<Expression<'a>> {
+    ) -> Result<Expression<'a, A>> {
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
+
+        let scope_token = self.ast.enter_scope();
 
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
@@ -301,6 +308,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
         Ok(self.ast.expression_arrow_function(
+            scope_token,
             self.end_span(span),
             expression,
             r#async,
@@ -314,7 +322,7 @@ impl<'a> ParserImpl<'a> {
     /// Section [Arrow Function](https://tc39.es/ecma262/#sec-arrow-function-definitions)
     /// `ArrowFunction`[In, Yield, Await] :
     ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] => `ConciseBody`[?In]
-    fn parse_parenthesized_arrow_function(&mut self) -> Result<Option<Expression<'a>>> {
+    fn parse_parenthesized_arrow_function(&mut self) -> Result<Option<Expression<'a, A>>> {
         let (type_parameters, params, return_type, r#async, span) =
             self.parse_parenthesized_arrow_function_head()?;
         self.parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
@@ -323,7 +331,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_possible_parenthesized_arrow_function_expression(
         &mut self,
-    ) -> Result<Option<Expression<'a>>> {
+    ) -> Result<Option<Expression<'a, A>>> {
         let pos = self.cur_token().start;
         if self.state.not_parenthesized_arrow.contains(&pos) {
             return Ok(None);

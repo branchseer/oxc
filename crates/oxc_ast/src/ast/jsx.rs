@@ -7,7 +7,7 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use oxc_allocator::{Box, CloneIn, Vec};
+use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 #[cfg(feature = "serialize")]
@@ -16,6 +16,8 @@ use serde::Serialize;
 use tsify::Tsify;
 
 use super::{inherit_variants, js::*, literal::*, ts::*};
+use derive_where::derive_where;
+use oxc_span::ast_alloc::AstAllocator;
 
 // 1.2 JSX Elements
 
@@ -37,19 +39,19 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 ///
 /// See: [JSX Syntax](https://facebook.github.io/jsx/)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct JSXElement<'a> {
+pub struct JSXElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Opening tag of the element.
-    pub opening_element: Box<'a, JSXOpeningElement<'a>>,
+    pub opening_element: A::Box<'a, JSXOpeningElement<'a, A>>,
     /// Closing tag of the element. Will be [`None`] for self-closing tags.
-    pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
+    pub closing_element: Option<A::Box<'a, JSXClosingElement<'a, A>>>,
     /// Children of the element. This can be text, other elements, or expressions.
-    pub children: Vec<'a, JSXChild<'a>>,
+    pub children: A::Vec<'a, JSXChild<'a, A>>,
 }
 
 /// JSX Opening Element
@@ -68,11 +70,11 @@ pub struct JSXElement<'a> {
 /// //         ^ type_parameters
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct JSXOpeningElement<'a> {
+pub struct JSXOpeningElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Is this tag self-closing?
@@ -83,11 +85,11 @@ pub struct JSXOpeningElement<'a> {
     /// <Foo>    // <- self_closing = false
     /// ```
     pub self_closing: bool,
-    pub name: JSXElementName<'a>,
+    pub name: JSXElementName<'a, A>,
     /// List of JSX attributes. In React-like applications, these become props.
-    pub attributes: Vec<'a, JSXAttributeItem<'a>>,
+    pub attributes: A::Vec<'a, JSXAttributeItem<'a, A>>,
     /// Type parameters for generic JSX elements.
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
 }
 
 /// JSX Closing Element
@@ -102,14 +104,14 @@ pub struct JSXOpeningElement<'a> {
 /// <Bar /> // <- no closing element
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct JSXClosingElement<'a> {
+pub struct JSXClosingElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub name: JSXElementName<'a>,
+    pub name: JSXElementName<'a, A>,
 }
 
 /// JSX Fragment
@@ -121,11 +123,11 @@ pub struct JSXClosingElement<'a> {
 ///
 /// See: [`React.Fragment`](https://react.dev/reference/react/Fragment)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct JSXFragment<'a> {
+pub struct JSXFragment<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// `<>`
@@ -133,14 +135,14 @@ pub struct JSXFragment<'a> {
     /// `</>`
     pub closing_fragment: JSXClosingFragment,
     /// Elements inside the fragment.
-    pub children: Vec<'a, JSXChild<'a>>,
+    pub children: A::Vec<'a, JSXChild<'a, A>>,
 }
 
 /// JSX Opening Fragment (`<>`)
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct JSXOpeningFragment {
     #[serde(flatten)]
@@ -151,7 +153,7 @@ pub struct JSXOpeningFragment {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct JSXClosingFragment {
     #[serde(flatten)]
@@ -160,20 +162,20 @@ pub struct JSXClosingFragment {
 
 /// JSX Element Name
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[serde(untagged)]
-pub enum JSXElementName<'a> {
+pub enum JSXElementName<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `<div />`
-    Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
+    Identifier(A::Box<'a, JSXIdentifier<'a>>) = 0,
     /// `<Apple />`
-    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 1,
+    IdentifierReference(A::Box<'a, IdentifierReference<'a>>) = 1,
     /// `<Apple:Orange />`
-    NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 2,
+    NamespacedName(A::Box<'a, JSXNamespacedName<'a>>) = 2,
     /// `<Apple.Orange />`
-    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 3,
+    MemberExpression(A::Box<'a, JSXMemberExpression<'a, A>>) = 3,
     /// `<this />`
-    ThisExpression(Box<'a, ThisExpression>) = 4,
+    ThisExpression(A::Box<'a, ThisExpression>) = 4,
 }
 
 /// JSX Namespaced Name
@@ -186,7 +188,7 @@ pub enum JSXElementName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct JSXNamespacedName<'a> {
     #[serde(flatten)]
@@ -213,27 +215,27 @@ pub struct JSXNamespacedName<'a> {
 /// [`object`]: JSXMemberExpression::object
 /// [`member expression`]: JSXMemberExpressionObject::MemberExpression
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct JSXMemberExpression<'a> {
+pub struct JSXMemberExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The object being accessed. This is everything before the last `.`.
-    pub object: JSXMemberExpressionObject<'a>,
+    pub object: JSXMemberExpressionObject<'a, A>,
     /// The property being accessed. This is everything after the last `.`.
     pub property: JSXIdentifier<'a>,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[serde(untagged)]
-pub enum JSXMemberExpressionObject<'a> {
-    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
-    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 1,
-    ThisExpression(Box<'a, ThisExpression>) = 2,
+pub enum JSXMemberExpressionObject<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    IdentifierReference(A::Box<'a, IdentifierReference<'a>>) = 0,
+    MemberExpression(A::Box<'a, JSXMemberExpression<'a, A>>) = 1,
+    ThisExpression(A::Box<'a, ThisExpression>) = 2,
 }
 
 /// JSX Expression Container
@@ -250,15 +252,15 @@ pub enum JSXMemberExpressionObject<'a> {
 /// </Foo>
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct JSXExpressionContainer<'a> {
+pub struct JSXExpressionContainer<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The expression inside the container.
-    pub expression: JSXExpression<'a>,
+    pub expression: JSXExpression<'a, A>,
 }
 
 inherit_variants! {
@@ -269,11 +271,11 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
-pub enum JSXExpression<'a> {
+pub enum JSXExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     EmptyExpression(JSXEmptyExpression) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
@@ -284,7 +286,7 @@ pub enum JSXExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct JSXEmptyExpression {
     #[serde(flatten)]
@@ -303,15 +305,15 @@ pub struct JSXEmptyExpression {
 /// //             Attribute     SpreadAttribute
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum JSXAttributeItem<'a> {
+pub enum JSXAttributeItem<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// A `key="value"` attribute
-    Attribute(Box<'a, JSXAttribute<'a>>) = 0,
+    Attribute(A::Box<'a, JSXAttribute<'a, A>>) = 0,
     /// a `{...spread}` attribute
-    SpreadAttribute(Box<'a, JSXSpreadAttribute<'a>>) = 1,
+    SpreadAttribute(A::Box<'a, JSXSpreadAttribute<'a, A>>) = 1,
 }
 
 /// JSX Attribute
@@ -326,19 +328,19 @@ pub enum JSXAttributeItem<'a> {
 /// <Component has-no-value foo="foo" />
 /// //                 name ^^^ ^^^^ value
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct JSXAttribute<'a> {
+pub struct JSXAttribute<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The name of the attribute. This is a prop in React-like applications.
-    pub name: JSXAttributeName<'a>,
+    pub name: JSXAttributeName<'a, A>,
     /// The value of the attribute. This can be a string literal, an expression,
     /// or an element. Will be [`None`] for boolean-like attributes (e.g.
     /// `<button disabled />`).
-    pub value: Option<JSXAttributeValue<'a>>,
+    pub value: Option<JSXAttributeValue<'a, A>>,
 }
 
 /// JSX Spread Attribute
@@ -349,14 +351,14 @@ pub struct JSXAttribute<'a> {
 /// //          ^^^^^^^^ argument
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct JSXSpreadAttribute<'a> {
+pub struct JSXSpreadAttribute<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub argument: Expression<'a>,
+    pub argument: Expression<'a, A>,
 }
 
 /// JSX Attribute Name
@@ -375,15 +377,15 @@ pub struct JSXSpreadAttribute<'a> {
 /// //                     ^^^^^^^ NamespacedName
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum JSXAttributeName<'a> {
+pub enum JSXAttributeName<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// An attribute name without a namespace prefix, e.g. `foo` in `foo="bar"`.
-    Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
+    Identifier(A::Box<'a, JSXIdentifier<'a>>) = 0,
     /// An attribute name with a namespace prefix, e.g. `foo:bar` in `foo:bar="baz"`.
-    NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 1,
+    NamespacedName(A::Box<'a, JSXNamespacedName<'a>>) = 1,
 }
 
 /// JSX Attribute Value
@@ -405,15 +407,15 @@ pub enum JSXAttributeName<'a> {
 /// //             ^^^^^^^^^^^ Element
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum JSXAttributeValue<'a> {
-    StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
-    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>) = 1,
-    Element(Box<'a, JSXElement<'a>>) = 2,
-    Fragment(Box<'a, JSXFragment<'a>>) = 3,
+pub enum JSXAttributeValue<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    StringLiteral(A::Box<'a, StringLiteral<'a>>) = 0,
+    ExpressionContainer(A::Box<'a, JSXExpressionContainer<'a, A>>) = 1,
+    Element(A::Box<'a, JSXElement<'a, A>>) = 2,
+    Fragment(A::Box<'a, JSXFragment<'a, A>>) = 3,
 }
 
 /// JSX Identifier
@@ -424,7 +426,7 @@ pub enum JSXAttributeValue<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct JSXIdentifier<'a> {
     #[serde(flatten)]
@@ -439,36 +441,36 @@ pub struct JSXIdentifier<'a> {
 ///
 /// Part of a [`JSXElement`].
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
-pub enum JSXChild<'a> {
+pub enum JSXChild<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `<Foo>Some Text</Foo>`
-    Text(Box<'a, JSXText<'a>>) = 0,
+    Text(A::Box<'a, JSXText<'a>>) = 0,
     /// `<Foo><Child /></Foo>`
-    Element(Box<'a, JSXElement<'a>>) = 1,
+    Element(A::Box<'a, JSXElement<'a, A>>) = 1,
     /// `<Foo><></></Foo>`
-    Fragment(Box<'a, JSXFragment<'a>>) = 2,
+    Fragment(A::Box<'a, JSXFragment<'a, A>>) = 2,
     /// `<Foo>{expression}</Foo>`
-    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>) = 3,
+    ExpressionContainer(A::Box<'a, JSXExpressionContainer<'a, A>>) = 3,
     /// `<Foo>{...spread}</Foo>`
-    Spread(Box<'a, JSXSpreadChild<'a>>) = 4,
+    Spread(A::Box<'a, JSXSpreadChild<'a, A>>) = 4,
 }
 
 /// JSX Spread Child.
 ///
 /// Variant of [`JSXChild`] that represents an object spread (`{...expression}`).
 #[ast(visit)]
-#[derive(Debug)]
+#[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
-pub struct JSXSpreadChild<'a> {
+pub struct JSXSpreadChild<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The expression being spread.
-    pub expression: Expression<'a>,
+    pub expression: Expression<'a, A>,
 }
 
 /// Text inside a JSX element.
@@ -484,7 +486,7 @@ pub struct JSXSpreadChild<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type")]
 pub struct JSXText<'a> {
     #[serde(flatten)]

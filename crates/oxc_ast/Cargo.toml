@@ -26,6 +26,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
+derive-where = { workspace = true }
 num-bigint = { workspace = true }
 
 serde = { workspace = true, features = ["derive"], optional = true }
@@ -35,7 +36,7 @@ tsify = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [features]
-default = []
+default = [ ]
 serialize = [
   "dep:serde",
   "dep:serde_json",

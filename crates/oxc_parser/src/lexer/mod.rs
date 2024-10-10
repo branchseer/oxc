@@ -71,7 +71,7 @@ struct Lookahead<'a> {
 }
 
 pub struct Lexer<'a> {
-    allocator: &'a Allocator,
+    pub(crate) allocator: &'a Allocator,
 
     // Wrapper around source text. Must not be changed after initialization.
     source: Source<'a>,

@@ -72,7 +72,7 @@ fn abs_trait(
     ident: &Ident,
 ) -> (/* absolute type path */ TokenStream, /* possible generics */ TokenStream) {
     if ident == "CloneIn" {
-        (quote!(::oxc_allocator::CloneIn), quote!(<'static>))
+        (quote!(::oxc_allocator::CloneIn), TokenStream::default())
     } else if ident == "GetSpan" {
         (quote!(::oxc_span::GetSpan), TokenStream::default())
     } else if ident == "GetSpanMut" {

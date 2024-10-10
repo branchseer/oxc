@@ -24,6 +24,7 @@ oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
 
 compact_str = { workspace = true }
+derive-where = { workspace = true }
 miette = { workspace = true }
 
 schemars = { workspace = true, optional = true }
@@ -33,5 +34,5 @@ wasm-bindgen = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["compact_str/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen"]
+serialize = ["compact_str/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_allocator/serialize"]
 schemars = ["dep:schemars"]

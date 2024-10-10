@@ -26,6 +26,10 @@ define_generator! {
     pub struct VisitMutGenerator;
 }
 
+define_generator! {
+    pub struct HandleGenerator;
+}
+
 impl Generator for VisitGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         GeneratorOutput(output(crate::AST_CRATE, "visit.rs"), generate_visit::<false>(ctx))
@@ -38,10 +42,40 @@ impl Generator for VisitMutGenerator {
     }
 }
 
+impl Generator for HandleGenerator {
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+        GeneratorOutput(output(crate::AST_CRATE, "handle.rs"), generate_handle(ctx))
+    }
+}
+
+fn generate_handle(ctx: &LateCtx) -> TokenStream {
+    let header = generated_header!();
+    let (handle_methods, _) = VisitBuilder::new(ctx, VisitType::Handle).build();
+    quote! {
+        #header
+
+        use oxc_span::ast_alloc::AstAllocator;
+        use crate::ast::*;
+
+        pub trait Handler <'a, A: AstAllocator> {
+
+            ///@@line_break
+            #[inline]
+            fn enter_scope(&mut self) {}
+
+            #[inline]
+            fn leave_scope(&mut self) {}
+
+            #(#handle_methods)*
+        }
+    }
+}
+
 fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
     let header = generated_header!();
 
-    let (visits, walks) = VisitBuilder::new(ctx, MUT).build();
+    let (visits, walks) =
+        VisitBuilder::new(ctx, if MUT { VisitType::VisitMut } else { VisitType::Visit }).build();
 
     let walk_mod = if MUT { quote!(walk_mut) } else { quote!(walk) };
     let trait_name = if MUT { quote!(VisitMut) } else { quote!(Visit) };
@@ -129,10 +163,17 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
     }
 }
 
+#[derive(PartialEq, Eq, Debug)]
+enum VisitType {
+    Visit,
+    VisitMut,
+    Handle,
+}
+
 struct VisitBuilder<'a> {
     ctx: &'a LateCtx,
 
-    is_mut: bool,
+    visit_type: VisitType,
 
     visits: Vec<TokenStream>,
     walks: Vec<TokenStream>,
@@ -140,8 +181,8 @@ struct VisitBuilder<'a> {
 }
 
 impl<'a> VisitBuilder<'a> {
-    fn new(ctx: &'a LateCtx, is_mut: bool) -> Self {
-        Self { ctx, is_mut, visits: Vec::new(), walks: Vec::new(), cache: FxHashMap::default() }
+    fn new(ctx: &'a LateCtx, visit_type: VisitType) -> Self {
+        Self { ctx, visit_type, visits: Vec::new(), walks: Vec::new(), cache: FxHashMap::default() }
     }
 
     fn build(mut self) -> (/* visits */ Vec<TokenStream>, /* walks */ Vec<TokenStream>) {
@@ -157,11 +198,15 @@ impl<'a> VisitBuilder<'a> {
         (self.visits, self.walks)
     }
 
+    fn is_mut(&self) -> bool {
+        self.visit_type == VisitType::VisitMut
+    }
+
     fn with_ref_pat<T>(&self, tk: T) -> TokenStream
     where
         T: ToTokens,
     {
-        if self.is_mut {
+        if self.is_mut() {
             quote!(&mut #tk)
         } else {
             quote!(&#tk)
@@ -169,11 +214,15 @@ impl<'a> VisitBuilder<'a> {
     }
 
     fn kind_type(&self, ident: &Ident) -> TokenStream {
-        if self.is_mut {
+        if self.is_mut() {
             quote!(AstType::#ident)
         } else {
             quote!(AstKind::#ident(visitor.alloc(it)))
         }
+    }
+
+    fn is_handle(&self) -> bool {
+        self.visit_type == VisitType::Handle
     }
 
     fn get_visitor(
@@ -187,11 +236,22 @@ impl<'a> VisitBuilder<'a> {
             debug_assert!(def.visitable(), "{def:?}");
 
             let ident = def.name().to_ident();
-            let as_type = def.to_type();
+            let as_type =
+                if self.is_handle() { def.to_type_with_generic_allocator() } else { def.to_type() };
 
             let ident = visit_as.clone().unwrap_or(ident);
-
-            (ident, if collection { parse_quote!(Vec<'a, #as_type>) } else { as_type })
+            (
+                ident,
+                if collection {
+                    if self.is_handle() {
+                        parse_quote!(A::Vec<'a, #as_type>)
+                    } else {
+                        parse_quote!(Vec<'a, #as_type>)
+                    }
+                } else {
+                    as_type
+                },
+            )
         };
 
         // is it already generated?
@@ -222,14 +282,18 @@ impl<'a> VisitBuilder<'a> {
         };
 
         let as_param_type = self.with_ref_pat(&as_type);
-        let (extra_params, extra_args) = if ident == "Function" {
+        let (extra_params, extra_args) = if !self.is_handle() && ident == "Function" {
             (quote!(, flags: ScopeFlags,), quote!(, flags))
         } else {
             (TokenStream::default(), TokenStream::default())
         };
 
         let visit_name = {
-            let visit_name = format_ident!("visit_{}", ident_snake);
+            let visit_name = if self.visit_type == VisitType::Handle {
+                format_ident!("handle_{}", ident_snake)
+            } else {
+                format_ident!("visit_{}", ident_snake)
+            };
             if !self.cache.contains_key(&ident) {
                 debug_assert!(self.cache.insert(ident.clone(), [None, None]).is_none());
             }
@@ -239,14 +303,21 @@ impl<'a> VisitBuilder<'a> {
         };
 
         let walk_name = format_ident!("walk_{}", ident_snake);
+        let (node_param_name, walk_call) = if self.visit_type == VisitType::Handle {
+            (quote!(_), quote!())
+        } else {
+            (quote!(it), quote!(#walk_name(self, it #extra_args)))
+        };
 
-        self.visits.push(quote! {
-            ///@@line_break
-            #[inline]
-            fn #visit_name (&mut self, it: #as_param_type #extra_params) {
-                #walk_name(self, it #extra_args);
-            }
-        });
+        if !(self.is_handle() && collection) {
+            self.visits.push(quote! {
+                ///@@line_break
+                #[inline]
+                fn #visit_name (&mut self, #node_param_name: #as_param_type #extra_params) {
+                    #walk_call;
+                }
+            });
+        }
 
         // We push an empty walk first, because we evaluate - and generate - each walk as we go,
         // This would let us to maintain the order of first visit.
@@ -255,7 +326,7 @@ impl<'a> VisitBuilder<'a> {
 
         let (walk_body, may_inline) = if collection {
             let singular_visit = self.get_visitor(def, false, None);
-            let iter = if self.is_mut { quote!(it.iter_mut()) } else { quote!(it) };
+            let iter = if self.is_mut() { quote!(it.iter_mut()) } else { quote!(it) };
             (
                 quote! {
                     for el in #iter {
@@ -291,7 +362,7 @@ impl<'a> VisitBuilder<'a> {
             }
         };
 
-        let visit_trait = if self.is_mut { quote!(VisitMut) } else { quote!(Visit) };
+        let visit_trait = if self.is_mut() { quote!(VisitMut) } else { quote!(Visit) };
         let may_inline = if may_inline { Some(quote!(#[inline])) } else { None };
 
         // replace the placeholder walker with the actual one!
@@ -380,7 +451,7 @@ impl<'a> VisitBuilder<'a> {
                 } else {
                     None
                 };
-                let to_child = if self.is_mut {
+                let to_child = if self.is_mut() {
                     format_ident!("to_{snake_name}_mut")
                 } else {
                     format_ident!("to_{snake_name}")
@@ -449,7 +520,7 @@ impl<'a> VisitBuilder<'a> {
         let node_events = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
             let comment = format!(
                 "@ NOTE: {} doesn't exists!",
-                if self.is_mut { "AstType" } else { "AstKind" }
+                if self.is_mut() { "AstType" } else { "AstKind" }
             );
             (quote!(#![doc = #comment]), TokenStream::default())
         } else {
@@ -505,7 +576,7 @@ impl<'a> VisitBuilder<'a> {
                         }
                     },
                     TypeWrapper::VecOpt => {
-                        let iter = if self.is_mut { quote!(iter_mut) } else { quote!(iter) };
+                        let iter = if self.is_mut() { quote!(iter_mut) } else { quote!(iter) };
                         quote! {
                             for #name in it.#name.#iter().flatten() {
                                 visitor.#visit(#name #(#args)*);

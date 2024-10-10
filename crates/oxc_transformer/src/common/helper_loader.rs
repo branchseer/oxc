@@ -61,7 +61,7 @@
 //! Based on [@babel/helper](https://github.com/babel/babel/tree/main/packages/babel-helpers).
 use std::{borrow::Cow, cell::RefCell};
 
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::{Argument, CallExpression, Expression, Program, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN};
@@ -177,7 +177,7 @@ impl<'a> HelperLoaderStore<'a> {
         ctx.ast.call_expression(
             SPAN,
             callee,
-            None::<TSTypeParameterInstantiation<'a>>,
+            None::<Box<'a, TSTypeParameterInstantiation<'a>>>,
             arguments,
             false,
         )
@@ -195,7 +195,7 @@ impl<'a> HelperLoaderStore<'a> {
         ctx.ast.expression_call(
             SPAN,
             callee,
-            None::<TSTypeParameterInstantiation<'a>>,
+            None::<Box<'a, TSTypeParameterInstantiation<'a>>>,
             arguments,
             false,
         )

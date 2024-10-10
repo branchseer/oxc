@@ -1,7 +1,6 @@
-use oxc_allocator::Box;
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{ast_alloc::Vec as _, GetSpan, Span};
 
 use super::{VariableDeclarationContext, VariableDeclarationParent};
 use crate::{
@@ -11,8 +10,8 @@ use crate::{
     ParserImpl, StatementContext,
 };
 
-impl<'a> ParserImpl<'a> {
-    pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
+impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
+    pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a, A>> {
         let span = self.start_span();
         let peeked = self.peek_kind();
         // let = foo, let instanceof x, let + 1
@@ -34,7 +33,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_using(&mut self) -> Result<Statement<'a>> {
+    pub(crate) fn parse_using(&mut self) -> Result<Statement<'a, A>> {
         let using_decl = self.parse_using_declaration(StatementContext::StatementList)?;
 
         self.asi()?;
@@ -47,7 +46,7 @@ impl<'a> ParserImpl<'a> {
         start_span: Span,
         decl_ctx: VariableDeclarationContext,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Box<'a, VariableDeclaration<'a>>> {
+    ) -> Result<A::Box<'a, VariableDeclaration<'a, A>>> {
         let kind = match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
             Kind::Const => VariableDeclarationKind::Const,
@@ -90,7 +89,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         decl_ctx: VariableDeclarationContext,
         kind: VariableDeclarationKind,
-    ) -> Result<VariableDeclarator<'a>> {
+    ) -> Result<VariableDeclarator<'a, A>> {
         let span = self.start_span();
 
         let mut binding_kind = self.parse_binding_pattern_kind()?;
@@ -109,7 +108,7 @@ impl<'a> ParserImpl<'a> {
             let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
             let type_annotation = self.parse_ts_type_annotation()?;
             if let Some(type_annotation) = &type_annotation {
-                Self::extend_binding_pattern_span_end(type_annotation.span, &mut binding_kind);
+                Self::extend_binding_pattern_span_end(type_annotation.span(), &mut binding_kind);
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
@@ -144,7 +143,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_using_declaration(
         &mut self,
         statement_ctx: StatementContext,
-    ) -> Result<VariableDeclaration<'a>> {
+    ) -> Result<VariableDeclaration<'a, A>> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);
@@ -165,7 +164,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
+        let mut declarations: A::Vec<'_, VariableDeclarator<'_, A>> = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(
                 VariableDeclarationContext::new(VariableDeclarationParent::Statement),

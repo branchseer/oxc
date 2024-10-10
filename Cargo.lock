@@ -484,6 +484,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "derive-where"
+version = "1.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62d671cc41a825ebabc75757b62d3d168c577f9149b2d49ece1dad1f72119d25"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1444,6 +1455,7 @@ name = "oxc_ast"
 version = "0.31.0"
 dependencies = [
  "bitflags 2.6.0",
+ "derive-where",
  "num-bigint",
  "oxc_allocator",
  "oxc_ast_macros",
@@ -1780,7 +1792,9 @@ version = "0.31.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
+ "cfg-if",
  "cow-utils",
+ "derive-where",
  "memchr",
  "num-bigint",
  "num-traits",
@@ -1854,6 +1868,7 @@ dependencies = [
 name = "oxc_regular_expression"
 version = "0.31.0"
 dependencies = [
+ "derive-where",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_diagnostics",
@@ -1929,6 +1944,7 @@ name = "oxc_span"
 version = "0.31.0"
 dependencies = [
  "compact_str",
+ "derive-where",
  "miette",
  "oxc_allocator",
  "oxc_ast_macros",

@@ -19,57 +19,59 @@ use crate::{Allocator, Box, Vec};
 /// Implementations of this trait on non-allocated items usually short-circuit to `Clone::clone`;
 /// However, it **isn't** guaranteed.
 ///
-pub trait CloneIn<'new_alloc>: Sized {
-    type Cloned;
+pub trait CloneIn<A = Allocator>: Sized {
+    type Cloned<'a>
+    where
+        A: 'a;
 
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc A) -> Self::Cloned<'new_alloc>;
 }
 
-impl<'alloc, T, C> CloneIn<'alloc> for Option<T>
+impl<T, A> CloneIn<A> for Option<T>
 where
-    T: CloneIn<'alloc, Cloned = C>,
+    T: CloneIn<A>,
 {
-    type Cloned = Option<C>;
+    type Cloned<'a> = Option<T::Cloned<'a>> where A: 'a;
 
-    fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc A) -> Self::Cloned<'new_alloc> {
         self.as_ref().map(|it| it.clone_in(allocator))
     }
 }
 
-impl<'old_alloc, 'new_alloc, T, C> CloneIn<'new_alloc> for Box<'old_alloc, T>
+impl<'old_alloc, T> CloneIn for Box<'old_alloc, T>
 where
-    T: CloneIn<'new_alloc, Cloned = C>,
+    T: CloneIn,
 {
-    type Cloned = Box<'new_alloc, C>;
+    type Cloned<'a> = Box<'a, T::Cloned<'a>>;
 
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         Box::new_in(self.as_ref().clone_in(allocator), allocator)
     }
 }
 
-impl<'old_alloc, 'new_alloc, T, C> CloneIn<'new_alloc> for Vec<'old_alloc, T>
+impl<'old_alloc, T> CloneIn for Vec<'old_alloc, T>
 where
-    T: CloneIn<'new_alloc, Cloned = C>,
+    T: CloneIn,
 {
-    type Cloned = Vec<'new_alloc, C>;
+    type Cloned<'a> = Vec<'a, T::Cloned<'a>>;
 
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         Vec::from_iter_in(self.iter().map(|it| it.clone_in(allocator)), allocator)
     }
 }
 
-impl<'alloc, T: Copy> CloneIn<'alloc> for Cell<T> {
-    type Cloned = Cell<T>;
+impl<T: Copy, A> CloneIn<A> for Cell<T> {
+    type Cloned<'a> = Cell<T> where A: 'a;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in<'new_alloc>(&self, _: &'new_alloc A) -> Self::Cloned<'new_alloc> {
         Cell::new(self.get())
     }
 }
 
-impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for &'old_alloc str {
-    type Cloned = &'new_alloc str;
+impl<'old_alloc> CloneIn for &'old_alloc str {
+    type Cloned<'a> = &'a str;
 
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         allocator.alloc_str(self)
     }
 }
@@ -77,10 +79,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for &'old_alloc str {
 macro_rules! impl_clone_in {
     ($($t:ty)*) => {
         $(
-            impl<'alloc> CloneIn<'alloc> for $t {
-                type Cloned = Self;
+            impl<A> CloneIn<A> for $t {
+                type Cloned<'a> = Self where A: 'a;
                 #[inline(always)]
-                fn clone_in(&self, _: &'alloc Allocator) -> Self {
+                fn clone_in<'new_alloc>(&self, _: &'new_alloc A) -> Self::Cloned<'new_alloc> {
                     *self
                 }
             }

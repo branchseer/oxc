@@ -135,7 +135,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         // SAFETY: `ast.copy` is unsound! We need to fix.
                         unsafe { self.ast.copy(&object.key) },
                         type_annotation.map(|type_annotation| {
-                            self.ast.ts_type_annotation(SPAN, type_annotation)
+                            self.ast.alloc_ts_type_annotation(SPAN, type_annotation)
                         }),
                     );
                     Some(property_signature)

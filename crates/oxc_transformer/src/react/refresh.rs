@@ -647,7 +647,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                 ctx.ast.vec(),
                 NONE,
             );
-            let function_body = ctx.ast.function_body(
+            let function_body = ctx.ast.alloc_function_body(
                 SPAN,
                 ctx.ast.vec(),
                 ctx.ast.vec1(ctx.ast.statement_return(

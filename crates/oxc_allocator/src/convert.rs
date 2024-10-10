@@ -5,32 +5,32 @@ use crate::{Allocator, Box};
 /// This trait works similarly to the standard library `From` trait, It comes with a similar
 /// implementation containing blanket implementation for `IntoIn`, reflective implementation and a
 /// bunch of primitive conversions from Rust types to their arena equivalent.
-pub trait FromIn<'a, T>: Sized {
-    fn from_in(value: T, allocator: &'a Allocator) -> Self;
+pub trait FromIn<'a, T, A = Allocator>: Sized {
+    fn from_in(value: T, allocator: &'a A) -> Self;
 }
 
 /// This trait works similarly to the standard library `Into` trait.
 /// It is similar to `FromIn` is reflective, A `FromIn` implementation also implicitly implements
 /// `IntoIn` for the opposite type.
-pub trait IntoIn<'a, T>: Sized {
-    fn into_in(self, allocator: &'a Allocator) -> T;
+pub trait IntoIn<'a, T, A = Allocator>: Sized {
+    fn into_in(self, allocator: &'a A) -> T;
 }
 
 /// `FromIn` is reflective
-impl<'a, T> FromIn<'a, T> for T {
+impl<'a, T, A> FromIn<'a, T, A> for T {
     #[inline(always)]
-    fn from_in(t: T, _: &'a Allocator) -> T {
+    fn from_in(t: T, _: &'a A) -> T {
         t
     }
 }
 
 /// `FromIn` implicitly implements `IntoIn`.
-impl<'a, T, U> IntoIn<'a, U> for T
+impl<'a, T, U, A> IntoIn<'a, U, A> for T
 where
-    U: FromIn<'a, T>,
+    U: FromIn<'a, T, A>,
 {
     #[inline]
-    fn into_in(self, allocator: &'a Allocator) -> U {
+    fn into_in(self, allocator: &'a A) -> U {
         U::from_in(self, allocator)
     }
 }
@@ -55,12 +55,5 @@ impl<'a, T> FromIn<'a, T> for Box<'a, T> {
     #[inline(always)]
     fn from_in(value: T, allocator: &'a Allocator) -> Self {
         Box::new_in(value, allocator)
-    }
-}
-
-impl<'a, T> FromIn<'a, Option<T>> for Option<Box<'a, T>> {
-    #[inline(always)]
-    fn from_in(value: Option<T>, allocator: &'a Allocator) -> Self {
-        value.map(|it| Box::new_in(it, allocator))
     }
 }

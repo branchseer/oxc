@@ -5,30 +5,31 @@
     clippy::unused_self,
 )]
 
-use std::mem;
-
 use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::ast_alloc::{AstAllocator, AstNode};
+use oxc_span::{ast_alloc::Vec as _, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
+use std::mem;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
-use crate::AstBuilder;
+use crate::handle::Handler;
+use crate::{AstBuilder, AstBuilderWithHandler, Visit};
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
 #[allow(clippy::upper_case_acronyms)]
 pub struct NONE;
 
-impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
-    fn from_in(_: NONE, _: &'a Allocator) -> Self {
+impl<'a, T, A> FromIn<'a, NONE, A> for Option<T> {
+    fn from_in(_: NONE, _: &'a A) -> Self {
         None
     }
 }
 
 impl<'a> AstBuilder<'a> {
     #[inline]
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub fn new(allocator: &'a oxc_allocator::Allocator) -> Self {
         Self { allocator }
     }
 
@@ -48,22 +49,19 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
-        let mut vec = self.vec_with_capacity(1);
-        vec.push(value);
-        vec
-    }
-
-    #[inline]
     pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
         Vec::from_iter_in(iter, self.allocator)
     }
 
     #[inline]
-    pub fn str(self, value: &str) -> &'a str {
-        String::from_str_in(value, self.allocator).into_bump_str()
+    pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
+        let mut vec = self.vec_with_capacity(1);
+        vec.push(value);
+        vec
     }
+}
 
+impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn atom(self, value: &str) -> Atom<'a> {
         Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
@@ -143,11 +141,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn void_0(self, span: Span) -> Expression<'a> {
         let num = self.number_0();
-        Expression::UnaryExpression(self.alloc(self.unary_expression(
-            span,
-            UnaryOperator::Void,
-            num,
-        )))
+        Expression::UnaryExpression(self.alloc_unary_expression(span, UnaryOperator::Void, num))
     }
 
     /* ---------- Functions ---------- */
@@ -170,8 +164,18 @@ impl<'a> AstBuilder<'a> {
         params: FormalParameters<'a>,
         body: Option<FunctionBody<'a>>,
     ) -> Box<'a, Function<'a>> {
-        self.alloc(
-            self.function(r#type, span, id, false, false, false, NONE, NONE, params, NONE, body),
+        self.alloc_function(
+            r#type,
+            span,
+            id,
+            false,
+            false,
+            false,
+            NONE,
+            NONE,
+            params,
+            NONE,
+            body.map(|body| self.alloc(body)),
         )
     }
 
@@ -183,14 +187,14 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         declaration: Declaration<'a>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+        self.alloc_export_named_declaration(
             span,
             Some(declaration),
             self.vec(),
             None,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        )
     }
 
     #[inline]
@@ -200,40 +204,107 @@ impl<'a> AstBuilder<'a> {
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(self.export_named_declaration(
+        self.alloc_export_named_declaration(
             span,
             None,
             specifiers,
             source,
             ImportOrExportKind::Value,
             NONE,
-        ))
+        )
+    }
+}
+
+impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
+    #[inline]
+    pub fn new(allocator: &'a A, handler: H) -> Self {
+        Self { allocator, handler }
+    }
+    #[inline]
+    pub fn alloc<T: AstNode + GetSpan + GetSpanMut>(&self, value: T) -> A::Box<'a, T> {
+        self.allocator.alloc(value)
+    }
+
+    #[inline]
+    pub fn vec<T: AstNode>(&self) -> A::Vec<'a, T> {
+        self.allocator.vec()
+    }
+
+    #[inline]
+    pub fn vec_with_capacity<T: AstNode>(&self, capacity: usize) -> A::Vec<'a, T> {
+        self.allocator.vec_with_capacity(capacity)
+    }
+
+    #[inline]
+    pub fn vec1<T: AstNode>(&self, value: T) -> A::Vec<'a, T> {
+        let mut vec = self.vec_with_capacity(1);
+        vec.push(value);
+        vec
+    }
+
+    #[inline]
+    pub fn str(&self, src: &str) -> &'a str {
+        self.allocator.alloc_str(src)
+    }
+
+    #[inline]
+    pub fn vec_from_iter<T: AstNode, I: IntoIterator<Item = T>>(&self, iter: I) -> A::Vec<'a, T> {
+        self.allocator.vec_from_iter(iter)
+    }
+
+    // #[inline]
+    // pub fn str(&self, value: &str) -> &'a str {
+    //     String::from_str_in(value, self.allocator).into_bump_str()
+    // }
+
+    #[inline]
+    pub fn map_alloc<T: AstNode + GetSpan + GetSpanMut>(
+        &self,
+        value: Option<T>,
+    ) -> Option<A::Box<'a, T>> {
+        Some(self.alloc(value?))
+    }
+}
+
+impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
+    #[inline]
+    pub fn plain_formal_parameter(
+        &mut self,
+        span: Span,
+        pattern: BindingPattern<'a, A>,
+    ) -> FormalParameter<'a, A> {
+        let param = self.formal_parameter(span, self.vec(), pattern, None, false, false);
+        self.handler.handle_formal_parameter(&param);
+        param
+    }
+    #[inline]
+    pub fn jsx_opening_fragment(&mut self, span: Span) -> JSXOpeningFragment {
+        // Not visitable
+        JSXOpeningFragment { span }
+    }
+    #[inline]
+    pub fn jsx_closing_fragment(&mut self, span: Span) -> JSXClosingFragment {
+        // Not visitable
+        JSXClosingFragment { span }
     }
 
     /* ---------- TypeScript ---------- */
 
     #[inline]
     pub fn ts_interface_heritages(
-        self,
-        extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
-    ) -> Vec<'a, TSInterfaceHeritage<'a>> {
-        Vec::from_iter_in(
-            extends.into_iter().map(|(expression, type_parameters, span)| TSInterfaceHeritage {
-                span,
-                expression,
-                type_parameters,
-            }),
-            self.allocator,
-        )
-    }
-
-    #[inline]
-    pub fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
-        JSXOpeningFragment { span }
-    }
-
-    #[inline]
-    pub fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
-        JSXClosingFragment { span }
+        &mut self,
+        extends: A::Vec<
+            'a,
+            (Expression<'a, A>, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, Span),
+        >,
+    ) -> A::Vec<'a, TSInterfaceHeritage<'a, A>> {
+        let Ok(extends) = extends.specialize() else {
+            return self.vec();
+        };
+        let mut vec = self.vec_with_capacity(extends.len());
+        for (expression, type_parameters, span) in extends {
+            vec.push(self.ts_interface_heritage(span, expression, type_parameters));
+        }
+        vec
     }
 }

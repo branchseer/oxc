@@ -1,10 +1,15 @@
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
-use oxc_span::{cmp::ContentEq, hash::ContentHash, Span};
+use oxc_span::{cmp::ContentEq, hash::ContentHash, GetSpan, GetSpanMut, Span};
+#[cfg(feature = "serialize")]
+use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
 #[ast]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum CommentKind {
     #[default]
     Line = 0,
@@ -14,6 +19,7 @@ pub enum CommentKind {
 #[ast]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum CommentPosition {
     /// Comments prior to a token until another token or trailing comment.
     ///
@@ -34,8 +40,9 @@ pub enum CommentPosition {
 }
 
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub struct Comment {
     /// The span of the comment text (without leading/trailing delimiters).
     pub span: Span,

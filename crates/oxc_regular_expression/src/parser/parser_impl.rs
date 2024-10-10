@@ -1,7 +1,8 @@
-use oxc_allocator::{Allocator, Box, Vec};
 use oxc_diagnostics::Result;
-use oxc_span::Atom as SpanAtom;
+use oxc_span::ast_alloc::{AstAllocator, Box, Vec as _};
+use oxc_span::{Atom as SpanAtom, GetSpan as _};
 
+use crate::ast::Character;
 use crate::{
     ast, diagnostics,
     options::ParserOptions,
@@ -9,16 +10,16 @@ use crate::{
     surrogate_pair,
 };
 
-pub struct Parser<'a> {
-    allocator: &'a Allocator,
+pub struct Parser<'a, A: AstAllocator> {
+    allocator: &'a A,
     source_text: &'a str,
     span_factory: SpanFactory,
     reader: Reader<'a>,
     state: State<'a>,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
+impl<'a, A: AstAllocator> Parser<'a, A> {
+    pub fn new(allocator: &'a A, source_text: &'a str, options: ParserOptions) -> Self {
         // `RegExp` can not be empty.
         // - Literal `//` means just a single line comment
         // - For `new RegExp("")` or `new RegExp()` (= empty), use a placeholder
@@ -33,7 +34,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(mut self) -> Result<ast::Pattern<'a>> {
+    pub fn parse(mut self) -> Result<ast::Pattern<'a, A>> {
         // Pre parse whole pattern to collect:
         // - the number of (named|unnamed) capturing groups
         //   - For `\1` in `\1()` to be handled as indexed reference
@@ -87,10 +88,10 @@ impl<'a> Parser<'a> {
     //   Alternative[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
     //   Alternative[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] | Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
     // ```
-    fn parse_disjunction(&mut self) -> Result<ast::Disjunction<'a>> {
+    fn parse_disjunction(&mut self) -> Result<ast::Disjunction<'a, A>> {
         let span_start = self.reader.offset();
 
-        let mut body = Vec::new_in(self.allocator);
+        let mut body = self.allocator.vec();
         loop {
             body.push(self.parse_alternative()?);
 
@@ -110,10 +111,10 @@ impl<'a> Parser<'a> {
     //   [empty]
     //   Alternative[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] Term[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
     // ```
-    fn parse_alternative(&mut self) -> Result<ast::Alternative<'a>> {
+    fn parse_alternative(&mut self) -> Result<ast::Alternative<'a, A>> {
         let span_start = self.reader.offset();
 
-        let mut body = Vec::new_in(self.allocator);
+        let mut body = self.allocator.vec();
         while let Some(term) = self.parse_term()? {
             body.push(term);
         }
@@ -135,7 +136,7 @@ impl<'a> Parser<'a> {
     //   [~UnicodeMode] ExtendedAtom[?NamedCaptureGroups]
     // ```
     // (Annex B)
-    fn parse_term(&mut self) -> Result<Option<ast::Term<'a>>> {
+    fn parse_term(&mut self) -> Result<Option<ast::Term<'a, A>>> {
         // [+UnicodeMode] Assertion
         // [+UnicodeMode] Atom Quantifier
         // [+UnicodeMode] Atom
@@ -147,16 +148,13 @@ impl<'a> Parser<'a> {
             let span_start = self.reader.offset();
             return match (self.parse_atom()?, self.consume_quantifier()?) {
                 (Some(atom), Some(((min, max), greedy))) => {
-                    Ok(Some(ast::Term::Quantifier(Box::new_in(
-                        ast::Quantifier {
-                            span: self.span_factory.create(span_start, self.reader.offset()),
-                            greedy,
-                            min,
-                            max,
-                            body: atom,
-                        },
-                        self.allocator,
-                    ))))
+                    Ok(Some(ast::Term::Quantifier(self.allocator.alloc(ast::Quantifier {
+                        span: self.span_factory.create(span_start, self.reader.offset()),
+                        greedy,
+                        min,
+                        max,
+                        body: atom,
+                    }))))
                 }
                 (Some(atom), None) => Ok(Some(atom)),
                 (None, Some(_)) => Err(diagnostics::lone_quantifier(
@@ -175,22 +173,24 @@ impl<'a> Parser<'a> {
         if let Some(assertion) = self.parse_assertion()? {
             // `QuantifiableAssertion` = (Negative)Lookahead: `(?=...)` or `(?!...)`
             if let ast::Term::LookAroundAssertion(look_around) = &assertion {
-                if matches!(
-                    look_around.kind,
-                    ast::LookAroundAssertionKind::Lookahead
-                        | ast::LookAroundAssertionKind::NegativeLookahead
-                ) {
-                    if let Some(((min, max), greedy)) = self.consume_quantifier()? {
-                        return Ok(Some(ast::Term::Quantifier(Box::new_in(
-                            ast::Quantifier {
-                                span: self.span_factory.create(span_start, self.reader.offset()),
-                                greedy,
-                                min,
-                                max,
-                                body: assertion,
-                            },
-                            self.allocator,
-                        ))));
+                if let Some(look_around) = look_around.try_deref() {
+                    if matches!(
+                        look_around.kind,
+                        ast::LookAroundAssertionKind::Lookahead
+                            | ast::LookAroundAssertionKind::NegativeLookahead
+                    ) {
+                        if let Some(((min, max), greedy)) = self.consume_quantifier()? {
+                            return Ok(Some(ast::Term::Quantifier(self.allocator.alloc(
+                                ast::Quantifier {
+                                    span:
+                                        self.span_factory.create(span_start, self.reader.offset()),
+                                    greedy,
+                                    min,
+                                    max,
+                                    body: assertion,
+                                },
+                            ))));
+                        }
                     }
                 }
             }
@@ -200,16 +200,13 @@ impl<'a> Parser<'a> {
 
         match (self.parse_extended_atom()?, self.consume_quantifier()?) {
             (Some(extended_atom), Some(((min, max), greedy))) => {
-                Ok(Some(ast::Term::Quantifier(Box::new_in(
-                    ast::Quantifier {
-                        span: self.span_factory.create(span_start, self.reader.offset()),
-                        min,
-                        max,
-                        greedy,
-                        body: extended_atom,
-                    },
-                    self.allocator,
-                ))))
+                Ok(Some(ast::Term::Quantifier(self.allocator.alloc(ast::Quantifier {
+                    span: self.span_factory.create(span_start, self.reader.offset()),
+                    min,
+                    max,
+                    greedy,
+                    body: extended_atom,
+                }))))
             }
             (Some(extended_atom), None) => Ok(Some(extended_atom)),
             (None, Some(_)) => Err(diagnostics::lone_quantifier(
@@ -237,7 +234,7 @@ impl<'a> Parser<'a> {
     //   (?! Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     // (Annex B)
-    fn parse_assertion(&mut self) -> Result<Option<ast::Term<'a>>> {
+    fn parse_assertion(&mut self) -> Result<Option<ast::Term<'a, A>>> {
         let span_start = self.reader.offset();
 
         let kind = if self.reader.eat('^') {
@@ -253,12 +250,11 @@ impl<'a> Parser<'a> {
         };
 
         if let Some(kind) = kind {
-            return Ok(Some(ast::Term::BoundaryAssertion(Box::new_in(
+            return Ok(Some(ast::Term::BoundaryAssertion(self.allocator.alloc(
                 ast::BoundaryAssertion {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind,
                 },
-                self.allocator,
             ))));
         }
 
@@ -284,13 +280,12 @@ impl<'a> Parser<'a> {
                 ));
             }
 
-            return Ok(Some(ast::Term::LookAroundAssertion(Box::new_in(
+            return Ok(Some(ast::Term::LookAroundAssertion(self.allocator.alloc(
                 ast::LookAroundAssertion {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind,
                     body: disjunction,
                 },
-                self.allocator,
             ))));
         }
 
@@ -307,21 +302,18 @@ impl<'a> Parser<'a> {
     //   (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     //   (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
-    fn parse_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
+    fn parse_atom(&mut self) -> Result<Option<ast::Term<'a, A>>> {
         let span_start = self.reader.offset();
 
         // PatternCharacter
         if let Some(cp) = self.reader.peek().filter(|&cp| !unicode::is_syntax_character(cp)) {
             self.reader.advance();
 
-            return Ok(Some(ast::Term::Character(Box::new_in(
-                ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Symbol,
-                    value: cp,
-                },
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::Character(self.allocator.alloc(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.offset()),
+                kind: ast::CharacterKind::Symbol,
+                value: cp,
+            }))));
         }
 
         // .
@@ -340,26 +332,20 @@ impl<'a> Parser<'a> {
 
         // CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
         if let Some(character_class) = self.parse_character_class()? {
-            return Ok(Some(ast::Term::CharacterClass(Box::new_in(
-                character_class,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CharacterClass(self.allocator.alloc(character_class))));
         }
 
         // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
-            return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
-                capturing_group,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CapturingGroup(self.allocator.alloc(capturing_group))));
         }
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
+            return Ok(Some(ast::Term::IgnoreGroup(self.allocator.alloc(ignore_group))));
         }
 
         Ok(None)
@@ -377,7 +363,7 @@ impl<'a> Parser<'a> {
     //   InvalidBracedQuantifier
     //   ExtendedPatternCharacter
     // ```
-    fn parse_extended_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
+    fn parse_extended_atom(&mut self) -> Result<Option<ast::Term<'a, A>>> {
         let span_start = self.reader.offset();
 
         // .
@@ -395,14 +381,11 @@ impl<'a> Parser<'a> {
 
             // \ [lookahead = c]
             if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
-                return Ok(Some(ast::Term::Character(Box::new_in(
-                    ast::Character {
-                        span: self.span_factory.create(span_start, self.reader.offset()),
-                        kind: ast::CharacterKind::Symbol,
-                        value: '\\' as u32,
-                    },
-                    self.allocator,
-                ))));
+                return Ok(Some(ast::Term::Character(self.allocator.alloc(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.offset()),
+                    kind: ast::CharacterKind::Symbol,
+                    value: '\\' as u32,
+                }))));
             }
 
             return Err(diagnostics::invalid_extended_atom_escape(
@@ -412,26 +395,20 @@ impl<'a> Parser<'a> {
 
         // CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
         if let Some(character_class) = self.parse_character_class()? {
-            return Ok(Some(ast::Term::CharacterClass(Box::new_in(
-                character_class,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CharacterClass(self.allocator.alloc(character_class))));
         }
 
         // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
-            return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
-                capturing_group,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CapturingGroup(self.allocator.alloc(capturing_group))));
         }
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
+            return Ok(Some(ast::Term::IgnoreGroup(self.allocator.alloc(ignore_group))));
         }
 
         // InvalidBracedQuantifier
@@ -447,14 +424,11 @@ impl<'a> Parser<'a> {
 
         // ExtendedPatternCharacter
         if let Some(cp) = self.consume_extended_pattern_character() {
-            return Ok(Some(ast::Term::Character(Box::new_in(
-                ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Symbol,
-                    value: cp,
-                },
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::Character(self.allocator.alloc(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.offset()),
+                kind: ast::CharacterKind::Symbol,
+                value: cp,
+            }))));
         }
 
         Ok(None)
@@ -469,7 +443,7 @@ impl<'a> Parser<'a> {
     //   [+NamedCaptureGroups] k GroupName[?UnicodeMode]
     // ```
     // (Annex B)
-    fn parse_atom_escape(&mut self, span_start: usize) -> Result<Option<ast::Term<'a>>> {
+    fn parse_atom_escape(&mut self, span_start: usize) -> Result<Option<ast::Term<'a, A>>> {
         let checkpoint = self.reader.checkpoint();
 
         // DecimalEscape: \1 means indexed reference
@@ -483,22 +457,20 @@ impl<'a> Parser<'a> {
                     ));
                 }
 
-                return Ok(Some(ast::Term::IndexedReference(Box::new_in(
+                return Ok(Some(ast::Term::IndexedReference(self.allocator.alloc(
                     ast::IndexedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         index,
                     },
-                    self.allocator,
                 ))));
             }
 
             if index <= self.state.num_of_capturing_groups {
-                return Ok(Some(ast::Term::IndexedReference(Box::new_in(
+                return Ok(Some(ast::Term::IndexedReference(self.allocator.alloc(
                     ast::IndexedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         index,
                     },
-                    self.allocator,
                 ))));
             }
 
@@ -507,23 +479,21 @@ impl<'a> Parser<'a> {
 
         // CharacterClassEscape: \d, \p{...}
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
-            return Ok(Some(ast::Term::CharacterClassEscape(Box::new_in(
-                character_class_escape,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::CharacterClassEscape(
+                self.allocator.alloc(character_class_escape),
+            )));
         }
         if let Some(unicode_property_escape) =
             self.parse_character_class_escape_unicode(span_start)?
         {
-            return Ok(Some(ast::Term::UnicodePropertyEscape(Box::new_in(
-                unicode_property_escape,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::Term::UnicodePropertyEscape(
+                self.allocator.alloc(unicode_property_escape),
+            )));
         }
 
         // CharacterEscape: \n, \cM, \0, etc...
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
-            return Ok(Some(ast::Term::Character(Box::new_in(character_escape, self.allocator))));
+            return Ok(Some(ast::Term::Character(self.allocator.alloc(character_escape))));
         }
 
         // k GroupName: \k<name> means named reference
@@ -537,12 +507,11 @@ impl<'a> Parser<'a> {
                     ));
                 }
 
-                return Ok(Some(ast::Term::NamedReference(Box::new_in(
+                return Ok(Some(ast::Term::NamedReference(self.allocator.alloc(
                     ast::NamedReference {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         name,
                     },
-                    self.allocator,
                 ))));
             }
 
@@ -753,7 +722,7 @@ impl<'a> Parser<'a> {
     //   [ [lookahead ≠ ^] ClassContents[?UnicodeMode, ?UnicodeSetsMode] ]
     //   [^ ClassContents[?UnicodeMode, ?UnicodeSetsMode] ]
     // ```
-    fn parse_character_class(&mut self) -> Result<Option<ast::CharacterClass<'a>>> {
+    fn parse_character_class(&mut self) -> Result<Option<ast::CharacterClass<'a, A>>> {
         let span_start = self.reader.offset();
 
         if self.reader.eat('[') {
@@ -761,7 +730,7 @@ impl<'a> Parser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = Parser::may_contain_strings_in_class_contents(&kind, &body);
+                let strings = Self::may_contain_strings_in_class_contents(&kind, &body);
 
                 // [SS:EE] CharacterClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
@@ -797,13 +766,14 @@ impl<'a> Parser<'a> {
     // ```
     fn parse_class_contents(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    {
         // [empty]
         if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some()
             // Unterminated
             || self.reader.peek().is_none()
         {
-            return Ok((ast::CharacterClassContentsKind::Union, Vec::new_in(self.allocator)));
+            return Ok((ast::CharacterClassContentsKind::Union, self.allocator.vec()));
         }
 
         // [+UnicodeSetsMode] ClassSetExpression
@@ -828,8 +798,9 @@ impl<'a> Parser<'a> {
     // ```
     fn parse_nonempty_class_ranges(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        let mut body = Vec::new_in(self.allocator);
+    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    {
+        let mut body = self.allocator.vec();
 
         loop {
             let range_span_start = self.reader.offset();
@@ -845,14 +816,12 @@ impl<'a> Parser<'a> {
                 continue;
             }
 
-            let dash = ast::CharacterClassContents::Character(Box::new_in(
-                ast::Character {
+            let dash =
+                ast::CharacterClassContents::Character(self.allocator.alloc(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Symbol,
                     value: '-' as u32,
-                },
-                self.allocator,
-            ));
+                }));
 
             let Some(class_atom_to) = self.parse_class_atom()? else {
                 // ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
@@ -870,6 +839,17 @@ impl<'a> Parser<'a> {
                 ast::CharacterClassContents::Character(to),
             ) = (&class_atom, &class_atom_to)
             {
+                let span = from.span().merge(&to.span());
+
+                let (from, to) = match (from.try_deref(), to.try_deref()) {
+                    (Some(from), Some(to)) => (from, to),
+                    (_, _) => {
+                        body.push(ast::CharacterClassContents::CharacterClassRange(
+                            A::box_from_span(span).unwrap(),
+                        ));
+                        continue;
+                    }
+                };
                 // [SS:EE] NonemptyClassRanges :: ClassAtom - ClassAtom ClassContents
                 // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
                 // It is a Syntax Error if IsCharacterClass of the first ClassAtom is false, IsCharacterClass of the second ClassAtom is false, and the CharacterValue of the first ClassAtom is strictly greater than the CharacterValue of the second ClassAtom.
@@ -880,14 +860,9 @@ impl<'a> Parser<'a> {
                     ));
                 }
 
-                body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
-                    ast::CharacterClassRange {
-                        span: from.span.merge(&to.span),
-                        min: **from,
-                        max: **to,
-                    },
-                    self.allocator,
-                )));
+                body.push(ast::CharacterClassContents::CharacterClassRange(
+                    self.allocator.alloc(ast::CharacterClassRange { span, min: *from, max: *to }),
+                ));
                 continue;
             }
 
@@ -909,7 +884,9 @@ impl<'a> Parser<'a> {
         }
 
         // [empty] is already covered by the caller, but for sure
-        debug_assert!(!body.is_empty());
+        if let Ok(body) = body.specialize_ref() {
+            debug_assert!(!body.is_empty());
+        }
 
         Ok((ast::CharacterClassContentsKind::Union, body))
     }
@@ -919,17 +896,16 @@ impl<'a> Parser<'a> {
     //   -
     //   ClassAtomNoDash[?UnicodeMode]
     // ```
-    fn parse_class_atom(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+    fn parse_class_atom(&mut self) -> Result<Option<ast::CharacterClassContents<'a, A>>> {
         let span_start = self.reader.offset();
 
         if self.reader.eat('-') {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(self.allocator.alloc(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Symbol,
                     value: '-' as u32,
                 },
-                self.allocator,
             ))));
         }
 
@@ -943,7 +919,7 @@ impl<'a> Parser<'a> {
     //   \ [lookahead = c]
     // ```
     // (Annex B)
-    fn parse_class_atom_no_dash(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+    fn parse_class_atom_no_dash(&mut self) -> Result<Option<ast::CharacterClassContents<'a, A>>> {
         let span_start = self.reader.offset();
 
         if let Some(cp) = self
@@ -953,25 +929,23 @@ impl<'a> Parser<'a> {
         {
             self.reader.advance();
 
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(self.allocator.alloc(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Symbol,
                     value: cp,
                 },
-                self.allocator,
             ))));
         }
 
         if self.reader.eat('\\') {
             if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
-                return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+                return Ok(Some(ast::CharacterClassContents::Character(self.allocator.alloc(
                     ast::Character {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         kind: ast::CharacterKind::Symbol,
                         value: '\\' as u32,
                     },
-                    self.allocator,
                 ))));
             }
 
@@ -1003,28 +977,26 @@ impl<'a> Parser<'a> {
     fn parse_class_escape(
         &mut self,
         span_start: usize,
-    ) -> Result<Option<ast::CharacterClassContents<'a>>> {
+    ) -> Result<Option<ast::CharacterClassContents<'a, A>>> {
         // b
         if self.reader.eat('b') {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(self.allocator.alloc(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::SingleEscape,
                     value: 0x08,
                 },
-                self.allocator,
             ))));
         }
 
         // [+UnicodeMode] -
         if self.state.unicode_mode && self.reader.eat('-') {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+            return Ok(Some(ast::CharacterClassContents::Character(self.allocator.alloc(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::SingleEscape,
                     value: '-' as u32,
                 },
-                self.allocator,
             ))));
         }
 
@@ -1040,13 +1012,12 @@ impl<'a> Parser<'a> {
                 {
                     self.reader.advance();
 
-                    return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
+                    return Ok(Some(ast::CharacterClassContents::Character(self.allocator.alloc(
                         ast::Character {
                             span: self.span_factory.create(span_start, self.reader.offset()),
                             kind: ast::CharacterKind::ControlLetter,
                             value: cp,
                         },
-                        self.allocator,
                     ))));
                 }
 
@@ -1056,26 +1027,23 @@ impl<'a> Parser<'a> {
 
         // CharacterClassEscape[?UnicodeMode]
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
-            return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(Box::new_in(
-                character_class_escape,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
+                self.allocator.alloc(character_class_escape),
+            )));
         }
         if let Some(unicode_property_escape) =
             self.parse_character_class_escape_unicode(span_start)?
         {
-            return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
-                unicode_property_escape,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(
+                self.allocator.alloc(unicode_property_escape),
+            )));
         }
 
         // CharacterEscape[?UnicodeMode, ?NamedCaptureGroups]
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
-                character_escape,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::CharacterClassContents::Character(
+                self.allocator.alloc(character_escape),
+            )));
         }
 
         Ok(None)
@@ -1089,7 +1057,8 @@ impl<'a> Parser<'a> {
     // ```
     fn parse_class_set_expression(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    {
         // ClassUnion :: ClassSetRange ClassUnion[opt]
         if let Some(class_set_range) = self.parse_class_set_range()? {
             return self.parse_class_set_union(class_set_range);
@@ -1126,9 +1095,10 @@ impl<'a> Parser<'a> {
     // ```
     fn parse_class_set_union(
         &mut self,
-        class_set_range_or_class_set_operand: ast::CharacterClassContents<'a>,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        let mut body = Vec::new_in(self.allocator);
+        class_set_range_or_class_set_operand: ast::CharacterClassContents<'a, A>,
+    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    {
+        let mut body = self.allocator.vec();
         body.push(class_set_range_or_class_set_operand);
 
         loop {
@@ -1154,9 +1124,10 @@ impl<'a> Parser<'a> {
     // ```
     fn parse_class_set_intersection(
         &mut self,
-        class_set_operand: ast::CharacterClassContents<'a>,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        let mut body = Vec::new_in(self.allocator);
+        class_set_operand: ast::CharacterClassContents<'a, A>,
+    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    {
+        let mut body = self.allocator.vec();
         body.push(class_set_operand);
 
         loop {
@@ -1195,9 +1166,10 @@ impl<'a> Parser<'a> {
     // ```
     fn parse_class_set_subtraction(
         &mut self,
-        class_set_operand: ast::CharacterClassContents<'a>,
-    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
-        let mut body = Vec::new_in(self.allocator);
+        class_set_operand: ast::CharacterClassContents<'a, A>,
+    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    {
+        let mut body = self.allocator.vec();
         body.push(class_set_operand);
 
         loop {
@@ -1226,7 +1198,7 @@ impl<'a> Parser<'a> {
     // ClassSetRange ::
     //   ClassSetCharacter - ClassSetCharacter
     // ```
-    fn parse_class_set_range(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+    fn parse_class_set_range(&mut self) -> Result<Option<ast::CharacterClassContents<'a, A>>> {
         let checkpoint = self.reader.checkpoint();
 
         if let Some(class_set_character) = self.parse_class_set_character()? {
@@ -1242,14 +1214,11 @@ impl<'a> Parser<'a> {
                     }
 
                     return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
-                        Box::new_in(
-                            ast::CharacterClassRange {
-                                span: class_set_character.span.merge(&class_set_character_to.span),
-                                min: class_set_character,
-                                max: class_set_character_to,
-                            },
-                            self.allocator,
-                        ),
+                        self.allocator.alloc(ast::CharacterClassRange {
+                            span: class_set_character.span.merge(&class_set_character_to.span),
+                            min: class_set_character,
+                            max: class_set_character_to,
+                        }),
                     )));
                 }
             }
@@ -1268,7 +1237,7 @@ impl<'a> Parser<'a> {
     // ClassStringDisjunction ::
     //   \q{ ClassStringDisjunctionContents }
     // ```
-    fn parse_class_set_operand(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+    fn parse_class_set_operand(&mut self) -> Result<Option<ast::CharacterClassContents<'a, A>>> {
         if let Some(nested_class) = self.parse_nested_class()? {
             return Ok(Some(nested_class));
         }
@@ -1279,14 +1248,13 @@ impl<'a> Parser<'a> {
                 self.parse_class_string_disjunction_contents()?;
 
             if self.reader.eat('}') {
-                return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(Box::new_in(
-                    ast::ClassStringDisjunction {
+                return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(
+                    self.allocator.alloc(ast::ClassStringDisjunction {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         strings,
                         body: class_string_disjunction_contents,
-                    },
-                    self.allocator,
-                ))));
+                    }),
+                )));
             }
 
             return Err(diagnostics::unterminated_pattern(
@@ -1296,10 +1264,9 @@ impl<'a> Parser<'a> {
         }
 
         if let Some(class_set_character) = self.parse_class_set_character()? {
-            return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
-                class_set_character,
-                self.allocator,
-            ))));
+            return Ok(Some(ast::CharacterClassContents::Character(
+                self.allocator.alloc(class_set_character),
+            )));
         }
 
         Ok(None)
@@ -1311,7 +1278,7 @@ impl<'a> Parser<'a> {
     //   [^ ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
     //   \ CharacterClassEscape[+UnicodeMode]
     // ```
-    fn parse_nested_class(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+    fn parse_nested_class(&mut self) -> Result<Option<ast::CharacterClassContents<'a, A>>> {
         let span_start = self.reader.offset();
 
         // [ [lookahead ≠ ^] ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
@@ -1321,7 +1288,7 @@ impl<'a> Parser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = Parser::may_contain_strings_in_class_contents(&kind, &body);
+                let strings = Self::may_contain_strings_in_class_contents(&kind, &body);
 
                 // [SS:EE] NestedClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
@@ -1331,16 +1298,15 @@ impl<'a> Parser<'a> {
                     ));
                 }
 
-                return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
-                    ast::CharacterClass {
+                return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(
+                    self.allocator.alloc(ast::CharacterClass {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         negative,
                         kind,
                         strings,
                         body,
-                    },
-                    self.allocator,
-                ))));
+                    }),
+                )));
             }
 
             return Err(diagnostics::unterminated_pattern(
@@ -1354,18 +1320,16 @@ impl<'a> Parser<'a> {
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('\\') {
             if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
-                return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(Box::new_in(
-                    character_class_escape,
-                    self.allocator,
-                ))));
+                return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
+                    self.allocator.alloc(character_class_escape),
+                )));
             }
             if let Some(unicode_property_escape) =
                 self.parse_character_class_escape_unicode(span_start)?
             {
-                return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
-                    unicode_property_escape,
-                    self.allocator,
-                ))));
+                return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(
+                    self.allocator.alloc(unicode_property_escape),
+                )));
             }
 
             self.reader.rewind(checkpoint);
@@ -1382,8 +1346,9 @@ impl<'a> Parser<'a> {
     // Returns: (ClassStringDisjunctionContents, contain_strings)
     fn parse_class_string_disjunction_contents(
         &mut self,
-    ) -> Result<(Vec<'a, ast::ClassString<'a>>, bool)> {
-        let mut body = Vec::new_in(self.allocator);
+    ) -> Result<(A::Vec<'a, ast::ClassString<'a, A>>, bool)> {
+        let mut body = self.allocator.vec();
+        let mut is_body_empty = true;
         let mut strings = false;
 
         loop {
@@ -1394,13 +1359,14 @@ impl<'a> Parser<'a> {
                 strings = true;
             }
             body.push(class_string);
+            is_body_empty = false;
 
             if !self.reader.eat('|') {
                 break;
             }
         }
 
-        if body.is_empty() {
+        if is_body_empty {
             strings = true;
         }
 
@@ -1416,16 +1382,18 @@ impl<'a> Parser<'a> {
     //   ClassSetCharacter NonEmptyClassString[opt]
     // ```
     // Returns (ClassString, contain_strings)
-    fn parse_class_string(&mut self) -> Result<ast::ClassString<'a>> {
+    fn parse_class_string(&mut self) -> Result<ast::ClassString<'a, A>> {
         let span_start = self.reader.offset();
 
-        let mut body = Vec::new_in(self.allocator);
+        let mut body = self.allocator.vec();
+        let mut body_len = 0usize;
         while let Some(class_set_character) = self.parse_class_set_character()? {
             body.push(class_set_character);
+            body_len += 1;
         }
 
         // `true` if empty or contains 2 or more characters
-        let strings = body.len() != 1;
+        let strings = body_len != 1;
 
         Ok(ast::ClassString {
             span: self.span_factory.create(span_start, self.reader.offset()),
@@ -1495,7 +1463,7 @@ impl<'a> Parser<'a> {
     // GroupSpecifier[UnicodeMode] ::
     //   ? GroupName[?UnicodeMode]
     // ```
-    fn parse_capturing_group(&mut self) -> Result<Option<ast::CapturingGroup<'a>>> {
+    fn parse_capturing_group(&mut self) -> Result<Option<ast::CapturingGroup<'a, A>>> {
         let span_start = self.reader.offset();
         let checkpoint = self.reader.checkpoint();
 
@@ -1536,7 +1504,7 @@ impl<'a> Parser<'a> {
     // (? RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     // (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
-    fn parse_ignore_group(&mut self) -> Result<Option<ast::IgnoreGroup<'a>>> {
+    fn parse_ignore_group(&mut self) -> Result<Option<ast::IgnoreGroup<'a, A>>> {
         let span_start = self.reader.offset();
 
         if self.reader.eat2('(', '?') {
@@ -2309,24 +2277,35 @@ impl<'a> Parser<'a> {
 
     fn may_contain_strings_in_class_contents(
         kind: &ast::CharacterClassContentsKind,
-        body: &Vec<'a, ast::CharacterClassContents<'a>>,
+        body: &A::Vec<'a, ast::CharacterClassContents<'a, A>>,
     ) -> bool {
-        let may_contain_strings = |item: &ast::CharacterClassContents<'a>| match item {
-            // MayContainStrings is true
-            // - if ClassContents contains UnicodePropertyValueExpression
-            //   - && UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
-            //     - && it is binary property of strings(can be true only with `UnicodeSetsMode`)
-            ast::CharacterClassContents::UnicodePropertyEscape(item) => item.strings,
-            // MayContainStrings is true
-            // - if ClassStringDisjunction is [empty]
-            // - || if ClassStringDisjunction contains ClassString
-            //   - && ClassString is [empty]
-            //   - || ClassString contains 2 more ClassSetCharacters
-            ast::CharacterClassContents::ClassStringDisjunction(item) => item.strings,
-            // MayContainStrings is true
-            // - if NestedClass has MayContainStrings: true
-            ast::CharacterClassContents::NestedCharacterClass(item) => item.strings,
-            _ => false,
+        let Ok(body) = body.specialize_ref() else {
+            return false;
+        };
+        let may_contain_strings = |item: &ast::CharacterClassContents<'a, A>| {
+            match item {
+                // MayContainStrings is true
+                // - if ClassContents contains UnicodePropertyValueExpression
+                //   - && UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                //     - && it is binary property of strings(can be true only with `UnicodeSetsMode`)
+                ast::CharacterClassContents::UnicodePropertyEscape(item) => {
+                    item.try_deref().unwrap().strings
+                }
+                // MayContainStrings is true
+                // - if ClassStringDisjunction is [empty]
+                // - || if ClassStringDisjunction contains ClassString
+                //   - && ClassString is [empty]
+                //   - || ClassString contains 2 more ClassSetCharacters
+                ast::CharacterClassContents::ClassStringDisjunction(item) => {
+                    item.try_deref().unwrap().strings
+                }
+                // MayContainStrings is true
+                // - if NestedClass has MayContainStrings: true
+                ast::CharacterClassContents::NestedCharacterClass(item) => {
+                    item.try_deref().unwrap().strings
+                }
+                _ => false,
+            }
         };
 
         match kind {

@@ -70,7 +70,8 @@ export default async function getTypesFromCode() {
 
   const types = Object.create(null);
   for (const filename of FILENAMES) {
-    const code = await readFile(`${codeDirPath}${filename}`, 'utf8');
+    let code = await readFile(`${codeDirPath}${filename}`, 'utf8');
+    code = code.replaceAll('A::', '').replaceAll(", A>", ">").replace(/, A:(.*?)>/g, ">");
     parseFile(code, filename, types);
   }
   return types;

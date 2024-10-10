@@ -25,12 +25,11 @@ define_generator! {
 
 impl Generator for AstBuilderGenerator {
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let fns = ctx
-            .schema()
-            .into_iter()
-            .filter(|it| it.visitable())
-            .map(|it| generate_builder_fn(it, ctx))
-            .collect_vec();
+        let visitable_type_defs = ctx.schema().into_iter().filter(|it| it.visitable());
+        let fns =
+            visitable_type_defs.clone().map(|it| generate_builder_fn(it, false, ctx)).collect_vec();
+        let fns_with_handle =
+            visitable_type_defs.map(|it| generate_builder_fn(it, true, ctx)).collect_vec();
 
         let header = generated_header!();
 
@@ -46,7 +45,12 @@ impl Generator for AstBuilderGenerator {
                 )]
 
                 ///@@line_break
-                use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+                use oxc_allocator::{Allocator, IntoIn};
+                use oxc_syntax::scope::ScopeFlags;
+                use oxc_span::ast_alloc::AstAllocator;
+                use derive_where::derive_where;
+
+                use crate::handle::Handler;
 
                 ///@@line_break
                 #[allow(clippy::wildcard_imports)]
@@ -54,14 +58,34 @@ impl Generator for AstBuilderGenerator {
 
                 ///@@line_break
                 /// AST builder for creating AST nodes
-                #[derive(Clone, Copy)]
-                pub struct AstBuilder<'a> {
-                    pub allocator: &'a Allocator,
+                #[derive_where(Clone, Copy)]
+                pub struct AstBuilder<'a, A = Allocator> {
+                    pub allocator: &'a A,
                 }
 
                 ///@@line_break
-                impl<'a> AstBuilder<'a> {
+                impl<'a, A: AstAllocator> AstBuilder<'a, A> {
                     #(#fns)*
+                }
+
+                ///@line_break
+                pub struct ScopeToken(());
+
+                ///@@line_break
+                /// AST builder for creating AST nodes and calling handler
+                #[derive(Clone, Copy)]
+                pub struct AstBuilderWithHandler<'a, H, A> {
+                    pub allocator: &'a A,
+                    pub handler: H,
+                }
+
+                ///@@line_break
+                impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
+                    pub fn enter_scope(&mut self) -> ScopeToken {
+                        self.handler.enter_scope();
+                        ScopeToken(())
+                    }
+                    #(#fns_with_handle)*
                 }
             },
         )
@@ -95,17 +119,19 @@ fn struct_builder_name(struct_: &StructDef) -> Ident {
     format_ident!("{ident}")
 }
 
-fn generate_builder_fn(def: &TypeDef, ctx: &LateCtx) -> TokenStream {
+fn generate_builder_fn(def: &TypeDef, with_handle: bool, ctx: &LateCtx) -> TokenStream {
     match def {
-        TypeDef::Enum(def) => generate_enum_builder_fn(def, ctx),
-        TypeDef::Struct(def) => generate_struct_builder_fn(def, ctx),
+        TypeDef::Enum(def) => generate_enum_builder_fn(def, with_handle, ctx),
+        TypeDef::Struct(def) => generate_struct_builder_fn(def, with_handle, ctx),
     }
 }
 
-fn generate_enum_builder_fn(def: &EnumDef, ctx: &LateCtx) -> TokenStream {
-    let variants_fns = def.variants.iter().map(|it| generate_enum_variant_builder_fn(def, it, ctx));
+fn generate_enum_builder_fn(def: &EnumDef, with_handle: bool, ctx: &LateCtx) -> TokenStream {
+    let variants_fns =
+        def.variants.iter().map(|it| generate_enum_variant_builder_fn(def, it, with_handle, ctx));
 
-    let inherits_fns = def.inherits.iter().map(|it| generate_enum_inherit_builder_fn(def, it, ctx));
+    let inherits_fns =
+        def.inherits.iter().map(|it| generate_enum_inherit_builder_fn(def, it, with_handle, ctx));
 
     variants_fns.chain(inherits_fns).collect()
 }
@@ -113,19 +139,30 @@ fn generate_enum_builder_fn(def: &EnumDef, ctx: &LateCtx) -> TokenStream {
 fn generate_enum_inherit_builder_fn(
     enum_: &EnumDef,
     inherit: &InheritDef,
+    with_handle: bool,
     _: &LateCtx,
 ) -> TokenStream {
     let enum_ident = enum_.ident();
-    let enum_as_type = enum_.to_type();
-    let super_type = inherit.super_.to_type();
+    let enum_as_type = enum_.to_type_with_generic_allocator();
+    let super_type = inherit.super_.to_type_with_generic_allocator();
     let fn_name =
         enum_builder_name(enum_ident.to_string(), inherit.super_.name().inner_name().to_string());
+
+    let mut self_param = quote!(self);
+    let mut handler_call = TokenStream::new();
+    if with_handle {
+        self_param = quote!(&mut self);
+        let handler_method_name = format_ident!("handle_{}", fn_ident_name(enum_.name.as_str()));
+        handler_call = quote!(self.handler.#handler_method_name(&value););
+    }
 
     quote! {
         ///@@line_break
         #[inline]
-        pub fn #fn_name(self, inner: #super_type) -> #enum_as_type {
-            #enum_ident::from(inner)
+        pub fn #fn_name(#self_param, inner: #super_type) -> #enum_as_type {
+            let value = #enum_ident::from(inner);
+            #handler_call
+            value
         }
     }
 }
@@ -134,11 +171,12 @@ fn generate_enum_inherit_builder_fn(
 fn generate_enum_variant_builder_fn(
     enum_: &EnumDef,
     variant: &VariantDef,
+    with_handle: bool,
     ctx: &LateCtx,
 ) -> TokenStream {
     assert_eq!(variant.fields.len(), 1);
     let enum_ident = enum_.ident();
-    let enum_type = &enum_.to_type();
+    let enum_type = &enum_.to_type_with_generic_allocator();
     let var_ident = &variant.ident();
     let var_type = &variant.fields.first().expect("we have already asserted this one!").typ;
     let var_type_name = &var_type.name();
@@ -148,23 +186,38 @@ fn generate_enum_variant_builder_fn(
         .or_else(|| var_type.transparent_type_id())
         .and_then(|id| ctx.type_def(id))
         .expect("type not found!");
+    let has_scope = if let TypeDef::Struct(struct_type) = ty {
+        struct_type.markers.scope.is_some()
+    } else {
+        false
+    };
     let (params, inner_builder) = match ty {
         TypeDef::Struct(it) => (get_struct_params(it, ctx), struct_builder_name(it)),
         TypeDef::Enum(_) => panic!("Unsupported!"),
     };
 
     let params = params.into_iter().filter(Param::not_default).collect_vec();
-    let fields = params.iter().map(|it| it.ident.clone());
     let (generic_params, where_clause) = get_generic_params(&params);
 
+    let mut fields = params.iter().map(|it| it.ident.clone()).collect_vec();
+    let mut params_tokens = params.iter().map(ToTokens::to_token_stream).collect_vec();
+    if with_handle && has_scope {
+        params_tokens.insert(0, quote!(scope_token: ScopeToken));
+        fields.insert(0, format_ident!("scope_token"));
+    }
+
     let mut inner = quote!(self.#inner_builder(#(#fields),*));
+
     let mut does_alloc = false;
+    let mut init = TokenStream::new();
     if matches!(var_type_name, TypeName::Box(_)) {
-        inner = quote!(self.alloc(#inner));
+        init = quote!(let value = #inner;);
+        inner = quote!(self.allocator.alloc(value));
         does_alloc = true;
     }
 
-    let from_variant_builder = generate_enum_from_variant_builder_fn(enum_, variant, ctx);
+    let from_variant_builder =
+        generate_enum_from_variant_builder_fn(enum_, variant, with_handle, ctx);
     let article = article_for(enum_ident.to_string());
     let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
         .with_params(&params);
@@ -176,12 +229,23 @@ fn generate_enum_variant_builder_fn(
         ));
     }
 
+    let mut self_param = quote!(self);
+    let mut handler_call = TokenStream::new();
+    if with_handle {
+        self_param = quote!(&mut self);
+        let handler_method_name = format_ident!("handle_{}", fn_ident_name(enum_.name.as_str()));
+        handler_call = quote!(self.handler.#handler_method_name(&value););
+    }
+
     quote! {
         ///@@line_break
         #docs
         #[inline]
-        pub fn #fn_name #generic_params (self, #(#params),*) -> #enum_type #where_clause {
-            #enum_ident::#var_ident(#inner)
+        pub fn #fn_name #generic_params (#self_param, #(#params_tokens),*) -> #enum_type #where_clause {
+            #init
+            let value = #enum_ident::#var_ident(#inner);
+            #handler_call
+            value
         }
 
         #from_variant_builder
@@ -193,15 +257,16 @@ fn generate_enum_variant_builder_fn(
 fn generate_enum_from_variant_builder_fn(
     enum_: &EnumDef,
     variant: &VariantDef,
+    with_handle: bool,
     _: &LateCtx,
 ) -> TokenStream {
     assert_eq!(variant.fields.len(), 1);
     let enum_ident = enum_.ident();
-    let enum_type = &enum_.to_type();
+    let enum_type = &enum_.to_type_with_generic_allocator();
     let var_ident = &variant.ident();
     let var_type_ref = &variant.fields.first().expect("we have already asserted this one!").typ;
     let var_type_name = var_type_ref.name().inner_name();
-    let var_type = var_type_ref.to_type();
+    let var_type = var_type_ref.to_type_with_generic_allocator();
     let fn_name = enum_builder_name(enum_ident.to_string(), format!("From{var_type_name}"));
 
     let from_article = article_for(var_type_name);
@@ -210,12 +275,23 @@ fn generate_enum_from_variant_builder_fn(
     let docs = DocComment::new(format!(
         " Convert {from_article} [`{var_type_name}`] into {to_article} [`{enum_ident}::{var_ident}`]",
     ));
+
+    let mut self_param = quote!(self);
+    let mut handler_call = TokenStream::new();
+    if with_handle {
+        self_param = quote!(&mut self);
+        let handler_method_name = format_ident!("handle_{}", fn_ident_name(enum_.name.as_str()));
+        handler_call = quote!(self.handler.#handler_method_name(&value););
+    }
+
     quote! {
         ///@@line_break
         #docs
         #[inline]
-        pub fn #fn_name<T>(self, inner: T) -> #enum_type where T: IntoIn<'a, #var_type> {
-            #enum_ident::#var_ident(inner.into_in(self.allocator))
+        pub fn #fn_name<T>(#self_param, inner: T) -> #enum_type where T: IntoIn<'a, #var_type, A> {
+            let value = #enum_ident::#var_ident(inner.into_in(self.allocator));
+            #handler_call
+            value
         }
     }
 }
@@ -243,14 +319,14 @@ fn default_init_field(field: &FieldDef) -> bool {
     }
 }
 
-fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
+fn generate_struct_builder_fn(ty: &StructDef, with_handle: bool, ctx: &LateCtx) -> TokenStream {
     fn default_field(param: &Param) -> TokenStream {
         debug_assert!(param.is_default);
         let ident = &param.ident;
         quote!(#ident: Default::default())
     }
     let ident = ty.ident();
-    let as_type = ty.to_type();
+    let as_type = ty.to_type_with_generic_allocator();
     let fn_name = struct_builder_name(ty);
 
     let params = get_struct_params(ty, ctx);
@@ -285,19 +361,40 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
             .with_description(format!("Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."))
             .with_params(&params);
 
+    let mut self_param = quote!(self);
+    let mut scope_token_param = TokenStream::new();
+    let mut handler_call = TokenStream::new();
+    let mut args = args.collect::<Vec<Ident>>();
+    if with_handle {
+        self_param = quote!(&mut self);
+        let handler_method_name = format_ident!("handle_{}", fn_ident_name(ty.name.as_str()));
+        handler_call = quote!(self.handler.#handler_method_name(&value););
+
+        if ty.markers.scope.is_some() {
+            args.insert(0, format_ident!("_scope_token"));
+            scope_token_param = quote!(_scope_token: ScopeToken,);
+            handler_call = quote! {
+                self.handler.leave_scope();
+                #handler_call
+            };
+        }
+    }
+
     quote! {
         ///@@line_break
         #fn_docs
         #[inline]
-        pub fn #fn_name #generic_params (self, #(#params),*) -> #as_type  #where_clause {
-            #ident { #(#fields),* }
+        pub fn #fn_name #generic_params (#self_param, #scope_token_param  #(#params),*) -> #as_type  #where_clause {
+            let value = #ident { #(#fields),* };
+            #handler_call
+            value
         }
 
         ///@@line_break
         #alloc_docs
         #[inline]
-        pub fn #alloc_fn_name #generic_params (self, #(#params),*) -> Box<'a, #as_type> #where_clause {
-            Box::new_in(self.#fn_name(#(#args),*), self.allocator)
+        pub fn #alloc_fn_name #generic_params (#self_param, #scope_token_param #(#params),*) -> A::Box<'a, #as_type> #where_clause {
+            self.allocator.alloc(self.#fn_name(#(#args),*))
         }
     }
 }
@@ -529,25 +626,29 @@ fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
         let (interface_typ, generic_typ) = match (&analysis.wrapper, type_def) {
             (TypeWrapper::Box, Some(def)) => {
                 let t = t_param();
-                let typ = def.to_type();
-                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, Box<'a, #typ>>), t)))
+                let typ = def.to_type_with_generic_allocator();
+                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, A::Box<'a, #typ>, A>), t)))
             }
             (TypeWrapper::OptBox, Some(def)) => {
                 let t = t_param();
-                let typ = def.to_type();
-                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, Option<Box<'a, #typ>>>), t)))
+                let typ = def.to_type_with_generic_allocator();
+                (
+                    Some(parse_quote!(#t)),
+                    Some((quote!(#t: IntoIn<'a, Option<A::Box<'a, #typ>>, A>), t)),
+                )
             }
             (TypeWrapper::Ref, None) if field.typ.is_str_slice() => {
                 let t = format_ident!("S").to_token_stream();
-                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, &'a str>), t)))
+                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, &'a str, A>), t)))
             }
             (TypeWrapper::None, None) if field.typ.name().inner_name() == "Atom" => {
-                let t = format_ident!("A").to_token_stream();
-                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, Atom<'a>>), t)))
+                let t = format_ident!("IntoAtom").to_token_stream();
+                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, Atom<'a>, A>), t)))
             }
             _ => (None, None),
         };
-        let ty = interface_typ.unwrap_or_else(|| field.typ.to_type());
+        let ty = interface_typ.unwrap_or_else(|| field.typ.to_type_with_generic_allocator());
+
         acc.push(Param {
             is_default: default_init_field(field),
             analysis: analysis.clone(),

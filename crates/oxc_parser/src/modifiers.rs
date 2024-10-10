@@ -1,19 +1,20 @@
-use bitflags::bitflags;
-use oxc_allocator::Vec;
-use oxc_ast::ast::TSAccessibility;
-use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::{GetSpan, Span, SPAN};
-
 use crate::{
     diagnostics,
     lexer::{Kind, Token},
     ParserImpl,
 };
+use bitflags::bitflags;
+use oxc_allocator::{Allocator, Vec};
+use oxc_ast::ast::TSAccessibility;
+use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_span::ast_alloc::AstAllocator;
+use oxc_span::{GetSpan, Span, SPAN};
 
 bitflags! {
   /// Bitflag of modifiers and contextual modifiers.
   /// Useful to cheaply track all already seen modifiers of a member (instead of using a HashSet<ModifierKind>).
   #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+  #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
   pub struct ModifierFlags: u16 {
       const DECLARE       = 1 << 0;
       const PRIVATE       = 1 << 1;
@@ -99,6 +100,7 @@ impl ModifierFlags {
 }
 
 #[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct Modifier {
     pub span: Span,
     pub kind: ModifierKind,
@@ -130,7 +132,7 @@ impl TryFrom<Token> for Modifier {
 /// // ^^^ This also counts as a modifier, but is also recorded separately as a
 /// // named export declaration
 /// ```
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 pub struct Modifiers<'a> {
     /// May contain duplicates.
     modifiers: Option<Vec<'a, Modifier>>,
@@ -140,13 +142,13 @@ pub struct Modifiers<'a> {
     flags: ModifierFlags,
 }
 
-impl<'a> Default for Modifiers<'a> {
+impl<'a> Modifiers<'a> {
     fn default() -> Self {
         Self::empty()
     }
-}
-
-impl<'a> Modifiers<'a> {
+    pub fn iter(&self) -> impl Iterator<Item = &Modifier> + '_ {
+        self.modifiers.as_ref().into_iter().flat_map(|modifiers| modifiers.iter())
+    }
     /// Create a new set of modifiers
     ///
     /// # Invariants
@@ -156,10 +158,9 @@ impl<'a> Modifiers<'a> {
     pub(crate) fn new(modifiers: Vec<'a, Modifier>, flags: ModifierFlags) -> Self {
         if modifiers.is_empty() {
             debug_assert!(flags.is_empty());
-            Self::empty()
-        } else {
-            Self { modifiers: Some(modifiers), flags }
+            return Self::empty();
         }
+        Self { modifiers: Some(modifiers), flags }
     }
 
     pub fn empty() -> Self {
@@ -168,10 +169,6 @@ impl<'a> Modifiers<'a> {
 
     pub fn contains(&self, target: ModifierKind) -> bool {
         self.flags.contains(target.into())
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &Modifier> + '_ {
-        self.modifiers.as_ref().into_iter().flat_map(|modifiers| modifiers.iter())
     }
 
     pub fn accessibility(&self) -> Option<TSAccessibility> {
@@ -221,6 +218,7 @@ impl GetSpan for Modifiers<'_> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub enum ModifierKind {
     Abstract,
     Accessor,
@@ -291,10 +289,10 @@ impl std::fmt::Display for ModifierKind {
     }
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Result<Modifiers<'a>> {
         let mut flags = ModifierFlags::empty();
-        let mut modifiers = self.ast.vec();
+        let mut modifiers = Vec::new_in(self.lexer.allocator);
         while self.at_modifier() {
             let span = self.start_span();
             let modifier_flags = self.cur_kind().into();
@@ -358,7 +356,7 @@ impl<'a> ParserImpl<'a> {
         let mut has_leading_modifier = false;
         let mut has_trailing_decorator = false;
 
-        let mut modifiers = self.ast.vec();
+        let mut modifiers = Vec::new_in(self.lexer.allocator);
         let mut modifier_flags = ModifierFlags::empty();
 
         // parse leading decorators

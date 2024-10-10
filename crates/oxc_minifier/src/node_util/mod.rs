@@ -98,7 +98,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// Gets the value of a node as a String, or `None` if it cannot be converted.
     /// This method effectively emulates the `String()` JavaScript cast function when
     /// possible and the node has no side effects. Otherwise, it returns `None`.
-    pub fn get_side_free_string_value(self, expr: &'a Expression) -> Option<Cow<'a, str>> {
+    pub fn get_side_free_string_value(self, expr: &Expression<'a>) -> Option<Cow<'a, str>> {
         let value = self.get_string_value(expr);
         // Calculating the string value, if any, is likely to be faster than calculating side effects,
         // and there are only a very few cases where we can compute a string value, but there could

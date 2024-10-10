@@ -9,6 +9,7 @@ use oxc_regular_expression::{
     Parser, ParserOptions,
 };
 use oxc_span::{GetSpan, Span};
+use std::mem::transmute;
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
@@ -138,7 +139,11 @@ fn parse_and_check_regex<'a>(
     expr_span: Span,
 ) {
     let allocator = Allocator::default();
-    let flags = extract_regex_flags(arguments);
+    let flags = extract_regex_flags(unsafe {
+        transmute::<&oxc_allocator::Vec<'a, Argument<'a>>, &oxc_allocator::Vec<'_, Argument<'_>>>(
+            arguments,
+        )
+    });
     let flags_text = flags.map_or(String::new(), |f| f.to_string());
     let parser = Parser::new(
         &allocator,

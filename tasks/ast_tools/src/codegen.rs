@@ -1,9 +1,3 @@
-use std::{cell::RefCell, path::PathBuf};
-
-use itertools::Itertools;
-use proc_macro2::TokenStream;
-use rustc_hash::{FxBuildHasher, FxHashMap};
-
 use crate::{
     derives::{Derive, DeriveOutput},
     fmt::pretty_print,
@@ -15,6 +9,13 @@ use crate::{
     util::write_all_to,
     Result, TypeId,
 };
+use itertools::Itertools;
+use proc_macro2::TokenStream;
+use quote::{quote, ToTokens};
+use rustc_hash::{FxBuildHasher, FxHashMap};
+use std::ops::DerefMut;
+use std::{cell::RefCell, path::PathBuf};
+use syn::{GenericParam, Generics, TypeParam};
 
 #[derive(Default)]
 pub struct AstCodegen {
@@ -182,6 +183,83 @@ impl AstCodegen {
             .map_ok(|it| it.map(rust_ast::Module::analyze))
             .collect::<Result<Result<Result<Vec<_>>>>>()???;
 
+        struct StripAllocatorGenerics;
+        impl syn::visit_mut::VisitMut for StripAllocatorGenerics {
+            fn visit_type_path_mut(&mut self, type_path: &mut syn::TypePath) {
+                if type_path.path.segments.len() > 1 && type_path.path.segments[0].ident == "A" {
+                    // `A::Box<...>` -> `Box<...>`
+                    type_path.path.segments =
+                        type_path.path.segments.pairs().map(|pair| pair.cloned()).skip(1).collect();
+                };
+                // if let Some(syn::PathSegment {
+                //     arguments: syn::PathArguments::AngleBracketed(generic_args),
+                //     ..
+                // }) = type_path.path.segments.last_mut()
+                // {
+                //     // `Box<'a, ..., A>` ->  `Box<'a, ...>`
+                //     if generic_args
+                //         .args
+                //         .last()
+                //         .is_some_and(|last_arg| last_arg.to_token_stream().to_string() == "A")
+                //     {
+                //         generic_args.args.pop();
+                //     }
+                // }
+                syn::visit_mut::visit_type_path_mut(self, type_path);
+            }
+            // fn visit_path_segment_mut(&mut self, path_segment: &mut syn::PathSegment) {
+            //     // `Box<'a, ..., A>` ->  `Box<'a, ...>`
+            //     if path_segment.ident == "Box" || path_segment.ident == "Vec" {
+            //         let syn::PathArguments::AngleBracketed(generic_args) = &mut path_segment.arguments else {
+            //             panic!("Vec/Box must be following by generic arguments. Actual: {}", path_segment.to_token_stream().to_string());
+            //         };
+            //         let last_arg = generic_args.args.last().map(|arg| arg.into_token_stream().to_string());
+            //         assert_eq!(last_arg.as_deref(), Some("A"), "Last generic argument of Vec/Box be A. Actual: {}", path_segment.to_token_stream().to_string());
+            //         generic_args.args.pop();
+            //     }
+            //     syn::visit_mut::visit_path_segment_mut(self, path_segment);
+            // }
+            fn visit_type_param_mut(&mut self, type_param: &mut TypeParam) {
+                if type_param.ident != "A" {
+                    return;
+                }
+                // Remove `: AstAllocator  = oxc_allocator::Allocator` in `enum Expression<'a, A: AstAllocator  = oxc_allocator::Allocator>`
+                type_param.colon_token = None;
+                type_param.bounds = Default::default();
+                type_param.eq_token = None;
+                type_param.default = None;
+            }
+            // (&mut self, arg: &mut syn::GenericArgument) {
+            //     let syn::GenericArgument::AssocType(assoc_type) = arg else {
+            //         syn::visit_mut::visit_generic_argument_mut(self, arg);
+            //         return;
+            //     };
+            //     dbg!(assoc_type.to_token_stream().to_string());
+            //     if assoc_type.ident != "A" {
+            //         syn::visit_mut::visit_generic_argument_mut(self, arg);
+            //         return;
+            //     };
+            //     // Remove `= oxc_allocator::Allocator>` in `enum Expression<'a, A = oxc_allocator::Allocator>`
+            //     *arg = syn::GenericArgument::Type(syn::parse2(quote!(A)).unwrap());
+            // }
+        }
+        for module in &modules {
+            for mut item in &module.items {
+                let mut ast_type = item.borrow_mut();
+                match ast_type.deref_mut() {
+                    AstType::Enum(enum_) => syn::visit_mut::VisitMut::visit_item_enum_mut(
+                        &mut StripAllocatorGenerics,
+                        &mut enum_.item,
+                    ),
+                    AstType::Struct(struct_) => syn::visit_mut::VisitMut::visit_item_struct_mut(
+                        &mut StripAllocatorGenerics,
+                        &mut struct_.item,
+                    ),
+                    AstType::Macro(_) => unreachable!(),
+                }
+            }
+        }
+
         // early passes
         let ctx = {
             let ctx = EarlyCtx::new(modules);
@@ -247,4 +325,5 @@ macro_rules! generated_header {
     }};
 }
 
+use crate::rust_ast::AstType;
 pub(crate) use generated_header;

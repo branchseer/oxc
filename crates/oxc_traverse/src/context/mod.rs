@@ -4,7 +4,7 @@ use oxc_ast::{
     AstBuilder,
 };
 use oxc_semantic::{NodeId, ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, Span, SPAN};
+use oxc_span::{Atom, CompactStr, GetSpan, Span, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -21,6 +21,8 @@ mod bound_identifier;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
+use oxc_span::ast_alloc::AstAllocator;
+
 mod scoping;
 pub use scoping::TraverseScoping;
 
@@ -131,7 +133,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.ast.alloc`.
     #[inline]
-    pub fn alloc<T>(&self, node: T) -> Box<'a, T> {
+    pub fn alloc<T: GetSpan>(&self, node: T) -> Box<'a, T> {
         self.ast.alloc(node)
     }
 

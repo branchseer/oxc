@@ -51,6 +51,7 @@ pub struct StructDef {
     pub fields: Vec<FieldDef>,
     #[serde(skip)]
     pub has_lifetime: bool,
+    pub has_generic_allocator: bool,
     pub size_64: usize,
     pub align_64: usize,
     pub offsets_64: Option<Vec<usize>>,
@@ -75,6 +76,7 @@ pub struct EnumDef {
     /// For `@inherits` inherited enum variants
     pub inherits: Vec<InheritDef>,
     pub has_lifetime: bool,
+    pub has_generic_allocator: bool,
     pub size_64: usize,
     pub align_64: usize,
     pub offsets_64: Option<Vec<usize>>,

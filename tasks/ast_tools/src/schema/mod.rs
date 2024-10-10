@@ -1,7 +1,3 @@
-use quote::ToTokens;
-use rustc_hash::FxHashSet;
-use serde::Serialize;
-
 use crate::{
     codegen,
     layout::KnownLayout,
@@ -10,6 +6,11 @@ use crate::{
     util::{unexpanded_macro_err, TypeExt},
     Result, TypeId,
 };
+use itertools::Itertools;
+use quote::ToTokens;
+use rustc_hash::FxHashSet;
+use serde::Serialize;
+use syn::{Path, TypePath};
 
 mod defs;
 mod get_generics;
@@ -159,7 +160,11 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &codegen::Ea
             .collect(),
         inherits: meta.inherits.iter().map(|it| lower_inherit(it, ctx)).collect(),
         has_lifetime: item.generics.lifetimes().count() > 0,
-
+        has_generic_allocator: item
+            .generics
+            .type_params()
+            .last()
+            .is_some_and(|param| param.ident == "A"),
         size_64,
         align_64,
         offsets_64,
@@ -193,7 +198,11 @@ fn lower_ast_struct(
         visitable: meta.visitable,
         fields: item.fields.iter().map(|fi| lower_field(fi, ctx)).collect(),
         has_lifetime: item.generics.lifetimes().count() > 0,
-
+        has_generic_allocator: item
+            .generics
+            .type_params()
+            .last()
+            .is_some_and(|param| param.ident == "A"),
         size_64,
         align_64,
         offsets_64,

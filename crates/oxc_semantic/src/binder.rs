@@ -128,7 +128,10 @@ fn function_as_var(flags: ScopeFlags, source_type: SourceType) -> bool {
 }
 
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
-fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
+fn is_function_part_of_if_statement<'a>(
+    function: &Function<'a>,
+    builder: &SemanticBuilder<'a>,
+) -> bool {
     if builder.current_scope_flags().is_strict_mode() {
         return false;
     }
@@ -150,7 +153,7 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
 }
 
 impl<'a> Binder<'a> for Function<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let current_scope_id = builder.current_scope_id;
         let scope_flags = builder.current_scope_flags();
         if let Some(ident) = &self.id {

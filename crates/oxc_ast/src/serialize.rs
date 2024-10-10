@@ -1,5 +1,7 @@
-use oxc_allocator::Box;
-use oxc_span::Span;
+use oxc_span::{
+    ast_alloc::{AstAllocator, Vec},
+    cast_ref, Atom, GetSpan, Span,
+};
 use serde::{
     ser::{SerializeSeq, Serializer},
     Serialize,
@@ -12,6 +14,8 @@ use crate::ast::{
     JSXIdentifier, JSXMemberExpressionObject, ObjectAssignmentTarget, ObjectPattern, Program,
     RegExpFlags, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
 };
+use oxc_allocator::{Allocator, Box};
+use oxc_span::ast_alloc::{Box as _, Vec as _};
 
 pub struct EcmaFormatter;
 
@@ -64,114 +68,122 @@ impl Serialize for Elision {
 /// Serialize `ArrayAssignmentTarget`, `ObjectAssignmentTarget`, `ObjectPattern`, `ArrayPattern`
 /// to be estree compatible, with `elements`/`properties` and `rest` fields combined.
 
-impl<'a> Serialize for ArrayAssignmentTarget<'a> {
+impl<'a, A: AstAllocator> Serialize for ArrayAssignmentTarget<'a, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let converted = SerArrayAssignmentTarget {
             span: self.span,
-            elements: ElementsAndRest::new(&self.elements, &self.rest),
+            elements: ElementsAndRest::new(self.elements.as_slice_or_empty(), &self.rest),
         };
         converted.serialize(serializer)
     }
 }
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename = "ArrayAssignmentTarget", rename_all = "camelCase")]
-struct SerArrayAssignmentTarget<'a, 'b> {
+#[serde(tag = "type", rename = "ArrayAssignmentTarget", rename_all = "camelCase", bound = "")]
+struct SerArrayAssignmentTarget<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
-    elements:
-        ElementsAndRest<'b, Option<AssignmentTargetMaybeDefault<'a>>, AssignmentTargetRest<'a>>,
+    elements: ElementsAndRest<
+        'b,
+        Option<AssignmentTargetMaybeDefault<'a, A>>,
+        AssignmentTargetRest<'a, A>,
+    >,
 }
 
-impl<'a> Serialize for ObjectAssignmentTarget<'a> {
+impl<'a, A: AstAllocator> Serialize for ObjectAssignmentTarget<'a, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let converted = SerObjectAssignmentTarget {
             span: self.span,
-            properties: ElementsAndRest::new(&self.properties, &self.rest),
+            properties: ElementsAndRest::new(&self.properties.as_slice_or_empty(), &self.rest),
         };
         converted.serialize(serializer)
     }
 }
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename = "ObjectAssignmentTarget")]
-struct SerObjectAssignmentTarget<'a, 'b> {
+#[serde(tag = "type", rename = "ObjectAssignmentTarget", bound = "")]
+struct SerObjectAssignmentTarget<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
-    properties: ElementsAndRest<'b, AssignmentTargetProperty<'a>, AssignmentTargetRest<'a>>,
+    properties: ElementsAndRest<'b, AssignmentTargetProperty<'a, A>, AssignmentTargetRest<'a, A>>,
 }
 
-impl<'a> Serialize for ObjectPattern<'a> {
+impl<'a, A: AstAllocator> Serialize for ObjectPattern<'a, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let converted = SerObjectPattern {
             span: self.span,
-            properties: ElementsAndRest::new(&self.properties, &self.rest),
+            properties: ElementsAndRest::new(&self.properties.as_slice_or_empty(), &self.rest),
         };
         converted.serialize(serializer)
     }
 }
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename = "ObjectPattern")]
-struct SerObjectPattern<'a, 'b> {
+#[serde(tag = "type", rename = "ObjectPattern", bound = "")]
+struct SerObjectPattern<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
-    properties: ElementsAndRest<'b, BindingProperty<'a>, Box<'a, BindingRestElement<'a>>>,
+    properties: ElementsAndRest<'b, BindingProperty<'a, A>, A::Box<'a, BindingRestElement<'a, A>>>,
 }
 
-impl<'a> Serialize for ArrayPattern<'a> {
+impl<'a, A: AstAllocator> Serialize for ArrayPattern<'a, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let converted = SerArrayPattern {
             span: self.span,
-            elements: ElementsAndRest::new(&self.elements, &self.rest),
+            elements: ElementsAndRest::new(self.elements.as_slice_or_empty(), &self.rest),
         };
         converted.serialize(serializer)
     }
 }
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename = "ArrayPattern")]
-struct SerArrayPattern<'a, 'b> {
+#[serde(tag = "type", rename = "ArrayPattern", bound = "")]
+struct SerArrayPattern<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
-    elements: ElementsAndRest<'b, Option<BindingPattern<'a>>, Box<'a, BindingRestElement<'a>>>,
+    elements:
+        ElementsAndRest<'b, Option<BindingPattern<'a, A>>, A::Box<'a, BindingRestElement<'a, A>>>,
 }
 
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined
 /// and `argument` field flattened.
-impl<'a> Serialize for FormalParameters<'a> {
+impl<'a, A: AstAllocator> Serialize for FormalParameters<'a, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted_rest = self.rest.as_ref().map(|rest| SerFormalParameterRest {
-            span: rest.span,
-            argument: &rest.argument.kind,
-            type_annotation: &rest.argument.type_annotation,
-            optional: rest.argument.optional,
+        let converted_rest = self.rest.as_ref().and_then(|rest| {
+            let rest = rest.try_deref()?;
+            // let rest = cast_ref!(&rest, BindingRestElement<'a, A as Allocator>).unwrap();
+            Some(SerFormalParameterRest {
+                span: rest.span,
+                argument: &rest.argument.kind,
+                type_annotation: &rest.argument.type_annotation,
+                optional: rest.argument.optional,
+            })
         });
         let converted = SerFormalParameters {
             span: self.span,
             kind: self.kind,
-            items: ElementsAndRest::new(&self.items, &converted_rest),
+            items: ElementsAndRest::new(self.items.as_slice_or_empty(), &converted_rest),
         };
         converted.serialize(serializer)
     }
 }
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename = "FormalParameters")]
-struct SerFormalParameters<'a, 'b> {
+#[serde(tag = "type", rename = "FormalParameters", bound = "")]
+struct SerFormalParameters<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
     kind: FormalParameterKind,
-    items: ElementsAndRest<'b, FormalParameter<'a>, SerFormalParameterRest<'a, 'b>>,
+    items: ElementsAndRest<'b, FormalParameter<'a, A>, SerFormalParameterRest<'a, 'b, A>>,
 }
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename = "RestElement", rename_all = "camelCase")]
-struct SerFormalParameterRest<'a, 'b> {
+#[serde(tag = "type", rename = "RestElement", rename_all = "camelCase", bound = "")]
+struct SerFormalParameterRest<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
-    argument: &'b BindingPatternKind<'a>,
-    type_annotation: &'b Option<Box<'a, TSTypeAnnotation<'a>>>,
+    argument: &'b BindingPatternKind<'a, A>,
+    type_annotation: &'b Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
     optional: bool,
 }
 
@@ -203,30 +215,33 @@ impl<'b, E: Serialize, R: Serialize> Serialize for ElementsAndRest<'b, E, R> {
 
 /// Serialize `TSModuleBlock` to be ESTree compatible, with `body` and `directives` fields combined,
 /// and directives output as `StringLiteral` expression statements
-impl<'a> Serialize for TSModuleBlock<'a> {
+impl<'a, A: AstAllocator> Serialize for TSModuleBlock<'a, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let converted = SerTSModuleBlock {
             span: self.span,
-            body: DirectivesAndStatements { directives: &self.directives, body: &self.body },
+            body: DirectivesAndStatements {
+                directives: self.directives.as_slice_or_empty(),
+                body: self.body.as_slice_or_empty(),
+            },
         };
         converted.serialize(serializer)
     }
 }
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename = "TSModuleBlock")]
-struct SerTSModuleBlock<'a, 'b> {
+#[serde(tag = "type", rename = "TSModuleBlock", bound = "")]
+struct SerTSModuleBlock<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
-    body: DirectivesAndStatements<'a, 'b>,
+    body: DirectivesAndStatements<'a, 'b, A>,
 }
 
-struct DirectivesAndStatements<'a, 'b> {
+struct DirectivesAndStatements<'a, 'b, A: AstAllocator> {
     directives: &'b [Directive<'a>],
-    body: &'b [Statement<'a>],
+    body: &'b [Statement<'a, A>],
 }
 
-impl<'a, 'b> Serialize for DirectivesAndStatements<'a, 'b> {
+impl<'a, 'b, A: AstAllocator> Serialize for DirectivesAndStatements<'a, 'b, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut seq = serializer.serialize_seq(Some(self.directives.len() + self.body.len()))?;
         for directive in self.directives {
@@ -250,31 +265,35 @@ struct DirectiveAsStatement<'a, 'b> {
     expression: &'b StringLiteral<'a>,
 }
 
-impl<'a> Serialize for JSXElementName<'a> {
+impl<'a, A: AstAllocator> Serialize for JSXElementName<'a, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::Identifier(ident) => ident.serialize(serializer),
-            Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+            Self::IdentifierReference(ident) => JSXIdentifier {
+                span: ident.span(),
+                name: ident.try_deref().map_or_else(|| Atom::empty(), |ident| ident.name.clone()),
             }
+            .serialize(serializer),
             Self::NamespacedName(name) => name.serialize(serializer),
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {
-                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
+                JSXIdentifier { span: expr.span(), name: "this".into() }.serialize(serializer)
             }
         }
     }
 }
 
-impl<'a> Serialize for JSXMemberExpressionObject<'a> {
+impl<'a, A: AstAllocator> Serialize for JSXMemberExpressionObject<'a, A> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
-            Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+            Self::IdentifierReference(ident) => JSXIdentifier {
+                span: ident.span(),
+                name: ident.try_deref().map_or_else(|| Atom::empty(), |ident| ident.name.clone()),
             }
+            .serialize(serializer),
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {
-                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
+                JSXIdentifier { span: expr.span(), name: "this".into() }.serialize(serializer)
             }
         }
     }

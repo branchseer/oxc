@@ -1,7 +1,8 @@
+use rustc_hash::FxHashSet;
+use std::mem::transmute;
 use std::{ops::ControlFlow, path::PathBuf};
 
-use rustc_hash::FxHashSet;
-
+use oxc::regular_expression::ast::Pattern;
 use oxc::{
     allocator::Allocator,
     ast::{ast::Program, Comment},
@@ -169,6 +170,7 @@ impl Driver {
             let options = ParserOptions::default().with_flags(&flags);
             match Parser::new(&allocator, &printed1, options).parse() {
                 Ok(pattern2) => {
+                    let pattern2 = unsafe { transmute::<_, Pattern<'_>>(pattern2) };
                     let printed2 = pattern2.to_string();
                     if !pattern2.content_eq(pattern) {
                         self.errors.push(OxcDiagnostic::error(format!(
