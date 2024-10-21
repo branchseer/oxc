@@ -1023,6 +1023,13 @@ impl<'a, A: AstAllocator> GetSpanMut for YieldExpression<'a, A> {
     }
 }
 
+impl<'a> GetSpanMut for ClassHead<'a> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl<'a, A: AstAllocator> GetSpanMut for Class<'a, A> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {

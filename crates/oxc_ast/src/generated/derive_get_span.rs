@@ -1023,6 +1023,13 @@ impl<'a, A: AstAllocator> GetSpan for YieldExpression<'a, A> {
     }
 }
 
+impl<'a> GetSpan for ClassHead<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a, A: AstAllocator> GetSpan for Class<'a, A> {
     #[inline]
     fn span(&self) -> Span {

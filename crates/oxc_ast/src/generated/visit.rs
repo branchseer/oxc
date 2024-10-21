@@ -802,6 +802,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_class_head(&mut self, it: &ClassHead<'a>) {
+        walk_class_head(self, it);
+    }
+
+    #[inline]
     fn visit_class_heritage(&mut self, it: &Expression<'a>) {
         walk_class_heritage(self, it);
     }
@@ -2942,9 +2947,7 @@ pub mod walk {
         let kind = AstKind::Class(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_decorators(&it.decorators);
-        if let Some(id) = &it.id {
-            visitor.visit_binding_identifier(id);
-        }
+        visitor.visit_class_head(&it.head);
         visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -2960,6 +2963,16 @@ pub mod walk {
         }
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_head<'a, V: Visit<'a>>(visitor: &mut V, it: &ClassHead<'a>) {
+        let kind = AstKind::ClassHead(visitor.alloc(it));
+        visitor.enter_node(kind);
+        if let Some(id) = &it.id {
+            visitor.visit_binding_identifier(id);
+        }
         visitor.leave_node(kind);
     }
 

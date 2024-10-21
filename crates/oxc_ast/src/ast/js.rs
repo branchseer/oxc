@@ -1975,6 +1975,34 @@ pub struct YieldExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
 }
 
 /// Class Definitions
+
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+#[serde(rename_all = "camelCase")]
+pub struct ClassHead<'a> {
+    #[serde(flatten)]
+    pub span: Span,
+    /// Whether the class is abstract
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo {}          // true
+    /// abstract class Bar {} // false
+    /// ```
+    pub r#abstract: bool,
+    /// Whether the class was `declare`ed
+    ///
+    /// ## Example
+    /// ```ts
+    /// declare class Foo {}
+    /// ```
+    pub declare: bool,
+    /// Class identifier, AKA the name
+    pub id: Option<BindingIdentifier<'a>>,
+}
+
 #[ast(visit)]
 #[scope(flags(ScopeFlags::StrictMode))]
 #[derive_where(Debug)]
@@ -1996,8 +2024,9 @@ pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// class Foo {}
     /// ```
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
-    /// Class identifier, AKA the name
-    pub id: Option<BindingIdentifier<'a>>,
+
+    pub head: ClassHead<'a>,
+
     #[scope(enter_before)]
     pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
     /// Super class. When present, this will usually be an [`IdentifierReference`].
@@ -2027,21 +2056,6 @@ pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// ```
     pub implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
     pub body: A::Box<'a, ClassBody<'a, A>>,
-    /// Whether the class is abstract
-    ///
-    /// ## Example
-    /// ```ts
-    /// class Foo {}          // true
-    /// abstract class Bar {} // false
-    /// ```
-    pub r#abstract: bool,
-    /// Whether the class was `declare`ed
-    ///
-    /// ## Example
-    /// ```ts
-    /// declare class Foo {}
-    /// ```
-    pub declare: bool,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
     #[serde(skip)]

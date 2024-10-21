@@ -71,14 +71,14 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
 
     fn parse_class(
         &mut self,
-        start_span: Span,
+        start_span_after_decorators: Span,
         r#type: ClassType,
         modifiers: &Modifiers<'a>,
     ) -> Result<A::Box<'a, Class<'a, A>>> {
         self.bump_any(); // advance `class`
 
         let decorators = self.take_decorators();
-        let start_span = decorators.iter().next().map_or(start_span, |d| d.span);
+        let start_span = decorators.iter().next().map_or(start_span_after_decorators, |d| d.span);
         let decorators = self.ast.vec_from_iter(decorators);
 
         let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
@@ -86,6 +86,13 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         } else {
             None
         };
+        let declare = modifiers.contains_declare();
+        let head = self.ast.class_head(
+            self.end_span(start_span_after_decorators),
+            modifiers.contains_abstract(),
+            declare,
+            id,
+        );
 
         let type_parameters = if self.is_ts { self.parse_ts_type_parameters()? } else { None };
         let (extends, implements) = self.parse_heritage_clause()?;
@@ -101,7 +108,6 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
                 }
             }
         }
-        let declare = modifiers.contains_declare();
         let scope_token = self.ast.enter_scope();
         let body = self.parse_class_body(declare)?;
 
@@ -116,14 +122,12 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             r#type,
             self.end_span(start_span),
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            modifiers.contains_abstract(),
-            declare,
         ))
     }
 

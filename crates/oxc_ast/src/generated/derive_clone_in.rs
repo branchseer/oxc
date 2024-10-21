@@ -2016,6 +2016,18 @@ impl<'old_alloc> CloneIn for YieldExpression<'old_alloc> {
     }
 }
 
+impl<'old_alloc> CloneIn for ClassHead<'old_alloc> {
+    type Cloned<'a> = ClassHead<'a>;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        ClassHead {
+            span: CloneIn::clone_in(&self.span, allocator),
+            r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
+            declare: CloneIn::clone_in(&self.declare, allocator),
+            id: CloneIn::clone_in(&self.id, allocator),
+        }
+    }
+}
+
 impl<'old_alloc> CloneIn for Class<'old_alloc> {
     type Cloned<'a> = Class<'a>;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
@@ -2023,14 +2035,12 @@ impl<'old_alloc> CloneIn for Class<'old_alloc> {
             r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
-            id: CloneIn::clone_in(&self.id, allocator),
+            head: CloneIn::clone_in(&self.head, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             super_class: CloneIn::clone_in(&self.super_class, allocator),
             super_type_parameters: CloneIn::clone_in(&self.super_type_parameters, allocator),
             implements: CloneIn::clone_in(&self.implements, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
-            declare: CloneIn::clone_in(&self.declare, allocator),
             scope_id: Default::default(),
         }
     }

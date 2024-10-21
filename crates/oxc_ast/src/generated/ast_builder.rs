@@ -842,28 +842,24 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn expression_class<T1, T2, T3>(
         self,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> Expression<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -874,14 +870,12 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            r#abstract,
-            declare,
         );
         let value = Expression::ClassExpression(self.allocator.alloc(value));
         value
@@ -4547,28 +4541,24 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn declaration_class<T1, T2, T3>(
         self,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> Declaration<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -4579,14 +4569,12 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            r#abstract,
-            declare,
         );
         let value = Declaration::ClassDeclaration(self.allocator.alloc(value));
         value
@@ -6443,6 +6431,47 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self.allocator.alloc(self.yield_expression(span, delegate, argument))
     }
 
+    /// Builds a [`ClassHead`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_head`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#abstract: Whether the class is abstract
+    /// - declare: Whether the class was `declare`ed
+    /// - id: Class identifier, AKA the name
+    #[inline]
+    pub fn class_head(
+        self,
+        span: Span,
+        r#abstract: bool,
+        declare: bool,
+        id: Option<BindingIdentifier<'a>>,
+    ) -> ClassHead<'a> {
+        let value = ClassHead { span, r#abstract, declare, id };
+        value
+    }
+
+    /// Builds a [`ClassHead`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_head`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#abstract: Whether the class is abstract
+    /// - declare: Whether the class was `declare`ed
+    /// - id: Class identifier, AKA the name
+    #[inline]
+    pub fn alloc_class_head(
+        self,
+        span: Span,
+        r#abstract: bool,
+        declare: bool,
+        id: Option<BindingIdentifier<'a>>,
+    ) -> A::Box<'a, ClassHead<'a>> {
+        self.allocator.alloc(self.class_head(span, r#abstract, declare, id))
+    }
+
     /// Builds a [`Class`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class`] instead.
@@ -6451,28 +6480,24 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn class<T1, T2, T3>(
         self,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> Class<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -6483,14 +6508,12 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters: type_parameters.into_in(self.allocator),
             super_class,
             super_type_parameters: super_type_parameters.into_in(self.allocator),
             implements,
             body: body.into_in(self.allocator),
-            r#abstract,
-            declare,
             scope_id: Default::default(),
         };
         value
@@ -6504,28 +6527,24 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn alloc_class<T1, T2, T3>(
         self,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> A::Box<'a, Class<'a, A>>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -6536,14 +6555,12 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            r#abstract,
-            declare,
         ))
     }
 
@@ -8150,28 +8167,24 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn export_default_declaration_kind_class<T1, T2, T3>(
         self,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -8182,14 +8195,12 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            r#abstract,
-            declare,
         );
         let value = ExportDefaultDeclarationKind::ClassDeclaration(self.allocator.alloc(value));
         value
@@ -15396,14 +15407,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn expression_class<T1, T2, T3>(
         &mut self,
@@ -15411,14 +15420,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> Expression<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -15430,14 +15437,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            r#abstract,
-            declare,
         );
         let value = Expression::ClassExpression(self.allocator.alloc(value));
         self.handler.handle_expression(&value);
@@ -19321,14 +19326,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn declaration_class<T1, T2, T3>(
         &mut self,
@@ -19336,14 +19339,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> Declaration<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -19355,14 +19356,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            r#abstract,
-            declare,
         );
         let value = Declaration::ClassDeclaration(self.allocator.alloc(value));
         self.handler.handle_declaration(&value);
@@ -21329,6 +21328,48 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         self.allocator.alloc(self.yield_expression(span, delegate, argument))
     }
 
+    /// Builds a [`ClassHead`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_head`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#abstract: Whether the class is abstract
+    /// - declare: Whether the class was `declare`ed
+    /// - id: Class identifier, AKA the name
+    #[inline]
+    pub fn class_head(
+        &mut self,
+        span: Span,
+        r#abstract: bool,
+        declare: bool,
+        id: Option<BindingIdentifier<'a>>,
+    ) -> ClassHead<'a> {
+        let value = ClassHead { span, r#abstract, declare, id };
+        self.handler.handle_class_head(&value);
+        value
+    }
+
+    /// Builds a [`ClassHead`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_head`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#abstract: Whether the class is abstract
+    /// - declare: Whether the class was `declare`ed
+    /// - id: Class identifier, AKA the name
+    #[inline]
+    pub fn alloc_class_head(
+        &mut self,
+        span: Span,
+        r#abstract: bool,
+        declare: bool,
+        id: Option<BindingIdentifier<'a>>,
+    ) -> A::Box<'a, ClassHead<'a>> {
+        self.allocator.alloc(self.class_head(span, r#abstract, declare, id))
+    }
+
     /// Builds a [`Class`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class`] instead.
@@ -21337,14 +21378,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn class<T1, T2, T3>(
         &mut self,
@@ -21352,14 +21391,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> Class<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -21370,14 +21407,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters: type_parameters.into_in(self.allocator),
             super_class,
             super_type_parameters: super_type_parameters.into_in(self.allocator),
             implements,
             body: body.into_in(self.allocator),
-            r#abstract,
-            declare,
             scope_id: Default::default(),
         };
         self.handler.leave_scope();
@@ -21393,14 +21428,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn alloc_class<T1, T2, T3>(
         &mut self,
@@ -21408,14 +21441,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> A::Box<'a, Class<'a, A>>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -21427,14 +21458,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            r#abstract,
-            declare,
         ))
     }
 
@@ -23115,14 +23144,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - id: Class identifier, AKA the name
+    /// - head
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
     /// - implements: Interface implementation clause for TypeScript classes.
     /// - body
-    /// - r#abstract: Whether the class is abstract
-    /// - declare: Whether the class was `declare`ed
     #[inline]
     pub fn export_default_declaration_kind_class<T1, T2, T3>(
         &mut self,
@@ -23130,14 +23157,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
         implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
         body: T3,
-        r#abstract: bool,
-        declare: bool,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
@@ -23149,14 +23174,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            id,
+            head,
             type_parameters,
             super_class,
             super_type_parameters,
             implements,
             body,
-            r#abstract,
-            declare,
         );
         let value = ExportDefaultDeclarationKind::ClassDeclaration(self.allocator.alloc(value));
         self.handler.handle_export_default_declaration_kind(&value);

@@ -421,6 +421,9 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_class(&mut self, _: &Class<'a, A>) {}
 
     #[inline]
+    fn handle_class_head(&mut self, _: &ClassHead<'a>) {}
+
+    #[inline]
     fn handle_class_heritage(&mut self, _: &Expression<'a, A>) {}
 
     #[inline]

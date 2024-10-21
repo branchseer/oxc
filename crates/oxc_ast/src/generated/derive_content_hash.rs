@@ -1094,18 +1094,24 @@ impl<'a> ContentHash for YieldExpression<'a> {
     }
 }
 
+impl<'a> ContentHash for ClassHead<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.r#abstract, state);
+        ContentHash::content_hash(&self.declare, state);
+        ContentHash::content_hash(&self.id, state);
+    }
+}
+
 impl<'a> ContentHash for Class<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.decorators, state);
-        ContentHash::content_hash(&self.id, state);
+        ContentHash::content_hash(&self.head, state);
         ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.super_class, state);
         ContentHash::content_hash(&self.super_type_parameters, state);
         ContentHash::content_hash(&self.implements, state);
         ContentHash::content_hash(&self.body, state);
-        ContentHash::content_hash(&self.r#abstract, state);
-        ContentHash::content_hash(&self.declare, state);
     }
 }
 

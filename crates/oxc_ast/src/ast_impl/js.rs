@@ -749,7 +749,7 @@ impl<'a> Declaration<'a> {
     pub fn id(&self) -> Option<&BindingIdentifier<'a>> {
         match self {
             Declaration::FunctionDeclaration(decl) => decl.id.as_ref(),
-            Declaration::ClassDeclaration(decl) => decl.id.as_ref(),
+            Declaration::ClassDeclaration(decl) => decl.head.id.as_ref(),
             Declaration::TSTypeAliasDeclaration(decl) => Some(&decl.id),
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
@@ -762,7 +762,7 @@ impl<'a> Declaration<'a> {
         match self {
             Declaration::VariableDeclaration(decl) => decl.declare,
             Declaration::FunctionDeclaration(decl) => decl.declare,
-            Declaration::ClassDeclaration(decl) => decl.declare,
+            Declaration::ClassDeclaration(decl) => decl.head.declare,
             Declaration::TSEnumDeclaration(decl) => decl.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
@@ -1120,27 +1120,23 @@ impl<'a> Class<'a> {
         r#type: ClassType,
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
-        id: Option<BindingIdentifier<'a>>,
+        head: ClassHead<'a>,
         super_class: Option<Expression<'a>>,
         body: Box<'a, ClassBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
-        r#abstract: bool,
-        declare: bool,
     ) -> Self {
         Self {
             r#type,
             span,
             decorators,
-            id,
+            head,
             super_class,
             body,
             type_parameters,
             super_type_parameters,
             implements,
-            r#abstract,
-            declare,
             scope_id: Cell::default(),
         }
     }
@@ -1168,7 +1164,7 @@ impl<'a> Class<'a> {
     }
 
     pub fn is_typescript_syntax(&self) -> bool {
-        self.declare || self.r#abstract
+        self.head.declare || self.head.r#abstract
     }
 }
 

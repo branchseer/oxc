@@ -311,7 +311,8 @@ impl<'a> AstKind<'a> {
             .into(),
             Self::CatchParameter(_) => "CatchParameter".into(),
 
-            Self::Class(c) => format!("Class({})", or_anonymous(c.id.as_ref())).into(),
+            Self::ClassHead(c) => format!("ClassHead({})", or_anonymous(c.id.as_ref())).into(),
+            Self::Class(c) => format!("Class({})", or_anonymous(c.head.id.as_ref())).into(),
             Self::TSClassImplements(_) => "TSClassImplements".into(),
             Self::ClassBody(_) => "ClassBody".into(),
             Self::ClassHeritage(_) => "ClassHeritage".into(),

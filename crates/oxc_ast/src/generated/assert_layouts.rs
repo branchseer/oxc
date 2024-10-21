@@ -606,20 +606,25 @@ const _: () = {
     assert!(offset_of!(YieldExpression, delegate) == 8usize);
     assert!(offset_of!(YieldExpression, argument) == 16usize);
 
-    assert!(size_of::<Class>() == 160usize);
+    assert!(size_of::<ClassHead>() == 48usize);
+    assert!(align_of::<ClassHead>() == 8usize);
+    assert!(offset_of!(ClassHead, span) == 0usize);
+    assert!(offset_of!(ClassHead, r#abstract) == 8usize);
+    assert!(offset_of!(ClassHead, declare) == 9usize);
+    assert!(offset_of!(ClassHead, id) == 16usize);
+
+    assert!(size_of::<Class>() == 176usize);
     assert!(align_of::<Class>() == 8usize);
     assert!(offset_of!(Class, r#type) == 0usize);
     assert!(offset_of!(Class, span) == 4usize);
     assert!(offset_of!(Class, decorators) == 16usize);
-    assert!(offset_of!(Class, id) == 48usize);
-    assert!(offset_of!(Class, type_parameters) == 80usize);
-    assert!(offset_of!(Class, super_class) == 88usize);
-    assert!(offset_of!(Class, super_type_parameters) == 104usize);
-    assert!(offset_of!(Class, implements) == 112usize);
-    assert!(offset_of!(Class, body) == 144usize);
-    assert!(offset_of!(Class, r#abstract) == 152usize);
-    assert!(offset_of!(Class, declare) == 153usize);
-    assert!(offset_of!(Class, scope_id) == 156usize);
+    assert!(offset_of!(Class, head) == 48usize);
+    assert!(offset_of!(Class, type_parameters) == 96usize);
+    assert!(offset_of!(Class, super_class) == 104usize);
+    assert!(offset_of!(Class, super_type_parameters) == 120usize);
+    assert!(offset_of!(Class, implements) == 128usize);
+    assert!(offset_of!(Class, body) == 160usize);
+    assert!(offset_of!(Class, scope_id) == 168usize);
 
     assert!(size_of::<ClassType>() == 1usize);
     assert!(align_of::<ClassType>() == 1usize);
@@ -2165,20 +2170,25 @@ const _: () = {
     assert!(offset_of!(YieldExpression, delegate) == 8usize);
     assert!(offset_of!(YieldExpression, argument) == 12usize);
 
-    assert!(size_of::<Class>() == 92usize);
+    assert!(size_of::<ClassHead>() == 32usize);
+    assert!(align_of::<ClassHead>() == 4usize);
+    assert!(offset_of!(ClassHead, span) == 0usize);
+    assert!(offset_of!(ClassHead, r#abstract) == 8usize);
+    assert!(offset_of!(ClassHead, declare) == 9usize);
+    assert!(offset_of!(ClassHead, id) == 12usize);
+
+    assert!(size_of::<Class>() == 100usize);
     assert!(align_of::<Class>() == 4usize);
     assert!(offset_of!(Class, r#type) == 0usize);
     assert!(offset_of!(Class, span) == 4usize);
     assert!(offset_of!(Class, decorators) == 12usize);
-    assert!(offset_of!(Class, id) == 28usize);
-    assert!(offset_of!(Class, type_parameters) == 48usize);
-    assert!(offset_of!(Class, super_class) == 52usize);
-    assert!(offset_of!(Class, super_type_parameters) == 60usize);
-    assert!(offset_of!(Class, implements) == 64usize);
-    assert!(offset_of!(Class, body) == 80usize);
-    assert!(offset_of!(Class, r#abstract) == 84usize);
-    assert!(offset_of!(Class, declare) == 85usize);
-    assert!(offset_of!(Class, scope_id) == 88usize);
+    assert!(offset_of!(Class, head) == 28usize);
+    assert!(offset_of!(Class, type_parameters) == 60usize);
+    assert!(offset_of!(Class, super_class) == 64usize);
+    assert!(offset_of!(Class, super_type_parameters) == 72usize);
+    assert!(offset_of!(Class, implements) == 76usize);
+    assert!(offset_of!(Class, body) == 92usize);
+    assert!(offset_of!(Class, scope_id) == 96usize);
 
     assert!(size_of::<ClassType>() == 1usize);
     assert!(align_of::<ClassType>() == 1usize);

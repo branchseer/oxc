@@ -89,6 +89,7 @@ pub enum AstType {
     FunctionBody,
     ArrowFunctionExpression,
     YieldExpression,
+    ClassHead,
     Class,
     ClassHeritage,
     ClassBody,
@@ -262,6 +263,7 @@ pub enum AstKind<'a> {
     FunctionBody(&'a FunctionBody<'a>),
     ArrowFunctionExpression(&'a ArrowFunctionExpression<'a>),
     YieldExpression(&'a YieldExpression<'a>),
+    ClassHead(&'a ClassHead<'a>),
     Class(&'a Class<'a>),
     ClassHeritage(&'a Expression<'a>),
     ClassBody(&'a ClassBody<'a>),
@@ -436,6 +438,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::FunctionBody(it) => it.span(),
             Self::ArrowFunctionExpression(it) => it.span(),
             Self::YieldExpression(it) => it.span(),
+            Self::ClassHead(it) => it.span(),
             Self::Class(it) => it.span(),
             Self::ClassHeritage(it) => it.span(),
             Self::ClassBody(it) => it.span(),
@@ -1251,6 +1254,15 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_yield_expression(&self) -> Option<&'a YieldExpression<'a>> {
         if let Self::YieldExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_class_head(&self) -> Option<&'a ClassHead<'a>> {
+        if let Self::ClassHead(v) = self {
             Some(*v)
         } else {
             None
