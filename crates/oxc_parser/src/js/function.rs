@@ -211,7 +211,8 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             }
         }
 
-        Ok(Statement::FunctionDeclaration(decl))
+        let decl = self.ast.declaration_from_function(decl);
+        Ok(self.ast.statement_declaration(decl))
     }
 
     /// Parse function implementation in Javascript, cursor

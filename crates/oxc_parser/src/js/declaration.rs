@@ -38,7 +38,8 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
         self.asi()?;
 
-        Ok(Statement::VariableDeclaration(self.ast.alloc(using_decl)))
+        let decl = self.ast.declaration_from_variable(using_decl);
+        Ok(self.ast.statement_declaration(decl))
     }
 
     pub(crate) fn parse_variable_declaration(

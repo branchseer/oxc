@@ -165,7 +165,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_block_statement(&mut self) -> Result<Statement<'a, A>> {
         let block = self.parse_block()?;
-        Ok(Statement::BlockStatement(block))
+        Ok(self.ast.statement_from_block(block))
     }
 
     /// Section 14.3.2 Variable Statement
@@ -184,7 +184,8 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         {
             self.error(diagnostics::lexical_declaration_single_statement(decl.span()));
         }
-        Ok(Statement::VariableDeclaration(decl))
+        let decl = self.ast.declaration_from_variable(decl);
+        Ok(self.ast.statement_declaration(decl))
     }
 
     /// Section 14.4 Empty Statement

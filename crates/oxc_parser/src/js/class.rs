@@ -47,7 +47,8 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             )));
         }
 
-        Ok(Statement::ClassDeclaration(decl))
+        let decl = self.ast.declaration_from_class(decl);
+        Ok(self.ast.statement_declaration(decl))
     }
 
     /// Section 15.7 Class Definitions

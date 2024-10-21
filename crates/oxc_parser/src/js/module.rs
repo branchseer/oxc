@@ -43,7 +43,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                     && self.nth_at(2, Kind::Eq)))
         {
             let decl = self.parse_ts_import_equals_declaration(span)?;
-            return Ok(Statement::from(decl));
+            return Ok(self.ast.statement_declaration(decl));
         }
 
         // `import type ...`
@@ -235,7 +235,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                 .parse_export_named_declaration(span)
                 .map(ModuleDeclaration::ExportNamedDeclaration),
         }?;
-        Ok(Statement::from(decl))
+        Ok(self.ast.statement_module_declaration(decl))
     }
 
     // export NamedExports ;
