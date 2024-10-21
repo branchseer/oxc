@@ -5,10 +5,11 @@ use crate::{
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
     Context, ParserImpl,
 };
-use oxc_ast::ast::{Decorator, RegExpFlags};
+use oxc_ast::ast::{Decorator, RegExpFlags, TSDefiniteMark, TSOptionalMark};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::{AstNode, Vec as _};
+use oxc_span::ast_alloc::Vec as _;
 use oxc_span::{GetSpan, Span};
+use std::fmt::Debug;
 
 #[derive(Clone, Copy)]
 pub struct ParserCheckpoint<'a, H> {
@@ -144,6 +145,23 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             return true;
         }
         false
+    }
+
+    #[inline]
+    pub(crate) fn eat_ts_optional_mark(&mut self) -> Option<TSOptionalMark> {
+        let start_span = self.start_span();
+        if self.eat(Kind::Question) {
+            return Some(self.ast.ts_optional_mark(self.end_span(start_span)));
+        }
+        None
+    }
+    #[inline]
+    pub(crate) fn eat_ts_definite_mark(&mut self) -> Option<TSDefiniteMark> {
+        let start_span = self.start_span();
+        if self.eat(Kind::Bang) {
+            return Some(self.ast.ts_definite_mark(self.end_span(start_span)));
+        }
+        None
     }
 
     /// Advance and return true if we are at `Kind`
@@ -342,7 +360,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         std::mem::take(&mut self.state.decorators)
     }
 
-    pub(crate) fn parse_normal_list<F, T: AstNode>(
+    pub(crate) fn parse_normal_list<F, T: Debug>(
         &mut self,
         open: Kind,
         close: Kind,
@@ -368,7 +386,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         Ok(list)
     }
 
-    pub(crate) fn parse_delimited_list<F, T: AstNode>(
+    pub(crate) fn parse_delimited_list<F, T: Debug>(
         &mut self,
         close: Kind,
         separator: Kind,
@@ -401,7 +419,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         Ok(list)
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, R, X: AstNode, Y>(
+    pub(crate) fn parse_delimited_list_with_rest<E, R, X: Debug, Y>(
         &mut self,
         close: Kind,
         parse_element: E,

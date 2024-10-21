@@ -1277,7 +1277,7 @@ pub struct VariableDeclarator<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub kind: VariableDeclarationKind,
     pub id: BindingPattern<'a, A>,
     pub init: Option<Expression<'a, A>>,
-    pub definite: bool,
+    pub definite: Option<TSDefiniteMark>,
 }
 
 /// Empty Statement
@@ -1663,7 +1663,7 @@ pub struct BindingPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[span]
     pub kind: BindingPatternKind<'a, A>,
     pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
-    pub optional: bool,
+    pub optional: Option<TSOptionalMark>,
 }
 
 #[ast(visit)]
@@ -1981,7 +1981,7 @@ pub struct YieldExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
-pub struct ClassHead<'a> {
+pub struct ClassModifiers {
     #[serde(flatten)]
     pub span: Span,
     /// Whether the class is abstract
@@ -1999,8 +1999,6 @@ pub struct ClassHead<'a> {
     /// declare class Foo {}
     /// ```
     pub declare: bool,
-    /// Class identifier, AKA the name
-    pub id: Option<BindingIdentifier<'a>>,
 }
 
 #[ast(visit)]
@@ -2025,7 +2023,9 @@ pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// ```
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
 
-    pub head: ClassHead<'a>,
+    pub modifiers: ClassModifiers,
+    /// Class identifier, AKA the name
+    pub id: Option<BindingIdentifier<'a>>,
 
     #[scope(enter_before)]
     pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
@@ -2140,13 +2140,10 @@ pub enum ClassElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub struct MethodDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    /// Method definition type
-    ///
-    /// This will always be true when an `abstract` modifier is used on the method.
-    pub r#type: MethodDefinitionType,
     #[serde(flatten)]
     pub span: Span,
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub modifiers: ClassElementModifiers,
     pub key: PropertyKey<'a, A>,
     #[visit(args(flags = match self.kind {
         MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
@@ -2157,10 +2154,7 @@ pub struct MethodDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub value: A::Box<'a, Function<'a, A>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
     pub computed: bool,
-    pub r#static: bool,
-    pub r#override: bool,
-    pub optional: bool,
-    pub accessibility: Option<TSAccessibility>,
+    pub optional: Option<TSOptionalMark>,
 }
 
 #[ast]
@@ -2173,44 +2167,18 @@ pub enum MethodDefinitionType {
 }
 
 #[ast(visit)]
-#[derive_where(Debug)]
+#[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
-pub struct PropertyDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    pub r#type: PropertyDefinitionType,
+pub struct ClassElementModifiers {
     #[serde(flatten)]
     pub span: Span,
-    /// Decorators applied to the property.
-    ///
-    /// See [`Decorator`] for more information.
-    pub decorators: A::Vec<'a, Decorator<'a, A>>,
-    /// The expression used to declare the property.
-    pub key: PropertyKey<'a, A>,
-    /// Initialized value in the declaration.
-    ///
-    /// ## Example
-    /// ```
-    /// class Foo {
-    ///   x = 5     // Some(NumericLiteral)
-    ///   y: string // None
-    ///
-    ///   constructor() {
-    ///     this.y = "hello"
-    ///   }
-    /// }
-    /// ```
-    pub value: Option<Expression<'a, A>>,
-    /// Property was declared with a computed key
-    ///
-    /// ## Example
-    /// ```ts
-    /// class Foo {
-    ///   ["a"]: string // true
-    ///   b: number     // false
-    /// }
-    /// ```
-    pub computed: bool,
+
+    pub r#async: bool,
+
+    pub r#abstract: bool,
+
     /// Property was declared with a `static` modifier
     pub r#static: bool,
     /// Property is declared with a `declare` modifier.
@@ -2228,15 +2196,9 @@ pub struct PropertyDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// ```
     pub declare: bool,
     pub r#override: bool,
-    /// `true` when created with an optional modifier (`?`)
-    pub optional: bool,
-    pub definite: bool,
     /// `true` when declared with a `readonly` modifier
     pub readonly: bool,
-    /// Type annotation on the property.
-    ///
-    /// Will only ever be [`Some`] for TypeScript files.
-    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+
     /// Accessibility modifier.
     ///
     /// Only ever [`Some`] for TypeScript files.
@@ -2252,6 +2214,57 @@ pub struct PropertyDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// }
     /// ```
     pub accessibility: Option<TSAccessibility>,
+}
+
+#[ast(visit)]
+#[derive_where(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+#[serde(rename_all = "camelCase")]
+pub struct PropertyDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    #[serde(flatten)]
+    pub span: Span,
+    /// Decorators applied to the property.
+    ///
+    /// See [`Decorator`] for more information.
+    pub decorators: A::Vec<'a, Decorator<'a, A>>,
+
+    pub modifiers: ClassElementModifiers,
+    /// The expression used to declare the property.
+    pub key: PropertyKey<'a, A>,
+
+    pub optional: Option<TSOptionalMark>,
+    pub definite: Option<TSDefiniteMark>,
+
+    /// Initialized value in the declaration.
+    ///
+    /// ## Example
+    /// ```
+    /// class Foo {
+    ///   x = 5     // Some(NumericLiteral)
+    ///   y: string // None
+    ///
+    ///   constructor() {
+    ///     this.y = "hello"
+    ///   }
+    /// }
+    /// ```
+    pub value: Option<Expression<'a, A>>,
+
+    /// Property was declared with a computed key
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo {
+    ///   ["a"]: string // true
+    ///   b: number     // false
+    /// }
+    /// ```
+    pub computed: bool,
+    /// Type annotation on the property.
+    ///
+    /// Will only ever be [`Some`] for TypeScript files.
+    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
 }
 
 #[ast]
@@ -2404,42 +2417,27 @@ pub enum AccessorPropertyType {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
 pub struct AccessorProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    pub r#type: AccessorPropertyType,
     #[serde(flatten)]
     pub span: Span,
     /// Decorators applied to the accessor property.
     ///
     /// See [`Decorator`] for more information.
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
+
+    pub modifiers: ClassElementModifiers,
+
     /// The expression used to declare the property.
     pub key: PropertyKey<'a, A>,
     /// Initialized value in the declaration, if present.
     pub value: Option<Expression<'a, A>>,
     /// Property was declared with a computed key
     pub computed: bool,
-    /// Property was declared with a `static` modifier
-    pub r#static: bool,
     /// Property has a `!` after its key.
-    pub definite: bool,
+    pub definite: Option<TSDefiniteMark>,
     /// Type annotation on the property.
     ///
     /// Will only ever be [`Some`] for TypeScript files.
     pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
-    /// Accessibility modifier.
-    ///
-    /// Only ever [`Some`] for TypeScript files.
-    ///
-    /// ## Example
-    ///
-    /// ```ts
-    /// class Foo {
-    ///   public accessor w: number     // Some(TSAccessibility::Public)
-    ///   private accessor x: string    // Some(TSAccessibility::Private)
-    ///   protected accessor y: boolean // Some(TSAccessibility::Protected)
-    ///   accessor z           // None
-    /// }
-    /// ```
-    pub accessibility: Option<TSAccessibility>,
 }
 
 #[ast(visit)]

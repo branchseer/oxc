@@ -1094,11 +1094,10 @@ impl<'a> ContentHash for YieldExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for ClassHead<'a> {
+impl ContentHash for ClassModifiers {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#abstract, state);
         ContentHash::content_hash(&self.declare, state);
-        ContentHash::content_hash(&self.id, state);
     }
 }
 
@@ -1106,7 +1105,8 @@ impl<'a> ContentHash for Class<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.decorators, state);
-        ContentHash::content_hash(&self.head, state);
+        ContentHash::content_hash(&self.modifiers, state);
+        ContentHash::content_hash(&self.id, state);
         ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.super_class, state);
         ContentHash::content_hash(&self.super_type_parameters, state);
@@ -1142,16 +1142,13 @@ impl<'a> ContentHash for ClassElement<'a> {
 
 impl<'a> ContentHash for MethodDefinition<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.decorators, state);
+        ContentHash::content_hash(&self.modifiers, state);
         ContentHash::content_hash(&self.key, state);
         ContentHash::content_hash(&self.value, state);
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.computed, state);
-        ContentHash::content_hash(&self.r#static, state);
-        ContentHash::content_hash(&self.r#override, state);
         ContentHash::content_hash(&self.optional, state);
-        ContentHash::content_hash(&self.accessibility, state);
     }
 }
 
@@ -1161,21 +1158,28 @@ impl ContentHash for MethodDefinitionType {
     }
 }
 
-impl<'a> ContentHash for PropertyDefinition<'a> {
+impl ContentHash for ClassElementModifiers {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.r#type, state);
-        ContentHash::content_hash(&self.decorators, state);
-        ContentHash::content_hash(&self.key, state);
-        ContentHash::content_hash(&self.value, state);
-        ContentHash::content_hash(&self.computed, state);
+        ContentHash::content_hash(&self.r#async, state);
+        ContentHash::content_hash(&self.r#abstract, state);
         ContentHash::content_hash(&self.r#static, state);
         ContentHash::content_hash(&self.declare, state);
         ContentHash::content_hash(&self.r#override, state);
+        ContentHash::content_hash(&self.readonly, state);
+        ContentHash::content_hash(&self.accessibility, state);
+    }
+}
+
+impl<'a> ContentHash for PropertyDefinition<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.decorators, state);
+        ContentHash::content_hash(&self.modifiers, state);
+        ContentHash::content_hash(&self.key, state);
         ContentHash::content_hash(&self.optional, state);
         ContentHash::content_hash(&self.definite, state);
-        ContentHash::content_hash(&self.readonly, state);
+        ContentHash::content_hash(&self.value, state);
+        ContentHash::content_hash(&self.computed, state);
         ContentHash::content_hash(&self.type_annotation, state);
-        ContentHash::content_hash(&self.accessibility, state);
     }
 }
 
@@ -1225,15 +1229,13 @@ impl ContentHash for AccessorPropertyType {
 
 impl<'a> ContentHash for AccessorProperty<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.decorators, state);
+        ContentHash::content_hash(&self.modifiers, state);
         ContentHash::content_hash(&self.key, state);
         ContentHash::content_hash(&self.value, state);
         ContentHash::content_hash(&self.computed, state);
-        ContentHash::content_hash(&self.r#static, state);
         ContentHash::content_hash(&self.definite, state);
         ContentHash::content_hash(&self.type_annotation, state);
-        ContentHash::content_hash(&self.accessibility, state);
     }
 }
 
@@ -2157,6 +2159,14 @@ impl ContentHash for ImportOrExportKind {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
     }
+}
+
+impl ContentHash for TSOptionalMark {
+    fn content_hash<H: Hasher>(&self, _: &mut H) {}
+}
+
+impl ContentHash for TSDefiniteMark {
+    fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
 impl<'a> ContentHash for JSDocNullableType<'a> {

@@ -463,7 +463,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a, A>> {
         let span = self.start_span();
-        
+
         self.expect(Kind::LAngle)?;
         let ts_type = self.parse_ts_type()?;
         self.expect(Kind::RAngle)?;

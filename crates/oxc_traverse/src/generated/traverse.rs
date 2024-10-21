@@ -971,6 +971,11 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_class_modifiers(&mut self, node: &mut ClassModifiers, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_class_modifiers(&mut self, node: &mut ClassModifiers, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
     fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {}
@@ -996,6 +1001,21 @@ pub trait Traverse<'a> {
     fn exit_method_definition(
         &mut self,
         node: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_class_element_modifiers(
+        &mut self,
+        node: &mut ClassElementModifiers,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_class_element_modifiers(
+        &mut self,
+        node: &mut ClassElementModifiers,
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
@@ -2268,6 +2288,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_ts_type_assertion_annotation(
+        &mut self,
+        node: &mut TSTypeAssertionAnnotation<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_assertion_annotation(
+        &mut self,
+        node: &mut TSTypeAssertionAnnotation<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_type_assertion(
         &mut self,
         node: &mut TSTypeAssertion<'a>,
@@ -2391,6 +2426,16 @@ pub trait Traverse<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
+
+    #[inline]
+    fn enter_ts_optional_mark(&mut self, node: &mut TSOptionalMark, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_optional_mark(&mut self, node: &mut TSOptionalMark, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_definite_mark(&mut self, node: &mut TSDefiniteMark, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_definite_mark(&mut self, node: &mut TSDefiniteMark, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
     fn enter_js_doc_nullable_type(

@@ -1023,7 +1023,7 @@ impl<'a, A: AstAllocator> GetSpan for YieldExpression<'a, A> {
     }
 }
 
-impl<'a> GetSpan for ClassHead<'a> {
+impl GetSpan for ClassModifiers {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -1057,6 +1057,13 @@ impl<'a, A: AstAllocator> GetSpan for ClassElement<'a, A> {
 }
 
 impl<'a, A: AstAllocator> GetSpan for MethodDefinition<'a, A> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ClassElementModifiers {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -1983,6 +1990,20 @@ impl<'a> GetSpan for TSNamespaceExportDeclaration<'a> {
 }
 
 impl<'a, A: AstAllocator> GetSpan for TSInstantiationExpression<'a, A> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for TSOptionalMark {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for TSDefiniteMark {
     #[inline]
     fn span(&self) -> Span {
         self.span

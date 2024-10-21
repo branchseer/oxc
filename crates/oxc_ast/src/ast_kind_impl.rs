@@ -311,8 +311,9 @@ impl<'a> AstKind<'a> {
             .into(),
             Self::CatchParameter(_) => "CatchParameter".into(),
 
-            Self::ClassHead(c) => format!("ClassHead({})", or_anonymous(c.id.as_ref())).into(),
-            Self::Class(c) => format!("Class({})", or_anonymous(c.head.id.as_ref())).into(),
+            Self::ClassModifiers(c) => "ClassModifiers".into(),
+            Self::ClassElementModifiers(c) => "ClassElementModifiers".into(),
+            Self::Class(c) => format!("Class({})", or_anonymous(c.id.as_ref())).into(),
             Self::TSClassImplements(_) => "TSClassImplements".into(),
             Self::ClassBody(_) => "ClassBody".into(),
             Self::ClassHeritage(_) => "ClassHeritage".into(),
@@ -350,6 +351,8 @@ impl<'a> AstKind<'a> {
             Self::JSXNamespacedName(_) => "JSXNamespacedName".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
+            Self::TSOptionalMark(_) => "TSOptionalMark".into(),
+            Self::TSDefiniteMark(_) => "TSDefiniteMark".into(),
 
             Self::TSAnyKeyword(_) => "TSAnyKeyword".into(),
             Self::TSIntersectionType(_) => "TSIntersectionType".into(),

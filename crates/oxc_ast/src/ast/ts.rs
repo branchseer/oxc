@@ -1910,6 +1910,26 @@ pub enum ImportOrExportKind {
     Type = 1,
 }
 
+#[ast(visit)]
+#[derive(Debug, Clone, Copy)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+#[serde(rename_all = "camelCase")]
+pub struct TSOptionalMark {
+    #[serde(flatten)]
+    pub span: Span,
+}
+
+#[ast(visit)]
+#[derive(Debug, Clone, Copy)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+#[serde(rename_all = "camelCase")]
+pub struct TSDefiniteMark {
+    #[serde(flatten)]
+    pub span: Span,
+}
+
 // [`JSDoc`](https://github.com/microsoft/TypeScript/blob/54a554d8af2657630307cbfa8a3e4f3946e36507/src/compiler/types.ts#L393)
 
 /// `type foo = ty?` or `type foo = ?ty`

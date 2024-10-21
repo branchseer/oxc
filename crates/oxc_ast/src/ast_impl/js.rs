@@ -749,7 +749,7 @@ impl<'a> Declaration<'a> {
     pub fn id(&self) -> Option<&BindingIdentifier<'a>> {
         match self {
             Declaration::FunctionDeclaration(decl) => decl.id.as_ref(),
-            Declaration::ClassDeclaration(decl) => decl.head.id.as_ref(),
+            Declaration::ClassDeclaration(decl) => decl.id.as_ref(),
             Declaration::TSTypeAliasDeclaration(decl) => Some(&decl.id),
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
@@ -762,7 +762,7 @@ impl<'a> Declaration<'a> {
         match self {
             Declaration::VariableDeclaration(decl) => decl.declare,
             Declaration::FunctionDeclaration(decl) => decl.declare,
-            Declaration::ClassDeclaration(decl) => decl.head.declare,
+            Declaration::ClassDeclaration(decl) => decl.modifiers.declare,
             Declaration::TSEnumDeclaration(decl) => decl.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
@@ -1120,7 +1120,8 @@ impl<'a> Class<'a> {
         r#type: ClassType,
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         super_class: Option<Expression<'a>>,
         body: Box<'a, ClassBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1131,7 +1132,8 @@ impl<'a> Class<'a> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             super_class,
             body,
             type_parameters,
@@ -1164,7 +1166,7 @@ impl<'a> Class<'a> {
     }
 
     pub fn is_typescript_syntax(&self) -> bool {
-        self.head.declare || self.head.r#abstract
+        self.modifiers.declare || self.modifiers.r#abstract
     }
 }
 
@@ -1179,9 +1181,9 @@ impl<'a> ClassElement<'a> {
     pub fn r#static(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
-            Self::MethodDefinition(def) => def.r#static,
-            Self::PropertyDefinition(def) => def.r#static,
-            Self::AccessorProperty(def) => def.r#static,
+            Self::MethodDefinition(def) => def.modifiers.r#static,
+            Self::PropertyDefinition(def) => def.modifiers.r#static,
+            Self::AccessorProperty(def) => def.modifiers.r#static,
         }
     }
 
@@ -1197,8 +1199,8 @@ impl<'a> ClassElement<'a> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         match self {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
-            Self::MethodDefinition(def) => def.accessibility,
-            Self::PropertyDefinition(def) => def.accessibility,
+            Self::MethodDefinition(def) => def.modifiers.accessibility,
+            Self::PropertyDefinition(def) => def.modifiers.accessibility,
         }
     }
 
@@ -1249,10 +1251,8 @@ impl<'a> ClassElement<'a> {
         match self {
             Self::TSIndexSignature(_) => true,
             Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
-            Self::PropertyDefinition(property) => {
-                property.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
-            }
-            Self::AccessorProperty(property) => property.r#type.is_abstract(),
+            Self::PropertyDefinition(property) => property.modifiers.r#abstract,
+            Self::AccessorProperty(property) => property.modifiers.r#abstract,
             Self::StaticBlock(_) => false,
         }
     }
@@ -1276,9 +1276,9 @@ impl<'a> ClassElement<'a> {
     /// ```
     pub fn is_abstract(&self) -> bool {
         match self {
-            Self::MethodDefinition(method) => method.r#type.is_abstract(),
-            Self::AccessorProperty(accessor) => accessor.r#type.is_abstract(),
-            Self::PropertyDefinition(property) => property.r#type.is_abstract(),
+            Self::MethodDefinition(method) => method.modifiers.r#abstract,
+            Self::AccessorProperty(accessor) => accessor.modifiers.r#abstract,
+            Self::PropertyDefinition(property) => property.modifiers.r#abstract,
             Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
         }
     }

@@ -842,7 +842,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -854,7 +855,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -870,7 +872,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -4541,7 +4544,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -4553,7 +4557,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -4569,7 +4574,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -4827,7 +4833,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         kind: VariableDeclarationKind,
         id: BindingPattern<'a, A>,
         init: Option<Expression<'a, A>>,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
     ) -> VariableDeclarator<'a, A> {
         let value = VariableDeclarator { span, kind, id, init, definite };
         value
@@ -4850,7 +4856,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         kind: VariableDeclarationKind,
         id: BindingPattern<'a, A>,
         init: Option<Expression<'a, A>>,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
     ) -> A::Box<'a, VariableDeclarator<'a, A>> {
         self.allocator.alloc(self.variable_declarator(span, kind, id, init, definite))
     }
@@ -5695,7 +5701,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         kind: BindingPatternKind<'a, A>,
         type_annotation: T1,
-        optional: bool,
+        optional: Option<TSOptionalMark>,
     ) -> BindingPattern<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
@@ -5721,7 +5727,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         kind: BindingPatternKind<'a, A>,
         type_annotation: T1,
-        optional: bool,
+        optional: Option<TSOptionalMark>,
     ) -> A::Box<'a, BindingPattern<'a, A>>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
@@ -6431,45 +6437,36 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self.allocator.alloc(self.yield_expression(span, delegate, argument))
     }
 
-    /// Builds a [`ClassHead`]
+    /// Builds a [`ClassModifiers`]
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_head`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_modifiers`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - r#abstract: Whether the class is abstract
     /// - declare: Whether the class was `declare`ed
-    /// - id: Class identifier, AKA the name
     #[inline]
-    pub fn class_head(
-        self,
-        span: Span,
-        r#abstract: bool,
-        declare: bool,
-        id: Option<BindingIdentifier<'a>>,
-    ) -> ClassHead<'a> {
-        let value = ClassHead { span, r#abstract, declare, id };
+    pub fn class_modifiers(self, span: Span, r#abstract: bool, declare: bool) -> ClassModifiers {
+        let value = ClassModifiers { span, r#abstract, declare };
         value
     }
 
-    /// Builds a [`ClassHead`] and stores it in the memory arena.
+    /// Builds a [`ClassModifiers`] and stores it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_head`] instead.
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_modifiers`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - r#abstract: Whether the class is abstract
     /// - declare: Whether the class was `declare`ed
-    /// - id: Class identifier, AKA the name
     #[inline]
-    pub fn alloc_class_head(
+    pub fn alloc_class_modifiers(
         self,
         span: Span,
         r#abstract: bool,
         declare: bool,
-        id: Option<BindingIdentifier<'a>>,
-    ) -> A::Box<'a, ClassHead<'a>> {
-        self.allocator.alloc(self.class_head(span, r#abstract, declare, id))
+    ) -> A::Box<'a, ClassModifiers> {
+        self.allocator.alloc(self.class_modifiers(span, r#abstract, declare))
     }
 
     /// Builds a [`Class`]
@@ -6480,7 +6477,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -6492,7 +6490,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -6508,7 +6507,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters: type_parameters.into_in(self.allocator),
             super_class,
             super_type_parameters: super_type_parameters.into_in(self.allocator),
@@ -6527,7 +6527,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -6539,7 +6540,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -6555,7 +6557,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -6626,48 +6629,31 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// This node contains a [`MethodDefinition`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - key
     /// - value
     /// - kind
     /// - computed
-    /// - r#static
-    /// - r#override
     /// - optional
-    /// - accessibility
     #[inline]
     pub fn class_element_method_definition<T1>(
         self,
-        r#type: MethodDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: T1,
         kind: MethodDefinitionKind,
         computed: bool,
-        r#static: bool,
-        r#override: bool,
-        optional: bool,
-        accessibility: Option<TSAccessibility>,
+        optional: Option<TSOptionalMark>,
     ) -> ClassElement<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
     {
-        let value = self.method_definition(
-            r#type,
-            span,
-            decorators,
-            key,
-            value,
-            kind,
-            computed,
-            r#static,
-            r#override,
-            optional,
-            accessibility,
-        );
+        let value = self
+            .method_definition(span, decorators, modifiers, key, value, kind, computed, optional);
         let value = ClassElement::MethodDefinition(self.allocator.alloc(value));
         value
     }
@@ -6687,56 +6673,41 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// This node contains a [`PropertyDefinition`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
+    /// - optional
+    /// - definite
     /// - value: Initialized value in the declaration.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
-    /// - declare: Property is declared with a `declare` modifier.
-    /// - r#override
-    /// - optional: `true` when created with an optional modifier (`?`)
-    /// - definite
-    /// - readonly: `true` when declared with a `readonly` modifier
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn class_element_property_definition<T1>(
         self,
-        r#type: PropertyDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
+        optional: Option<TSOptionalMark>,
+        definite: Option<TSDefiniteMark>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        declare: bool,
-        r#override: bool,
-        optional: bool,
-        definite: bool,
-        readonly: bool,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         let value = self.property_definition(
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
-            value,
-            computed,
-            r#static,
-            declare,
-            r#override,
             optional,
             definite,
-            readonly,
+            value,
+            computed,
             type_annotation,
-            accessibility,
         );
         let value = ClassElement::PropertyDefinition(self.allocator.alloc(value));
         value
@@ -6757,44 +6728,38 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// This node contains a [`AccessorProperty`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the accessor property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn class_element_accessor_property<T1>(
         self,
-        r#type: AccessorPropertyType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         let value = self.accessor_property(
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
             value,
             computed,
-            r#static,
             definite,
             type_annotation,
-            accessibility,
         );
         let value = ClassElement::AccessorProperty(self.allocator.alloc(value));
         value
@@ -6850,47 +6815,38 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_method_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - key
     /// - value
     /// - kind
     /// - computed
-    /// - r#static
-    /// - r#override
     /// - optional
-    /// - accessibility
     #[inline]
     pub fn method_definition<T1>(
         self,
-        r#type: MethodDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: T1,
         kind: MethodDefinitionKind,
         computed: bool,
-        r#static: bool,
-        r#override: bool,
-        optional: bool,
-        accessibility: Option<TSAccessibility>,
+        optional: Option<TSOptionalMark>,
     ) -> MethodDefinition<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
     {
         let value = MethodDefinition {
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
             value: value.into_in(self.allocator),
             kind,
             computed,
-            r#static,
-            r#override,
             optional,
-            accessibility,
         };
         value
     }
@@ -6900,46 +6856,107 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::method_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - key
     /// - value
     /// - kind
     /// - computed
-    /// - r#static
-    /// - r#override
     /// - optional
-    /// - accessibility
     #[inline]
     pub fn alloc_method_definition<T1>(
         self,
-        r#type: MethodDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: T1,
         kind: MethodDefinitionKind,
         computed: bool,
-        r#static: bool,
-        r#override: bool,
-        optional: bool,
-        accessibility: Option<TSAccessibility>,
+        optional: Option<TSOptionalMark>,
     ) -> A::Box<'a, MethodDefinition<'a, A>>
     where
         T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
     {
-        self.allocator.alloc(self.method_definition(
-            r#type,
+        self.allocator.alloc(
+            self.method_definition(
+                span, decorators, modifiers, key, value, kind, computed, optional,
+            ),
+        )
+    }
+
+    /// Builds a [`ClassElementModifiers`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_element_modifiers`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#async
+    /// - r#abstract
+    /// - r#static: Property was declared with a `static` modifier
+    /// - declare: Property is declared with a `declare` modifier.
+    /// - r#override
+    /// - readonly: `true` when declared with a `readonly` modifier
+    /// - accessibility: Accessibility modifier.
+    #[inline]
+    pub fn class_element_modifiers(
+        self,
+        span: Span,
+        r#async: bool,
+        r#abstract: bool,
+        r#static: bool,
+        declare: bool,
+        r#override: bool,
+        readonly: bool,
+        accessibility: Option<TSAccessibility>,
+    ) -> ClassElementModifiers {
+        let value = ClassElementModifiers {
             span,
-            decorators,
-            key,
-            value,
-            kind,
-            computed,
+            r#async,
+            r#abstract,
             r#static,
+            declare,
             r#override,
-            optional,
+            readonly,
+            accessibility,
+        };
+        value
+    }
+
+    /// Builds a [`ClassElementModifiers`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_element_modifiers`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#async
+    /// - r#abstract
+    /// - r#static: Property was declared with a `static` modifier
+    /// - declare: Property is declared with a `declare` modifier.
+    /// - r#override
+    /// - readonly: `true` when declared with a `readonly` modifier
+    /// - accessibility: Accessibility modifier.
+    #[inline]
+    pub fn alloc_class_element_modifiers(
+        self,
+        span: Span,
+        r#async: bool,
+        r#abstract: bool,
+        r#static: bool,
+        declare: bool,
+        r#override: bool,
+        readonly: bool,
+        accessibility: Option<TSAccessibility>,
+    ) -> A::Box<'a, ClassElementModifiers> {
+        self.allocator.alloc(self.class_element_modifiers(
+            span,
+            r#async,
+            r#abstract,
+            r#static,
+            declare,
+            r#override,
+            readonly,
             accessibility,
         ))
     }
@@ -6949,56 +6966,41 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_property_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
+    /// - optional
+    /// - definite
     /// - value: Initialized value in the declaration.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
-    /// - declare: Property is declared with a `declare` modifier.
-    /// - r#override
-    /// - optional: `true` when created with an optional modifier (`?`)
-    /// - definite
-    /// - readonly: `true` when declared with a `readonly` modifier
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn property_definition<T1>(
         self,
-        r#type: PropertyDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
+        optional: Option<TSOptionalMark>,
+        definite: Option<TSDefiniteMark>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        declare: bool,
-        r#override: bool,
-        optional: bool,
-        definite: bool,
-        readonly: bool,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> PropertyDefinition<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         let value = PropertyDefinition {
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
-            value,
-            computed,
-            r#static,
-            declare,
-            r#override,
             optional,
             definite,
-            readonly,
+            value,
+            computed,
             type_annotation: type_annotation.into_in(self.allocator),
-            accessibility,
         };
         value
     }
@@ -7008,56 +7010,41 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::property_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
+    /// - optional
+    /// - definite
     /// - value: Initialized value in the declaration.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
-    /// - declare: Property is declared with a `declare` modifier.
-    /// - r#override
-    /// - optional: `true` when created with an optional modifier (`?`)
-    /// - definite
-    /// - readonly: `true` when declared with a `readonly` modifier
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn alloc_property_definition<T1>(
         self,
-        r#type: PropertyDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
+        optional: Option<TSOptionalMark>,
+        definite: Option<TSDefiniteMark>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        declare: bool,
-        r#override: bool,
-        optional: bool,
-        definite: bool,
-        readonly: bool,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> A::Box<'a, PropertyDefinition<'a, A>>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         self.allocator.alloc(self.property_definition(
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
-            value,
-            computed,
-            r#static,
-            declare,
-            r#override,
             optional,
             definite,
-            readonly,
+            value,
+            computed,
             type_annotation,
-            accessibility,
         ))
     }
 
@@ -7355,44 +7342,38 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_accessor_property`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the accessor property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn accessor_property<T1>(
         self,
-        r#type: AccessorPropertyType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> AccessorProperty<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         let value = AccessorProperty {
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
             value,
             computed,
-            r#static,
             definite,
             type_annotation: type_annotation.into_in(self.allocator),
-            accessibility,
         };
         value
     }
@@ -7402,44 +7383,38 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::accessor_property`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the accessor property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn alloc_accessor_property<T1>(
         self,
-        r#type: AccessorPropertyType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> A::Box<'a, AccessorProperty<'a, A>>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         self.allocator.alloc(self.accessor_property(
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
             value,
             computed,
-            r#static,
             definite,
             type_annotation,
-            accessibility,
         ))
     }
 
@@ -8167,7 +8142,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -8179,7 +8155,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -8195,7 +8172,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -13297,6 +13275,52 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self.allocator.alloc(self.ts_instantiation_expression(span, expression, type_parameters))
     }
 
+    /// Builds a [`TSOptionalMark`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_optional_mark`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn ts_optional_mark(self, span: Span) -> TSOptionalMark {
+        let value = TSOptionalMark { span };
+        value
+    }
+
+    /// Builds a [`TSOptionalMark`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_optional_mark`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn alloc_ts_optional_mark(self, span: Span) -> A::Box<'a, TSOptionalMark> {
+        self.allocator.alloc(self.ts_optional_mark(span))
+    }
+
+    /// Builds a [`TSDefiniteMark`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_definite_mark`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn ts_definite_mark(self, span: Span) -> TSDefiniteMark {
+        let value = TSDefiniteMark { span };
+        value
+    }
+
+    /// Builds a [`TSDefiniteMark`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_definite_mark`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn alloc_ts_definite_mark(self, span: Span) -> A::Box<'a, TSDefiniteMark> {
+        self.allocator.alloc(self.ts_definite_mark(span))
+    }
+
     /// Builds a [`JSDocNullableType`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_js_doc_nullable_type`] instead.
@@ -15440,7 +15464,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -15453,7 +15478,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -15470,7 +15496,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -19359,7 +19386,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -19372,7 +19400,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -19389,7 +19418,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -19677,7 +19707,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         kind: VariableDeclarationKind,
         id: BindingPattern<'a, A>,
         init: Option<Expression<'a, A>>,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
     ) -> VariableDeclarator<'a, A> {
         let value = VariableDeclarator { span, kind, id, init, definite };
         self.handler.handle_variable_declarator(&value);
@@ -19701,7 +19731,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         kind: VariableDeclarationKind,
         id: BindingPattern<'a, A>,
         init: Option<Expression<'a, A>>,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
     ) -> A::Box<'a, VariableDeclarator<'a, A>> {
         self.allocator.alloc(self.variable_declarator(span, kind, id, init, definite))
     }
@@ -20591,7 +20621,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         kind: BindingPatternKind<'a, A>,
         type_annotation: T1,
-        optional: bool,
+        optional: Option<TSOptionalMark>,
     ) -> BindingPattern<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
@@ -20618,7 +20648,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         kind: BindingPatternKind<'a, A>,
         type_annotation: T1,
-        optional: bool,
+        optional: Option<TSOptionalMark>,
     ) -> A::Box<'a, BindingPattern<'a, A>>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
@@ -21361,46 +21391,42 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         self.allocator.alloc(self.yield_expression(span, delegate, argument))
     }
 
-    /// Builds a [`ClassHead`]
+    /// Builds a [`ClassModifiers`]
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_head`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_modifiers`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - r#abstract: Whether the class is abstract
     /// - declare: Whether the class was `declare`ed
-    /// - id: Class identifier, AKA the name
     #[inline]
-    pub fn class_head(
+    pub fn class_modifiers(
         &mut self,
         span: Span,
         r#abstract: bool,
         declare: bool,
-        id: Option<BindingIdentifier<'a>>,
-    ) -> ClassHead<'a> {
-        let value = ClassHead { span, r#abstract, declare, id };
-        self.handler.handle_class_head(&value);
+    ) -> ClassModifiers {
+        let value = ClassModifiers { span, r#abstract, declare };
+        self.handler.handle_class_modifiers(&value);
         value
     }
 
-    /// Builds a [`ClassHead`] and stores it in the memory arena.
+    /// Builds a [`ClassModifiers`] and stores it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_head`] instead.
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_modifiers`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - r#abstract: Whether the class is abstract
     /// - declare: Whether the class was `declare`ed
-    /// - id: Class identifier, AKA the name
     #[inline]
-    pub fn alloc_class_head(
+    pub fn alloc_class_modifiers(
         &mut self,
         span: Span,
         r#abstract: bool,
         declare: bool,
-        id: Option<BindingIdentifier<'a>>,
-    ) -> A::Box<'a, ClassHead<'a>> {
-        self.allocator.alloc(self.class_head(span, r#abstract, declare, id))
+    ) -> A::Box<'a, ClassModifiers> {
+        self.allocator.alloc(self.class_modifiers(span, r#abstract, declare))
     }
 
     /// Builds a [`Class`]
@@ -21411,7 +21437,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -21424,7 +21451,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -21440,7 +21468,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters: type_parameters.into_in(self.allocator),
             super_class,
             super_type_parameters: super_type_parameters.into_in(self.allocator),
@@ -21461,7 +21490,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -21474,7 +21504,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -21491,7 +21522,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -21570,48 +21602,31 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// This node contains a [`MethodDefinition`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - key
     /// - value
     /// - kind
     /// - computed
-    /// - r#static
-    /// - r#override
     /// - optional
-    /// - accessibility
     #[inline]
     pub fn class_element_method_definition<T1>(
         &mut self,
-        r#type: MethodDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: T1,
         kind: MethodDefinitionKind,
         computed: bool,
-        r#static: bool,
-        r#override: bool,
-        optional: bool,
-        accessibility: Option<TSAccessibility>,
+        optional: Option<TSOptionalMark>,
     ) -> ClassElement<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
     {
-        let value = self.method_definition(
-            r#type,
-            span,
-            decorators,
-            key,
-            value,
-            kind,
-            computed,
-            r#static,
-            r#override,
-            optional,
-            accessibility,
-        );
+        let value = self
+            .method_definition(span, decorators, modifiers, key, value, kind, computed, optional);
         let value = ClassElement::MethodDefinition(self.allocator.alloc(value));
         self.handler.handle_class_element(&value);
         value
@@ -21633,56 +21648,41 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// This node contains a [`PropertyDefinition`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
+    /// - optional
+    /// - definite
     /// - value: Initialized value in the declaration.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
-    /// - declare: Property is declared with a `declare` modifier.
-    /// - r#override
-    /// - optional: `true` when created with an optional modifier (`?`)
-    /// - definite
-    /// - readonly: `true` when declared with a `readonly` modifier
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn class_element_property_definition<T1>(
         &mut self,
-        r#type: PropertyDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
+        optional: Option<TSOptionalMark>,
+        definite: Option<TSDefiniteMark>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        declare: bool,
-        r#override: bool,
-        optional: bool,
-        definite: bool,
-        readonly: bool,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         let value = self.property_definition(
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
-            value,
-            computed,
-            r#static,
-            declare,
-            r#override,
             optional,
             definite,
-            readonly,
+            value,
+            computed,
             type_annotation,
-            accessibility,
         );
         let value = ClassElement::PropertyDefinition(self.allocator.alloc(value));
         self.handler.handle_class_element(&value);
@@ -21705,44 +21705,38 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// This node contains a [`AccessorProperty`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the accessor property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn class_element_accessor_property<T1>(
         &mut self,
-        r#type: AccessorPropertyType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         let value = self.accessor_property(
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
             value,
             computed,
-            r#static,
             definite,
             type_annotation,
-            accessibility,
         );
         let value = ClassElement::AccessorProperty(self.allocator.alloc(value));
         self.handler.handle_class_element(&value);
@@ -21802,47 +21796,38 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_method_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - key
     /// - value
     /// - kind
     /// - computed
-    /// - r#static
-    /// - r#override
     /// - optional
-    /// - accessibility
     #[inline]
     pub fn method_definition<T1>(
         &mut self,
-        r#type: MethodDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: T1,
         kind: MethodDefinitionKind,
         computed: bool,
-        r#static: bool,
-        r#override: bool,
-        optional: bool,
-        accessibility: Option<TSAccessibility>,
+        optional: Option<TSOptionalMark>,
     ) -> MethodDefinition<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
     {
         let value = MethodDefinition {
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
             value: value.into_in(self.allocator),
             kind,
             computed,
-            r#static,
-            r#override,
             optional,
-            accessibility,
         };
         self.handler.handle_method_definition(&value);
         value
@@ -21853,46 +21838,108 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::method_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - key
     /// - value
     /// - kind
     /// - computed
-    /// - r#static
-    /// - r#override
     /// - optional
-    /// - accessibility
     #[inline]
     pub fn alloc_method_definition<T1>(
         &mut self,
-        r#type: MethodDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: T1,
         kind: MethodDefinitionKind,
         computed: bool,
-        r#static: bool,
-        r#override: bool,
-        optional: bool,
-        accessibility: Option<TSAccessibility>,
+        optional: Option<TSOptionalMark>,
     ) -> A::Box<'a, MethodDefinition<'a, A>>
     where
         T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
     {
-        self.allocator.alloc(self.method_definition(
-            r#type,
+        self.allocator.alloc(
+            self.method_definition(
+                span, decorators, modifiers, key, value, kind, computed, optional,
+            ),
+        )
+    }
+
+    /// Builds a [`ClassElementModifiers`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_element_modifiers`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#async
+    /// - r#abstract
+    /// - r#static: Property was declared with a `static` modifier
+    /// - declare: Property is declared with a `declare` modifier.
+    /// - r#override
+    /// - readonly: `true` when declared with a `readonly` modifier
+    /// - accessibility: Accessibility modifier.
+    #[inline]
+    pub fn class_element_modifiers(
+        &mut self,
+        span: Span,
+        r#async: bool,
+        r#abstract: bool,
+        r#static: bool,
+        declare: bool,
+        r#override: bool,
+        readonly: bool,
+        accessibility: Option<TSAccessibility>,
+    ) -> ClassElementModifiers {
+        let value = ClassElementModifiers {
             span,
-            decorators,
-            key,
-            value,
-            kind,
-            computed,
+            r#async,
+            r#abstract,
             r#static,
+            declare,
             r#override,
-            optional,
+            readonly,
+            accessibility,
+        };
+        self.handler.handle_class_element_modifiers(&value);
+        value
+    }
+
+    /// Builds a [`ClassElementModifiers`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_element_modifiers`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - r#async
+    /// - r#abstract
+    /// - r#static: Property was declared with a `static` modifier
+    /// - declare: Property is declared with a `declare` modifier.
+    /// - r#override
+    /// - readonly: `true` when declared with a `readonly` modifier
+    /// - accessibility: Accessibility modifier.
+    #[inline]
+    pub fn alloc_class_element_modifiers(
+        &mut self,
+        span: Span,
+        r#async: bool,
+        r#abstract: bool,
+        r#static: bool,
+        declare: bool,
+        r#override: bool,
+        readonly: bool,
+        accessibility: Option<TSAccessibility>,
+    ) -> A::Box<'a, ClassElementModifiers> {
+        self.allocator.alloc(self.class_element_modifiers(
+            span,
+            r#async,
+            r#abstract,
+            r#static,
+            declare,
+            r#override,
+            readonly,
             accessibility,
         ))
     }
@@ -21902,56 +21949,41 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_property_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
+    /// - optional
+    /// - definite
     /// - value: Initialized value in the declaration.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
-    /// - declare: Property is declared with a `declare` modifier.
-    /// - r#override
-    /// - optional: `true` when created with an optional modifier (`?`)
-    /// - definite
-    /// - readonly: `true` when declared with a `readonly` modifier
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn property_definition<T1>(
         &mut self,
-        r#type: PropertyDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
+        optional: Option<TSOptionalMark>,
+        definite: Option<TSDefiniteMark>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        declare: bool,
-        r#override: bool,
-        optional: bool,
-        definite: bool,
-        readonly: bool,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> PropertyDefinition<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         let value = PropertyDefinition {
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
-            value,
-            computed,
-            r#static,
-            declare,
-            r#override,
             optional,
             definite,
-            readonly,
+            value,
+            computed,
             type_annotation: type_annotation.into_in(self.allocator),
-            accessibility,
         };
         self.handler.handle_property_definition(&value);
         value
@@ -21962,56 +21994,41 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::property_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
+    /// - optional
+    /// - definite
     /// - value: Initialized value in the declaration.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
-    /// - declare: Property is declared with a `declare` modifier.
-    /// - r#override
-    /// - optional: `true` when created with an optional modifier (`?`)
-    /// - definite
-    /// - readonly: `true` when declared with a `readonly` modifier
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn alloc_property_definition<T1>(
         &mut self,
-        r#type: PropertyDefinitionType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
+        optional: Option<TSOptionalMark>,
+        definite: Option<TSDefiniteMark>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        declare: bool,
-        r#override: bool,
-        optional: bool,
-        definite: bool,
-        readonly: bool,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> A::Box<'a, PropertyDefinition<'a, A>>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         self.allocator.alloc(self.property_definition(
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
-            value,
-            computed,
-            r#static,
-            declare,
-            r#override,
             optional,
             definite,
-            readonly,
+            value,
+            computed,
             type_annotation,
-            accessibility,
         ))
     }
 
@@ -22333,44 +22350,38 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_accessor_property`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the accessor property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn accessor_property<T1>(
         &mut self,
-        r#type: AccessorPropertyType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> AccessorProperty<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         let value = AccessorProperty {
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
             value,
             computed,
-            r#static,
             definite,
             type_annotation: type_annotation.into_in(self.allocator),
-            accessibility,
         };
         self.handler.handle_accessor_property(&value);
         value
@@ -22381,44 +22392,38 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::accessor_property`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the accessor property.
+    /// - modifiers
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
-    /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
-    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn alloc_accessor_property<T1>(
         &mut self,
-        r#type: AccessorPropertyType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
-        r#static: bool,
-        definite: bool,
+        definite: Option<TSDefiniteMark>,
         type_annotation: T1,
-        accessibility: Option<TSAccessibility>,
     ) -> A::Box<'a, AccessorProperty<'a, A>>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
     {
         self.allocator.alloc(self.accessor_property(
-            r#type,
             span,
             decorators,
+            modifiers,
             key,
             value,
             computed,
-            r#static,
             definite,
             type_annotation,
-            accessibility,
         ))
     }
 
@@ -23177,7 +23182,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - r#type
     /// - span: The [`Span`] covering this node
     /// - decorators: Decorators applied to the class.
-    /// - head
+    /// - modifiers
+    /// - id: Class identifier, AKA the name
     /// - type_parameters
     /// - super_class: Super class. When present, this will usually be an [`IdentifierReference`].
     /// - super_type_parameters: Type parameters passed to super class.
@@ -23190,7 +23196,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        head: ClassHead<'a>,
+        modifiers: ClassModifiers,
+        id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
@@ -23207,7 +23214,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
             r#type,
             span,
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -28638,6 +28646,54 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
     {
         self.allocator.alloc(self.ts_instantiation_expression(span, expression, type_parameters))
+    }
+
+    /// Builds a [`TSOptionalMark`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_optional_mark`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn ts_optional_mark(&mut self, span: Span) -> TSOptionalMark {
+        let value = TSOptionalMark { span };
+        self.handler.handle_ts_optional_mark(&value);
+        value
+    }
+
+    /// Builds a [`TSOptionalMark`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_optional_mark`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn alloc_ts_optional_mark(&mut self, span: Span) -> A::Box<'a, TSOptionalMark> {
+        self.allocator.alloc(self.ts_optional_mark(span))
+    }
+
+    /// Builds a [`TSDefiniteMark`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_definite_mark`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn ts_definite_mark(&mut self, span: Span) -> TSDefiniteMark {
+        let value = TSDefiniteMark { span };
+        self.handler.handle_ts_definite_mark(&value);
+        value
+    }
+
+    /// Builds a [`TSDefiniteMark`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_definite_mark`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn alloc_ts_definite_mark(&mut self, span: Span) -> A::Box<'a, TSDefiniteMark> {
+        self.allocator.alloc(self.ts_definite_mark(span))
     }
 
     /// Builds a [`JSDocNullableType`]

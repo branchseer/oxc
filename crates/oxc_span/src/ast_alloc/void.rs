@@ -1,8 +1,8 @@
 use derive_where::derive_where;
 use oxc_allocator::FromIn;
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
-use crate::ast_alloc::AstNode;
 use crate::{GetSpan, GetSpanMut, Span};
 
 #[derive(Default, Debug)]
@@ -133,10 +133,10 @@ impl<'a, T> super::Vec<'a> for VoidVec<'a, T> {
 
 impl super::AstAllocator for VoidAllocator {
     const IS_VOID: bool = true;
-    type Box<'a, T: AstNode + GetSpan + GetSpanMut> = VoidBox<'a, T>;
-    type Vec<'a, T: AstNode> = VoidVec<'a, T>;
+    type Box<'a, T: Debug + GetSpan + GetSpanMut> = VoidBox<'a, T>;
+    type Vec<'a, T: Debug> = VoidVec<'a, T>;
 
-    fn alloc<'a, T: AstNode + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T> {
+    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T> {
         VoidBox::from_in(value, self)
     }
 
@@ -145,21 +145,19 @@ impl super::AstAllocator for VoidAllocator {
     }
 
     #[inline]
-    fn box_from_span<'a, T: AstNode + GetSpan + GetSpanMut>(
-        span: Span,
-    ) -> Option<Self::Box<'a, T>> {
+    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(span: Span) -> Option<Self::Box<'a, T>> {
         Some(VoidBox { span, _phantom: PhantomData })
     }
 
-    fn vec<'a, T: AstNode>(&'a self) -> Self::Vec<'a, T> {
+    fn vec<'a, T: Debug>(&'a self) -> Self::Vec<'a, T> {
         VoidVec(PhantomData)
     }
 
-    fn vec_with_capacity<'a, T: AstNode>(&'a self, capacity: usize) -> Self::Vec<'a, T> {
+    fn vec_with_capacity<'a, T: Debug>(&'a self, capacity: usize) -> Self::Vec<'a, T> {
         VoidVec(PhantomData)
     }
 
-    fn vec_from_iter<'a, T: AstNode, I: IntoIterator<Item = T>>(
+    fn vec_from_iter<'a, T: Debug, I: IntoIterator<Item = T>>(
         &'a self,
         iter: I,
     ) -> Self::Vec<'a, T> {

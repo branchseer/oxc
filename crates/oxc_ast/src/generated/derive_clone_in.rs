@@ -2016,14 +2016,13 @@ impl<'old_alloc> CloneIn for YieldExpression<'old_alloc> {
     }
 }
 
-impl<'old_alloc> CloneIn for ClassHead<'old_alloc> {
-    type Cloned<'a> = ClassHead<'a>;
+impl CloneIn for ClassModifiers {
+    type Cloned<'a> = ClassModifiers;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
-        ClassHead {
+        ClassModifiers {
             span: CloneIn::clone_in(&self.span, allocator),
             r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
             declare: CloneIn::clone_in(&self.declare, allocator),
-            id: CloneIn::clone_in(&self.id, allocator),
         }
     }
 }
@@ -2035,7 +2034,8 @@ impl<'old_alloc> CloneIn for Class<'old_alloc> {
             r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
-            head: CloneIn::clone_in(&self.head, allocator),
+            modifiers: CloneIn::clone_in(&self.modifiers, allocator),
+            id: CloneIn::clone_in(&self.id, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
             super_class: CloneIn::clone_in(&self.super_class, allocator),
             super_type_parameters: CloneIn::clone_in(&self.super_type_parameters, allocator),
@@ -2091,17 +2091,14 @@ impl<'old_alloc> CloneIn for MethodDefinition<'old_alloc> {
     type Cloned<'a> = MethodDefinition<'a>;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         MethodDefinition {
-            r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
+            modifiers: CloneIn::clone_in(&self.modifiers, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
             computed: CloneIn::clone_in(&self.computed, allocator),
-            r#static: CloneIn::clone_in(&self.r#static, allocator),
-            r#override: CloneIn::clone_in(&self.r#override, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
-            accessibility: CloneIn::clone_in(&self.accessibility, allocator),
         }
     }
 }
@@ -2116,24 +2113,35 @@ impl CloneIn for MethodDefinitionType {
     }
 }
 
+impl CloneIn for ClassElementModifiers {
+    type Cloned<'a> = ClassElementModifiers;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        ClassElementModifiers {
+            span: CloneIn::clone_in(&self.span, allocator),
+            r#async: CloneIn::clone_in(&self.r#async, allocator),
+            r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
+            r#static: CloneIn::clone_in(&self.r#static, allocator),
+            declare: CloneIn::clone_in(&self.declare, allocator),
+            r#override: CloneIn::clone_in(&self.r#override, allocator),
+            readonly: CloneIn::clone_in(&self.readonly, allocator),
+            accessibility: CloneIn::clone_in(&self.accessibility, allocator),
+        }
+    }
+}
+
 impl<'old_alloc> CloneIn for PropertyDefinition<'old_alloc> {
     type Cloned<'a> = PropertyDefinition<'a>;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         PropertyDefinition {
-            r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
+            modifiers: CloneIn::clone_in(&self.modifiers, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
-            computed: CloneIn::clone_in(&self.computed, allocator),
-            r#static: CloneIn::clone_in(&self.r#static, allocator),
-            declare: CloneIn::clone_in(&self.declare, allocator),
-            r#override: CloneIn::clone_in(&self.r#override, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
             definite: CloneIn::clone_in(&self.definite, allocator),
-            readonly: CloneIn::clone_in(&self.readonly, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
+            computed: CloneIn::clone_in(&self.computed, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
-            accessibility: CloneIn::clone_in(&self.accessibility, allocator),
         }
     }
 }
@@ -2223,16 +2231,14 @@ impl<'old_alloc> CloneIn for AccessorProperty<'old_alloc> {
     type Cloned<'a> = AccessorProperty<'a>;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         AccessorProperty {
-            r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
+            modifiers: CloneIn::clone_in(&self.modifiers, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
             computed: CloneIn::clone_in(&self.computed, allocator),
-            r#static: CloneIn::clone_in(&self.r#static, allocator),
             definite: CloneIn::clone_in(&self.definite, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
-            accessibility: CloneIn::clone_in(&self.accessibility, allocator),
         }
     }
 }
@@ -3853,6 +3859,20 @@ impl CloneIn for ImportOrExportKind {
             Self::Value => ImportOrExportKind::Value,
             Self::Type => ImportOrExportKind::Type,
         }
+    }
+}
+
+impl CloneIn for TSOptionalMark {
+    type Cloned<'a> = TSOptionalMark;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        TSOptionalMark { span: CloneIn::clone_in(&self.span, allocator) }
+    }
+}
+
+impl CloneIn for TSDefiniteMark {
+    type Cloned<'a> = TSDefiniteMark;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        TSDefiniteMark { span: CloneIn::clone_in(&self.span, allocator) }
     }
 }
 

@@ -111,7 +111,7 @@ impl<'a> BoundNames<'a> for Function<'a> {
 
 impl<'a> BoundName<'a> for Class<'a> {
     fn bound_name<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
-        if let Some(ident) = &self.head.id {
+        if let Some(ident) = &self.id {
             f(ident);
         }
     }

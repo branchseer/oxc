@@ -6,9 +6,10 @@
 )]
 
 use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
-use oxc_span::ast_alloc::{AstAllocator, AstNode};
+use oxc_span::ast_alloc::AstAllocator;
 use oxc_span::{ast_alloc::Vec as _, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
+use std::fmt::Debug;
 use std::mem;
 
 #[allow(clippy::wildcard_imports)]
@@ -221,22 +222,22 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         Self { allocator, handler }
     }
     #[inline]
-    pub fn alloc<T: AstNode + GetSpan + GetSpanMut>(&self, value: T) -> A::Box<'a, T> {
+    pub fn alloc<T: Debug + GetSpan + GetSpanMut>(&self, value: T) -> A::Box<'a, T> {
         self.allocator.alloc(value)
     }
 
     #[inline]
-    pub fn vec<T: AstNode>(&self) -> A::Vec<'a, T> {
+    pub fn vec<T: Debug>(&self) -> A::Vec<'a, T> {
         self.allocator.vec()
     }
 
     #[inline]
-    pub fn vec_with_capacity<T: AstNode>(&self, capacity: usize) -> A::Vec<'a, T> {
+    pub fn vec_with_capacity<T: Debug>(&self, capacity: usize) -> A::Vec<'a, T> {
         self.allocator.vec_with_capacity(capacity)
     }
 
     #[inline]
-    pub fn vec1<T: AstNode>(&self, value: T) -> A::Vec<'a, T> {
+    pub fn vec1<T: Debug>(&self, value: T) -> A::Vec<'a, T> {
         let mut vec = self.vec_with_capacity(1);
         vec.push(value);
         vec
@@ -248,7 +249,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     }
 
     #[inline]
-    pub fn vec_from_iter<T: AstNode, I: IntoIterator<Item = T>>(&self, iter: I) -> A::Vec<'a, T> {
+    pub fn vec_from_iter<T: Debug, I: IntoIterator<Item = T>>(&self, iter: I) -> A::Vec<'a, T> {
         self.allocator.vec_from_iter(iter)
     }
 
@@ -258,7 +259,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     // }
 
     #[inline]
-    pub fn map_alloc<T: AstNode + GetSpan + GetSpanMut>(
+    pub fn map_alloc<T: Debug + GetSpan + GetSpanMut>(
         &self,
         value: Option<T>,
     ) -> Option<A::Box<'a, T>> {

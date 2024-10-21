@@ -186,7 +186,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     pub(crate) fn parse_ts_type_parameter(&mut self) -> Result<TSTypeParameter<'a, A>> {
         let span = self.start_span();
 
-        let modifiers = self.parse_modifiers(false, true, false);
+        let (modifiers, _) = self.parse_modifiers(false, true, false);
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::IN | ModifierFlags::OUT | ModifierFlags::CONST,

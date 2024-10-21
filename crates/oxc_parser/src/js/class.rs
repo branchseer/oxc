@@ -1,7 +1,7 @@
 use crate::{
     diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{self, ModifierFlags, ModifierKind, Modifiers},
     Context, ParserImpl, StatementContext,
 };
 use oxc_allocator::Allocator;
@@ -30,7 +30,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         stmt_ctx: StatementContext,
         start_span: Span,
     ) -> Result<Statement<'a, A>> {
-        let modifiers = self.parse_modifiers(
+        let (modifiers, _) = self.parse_modifiers(
             /* allow_decorators */ true, /* permit_const_as_modifier */ false,
             /* stop_on_start_of_class_static_block */ true,
         );
@@ -57,6 +57,16 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         start_span: Span,
         modifiers: &Modifiers<'a>,
     ) -> Result<A::Box<'a, Class<'a, A>>> {
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE | ModifierFlags::ABSTRACT,
+            diagnostics::modifier_cannot_be_used_here,
+        );
+        let modifiers = self.ast.class_modifiers(
+            self.end_span(start_span),
+            modifiers.contains_abstract(),
+            modifiers.contains_declare(),
+        );
         self.parse_class(start_span, ClassType::ClassDeclaration, modifiers)
     }
 
@@ -64,21 +74,21 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     /// `ClassExpression`[Yield, Await] :
     ///     class `BindingIdentifier`[?Yield, ?Await]opt `ClassTail`[?Yield, ?Await]
     pub(crate) fn parse_class_expression(&mut self) -> Result<Expression<'a, A>> {
-        let class =
-            self.parse_class(self.start_span(), ClassType::ClassExpression, &Modifiers::empty())?;
+        let modifiers = self.ast.class_modifiers(self.end_span(self.start_span()), false, false);
+        let class = self.parse_class(self.start_span(), ClassType::ClassExpression, modifiers)?;
         Ok(self.ast.expression_from_class(class))
     }
 
     fn parse_class(
         &mut self,
-        start_span_after_decorators: Span,
+        start_span: Span,
         r#type: ClassType,
-        modifiers: &Modifiers<'a>,
+        modifiers: ClassModifiers,
     ) -> Result<A::Box<'a, Class<'a, A>>> {
         self.bump_any(); // advance `class`
 
         let decorators = self.take_decorators();
-        let start_span = decorators.iter().next().map_or(start_span_after_decorators, |d| d.span);
+        let start_span = decorators.iter().next().map_or(start_span, |d| d.span);
         let decorators = self.ast.vec_from_iter(decorators);
 
         let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
@@ -86,14 +96,6 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         } else {
             None
         };
-        let declare = modifiers.contains_declare();
-        let head = self.ast.class_head(
-            self.end_span(start_span_after_decorators),
-            modifiers.contains_abstract(),
-            declare,
-            id,
-        );
-
         let type_parameters = if self.is_ts { self.parse_ts_type_parameters()? } else { None };
         let (extends, implements) = self.parse_heritage_clause()?;
         let mut super_class = None;
@@ -109,20 +111,15 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             }
         }
         let scope_token = self.ast.enter_scope();
-        let body = self.parse_class_body(declare)?;
-
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE | ModifierFlags::ABSTRACT,
-            diagnostics::modifier_cannot_be_used_here,
-        );
+        let body = self.parse_class_body(modifiers.declare)?;
 
         Ok(self.ast.alloc_class(
             scope_token,
             r#type,
             self.end_span(start_span),
             decorators,
-            head,
+            modifiers,
+            id,
             type_parameters,
             super_class,
             super_type_parameters,
@@ -226,7 +223,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
 
         let span = self.start_span();
 
-        let modifiers = self.parse_modifiers(true, true, true);
+        let (modifiers, mut modifiers_span) = self.parse_modifiers(true, true, true);
 
         let mut kind = MethodDefinitionKind::Method;
         let mut generator = false;
@@ -242,6 +239,8 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         let mut r#static = modifiers.contains(ModifierKind::Static);
         let mut r#async = modifiers.contains(ModifierKind::Async);
 
+        let mut class_element_modifiers: Option<ClassElementModifiers> = None;
+
         if self.at(Kind::Static) {
             // static { block }
             if self.peek_at(Kind::LCurly) {
@@ -253,7 +252,18 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             if self.peek_kind().is_class_element_name_start() || self.peek_at(Kind::Star) {
                 self.bump(Kind::Static);
                 r#static = true;
+                modifiers_span = self.end_span(modifiers_span);
             } else {
+                class_element_modifiers = Some(self.ast.class_element_modifiers(
+                    modifiers_span,
+                    r#async,
+                    r#abstract,
+                    r#static,
+                    declare,
+                    r#override,
+                    readonly,
+                    accessibility,
+                ));
                 key_name = Some(self.parse_class_element_name()?);
             }
         }
@@ -265,10 +275,34 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             {
                 self.bump(Kind::Async);
                 r#async = true;
+                modifiers_span = self.end_span(modifiers_span);
             } else {
+                class_element_modifiers = Some(self.ast.class_element_modifiers(
+                    modifiers_span,
+                    r#async,
+                    r#abstract,
+                    r#static,
+                    declare,
+                    r#override,
+                    readonly,
+                    accessibility,
+                ));
                 key_name = Some(self.parse_class_element_name()?);
             }
         }
+
+        let class_element_modifiers = class_element_modifiers.unwrap_or_else(|| {
+            self.ast.class_element_modifiers(
+                modifiers_span,
+                r#async,
+                r#abstract,
+                r#static,
+                declare,
+                r#override,
+                readonly,
+                accessibility,
+            )
+        });
 
         if self.is_at_ts_index_signature_member() {
             if let TSSignature::TSIndexSignature(sig) = self.parse_ts_index_signature_member()? {
@@ -305,17 +339,11 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         let (key, computed) =
             if let Some(result) = key_name { result } else { self.parse_class_element_name()? };
 
-        let (optional, optional_span) = if self.at(Kind::Question) {
-            let span = self.start_span();
-            self.bump_any();
-            (true, self.end_span(span))
-        } else {
-            (false, oxc_span::SPAN)
-        };
-        let definite = self.eat(Kind::Bang);
+        let optional = self.eat_ts_optional_mark();
+        let definite = self.eat_ts_definite_mark();
 
-        if optional && definite {
-            self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
+        if let (Some(optional), Some(_)) = (optional, definite) {
+            self.error(diagnostics::optional_definite_property(optional.span.expand_right(1)));
         }
 
         if modifiers.contains(ModifierKind::Const) {
@@ -340,17 +368,15 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         }
 
         if accessor {
-            if optional {
-                self.error(diagnostics::optional_accessor_property(optional_span));
+            if let Some(optional) = optional {
+                self.error(diagnostics::optional_accessor_property(optional.span));
             }
             self.parse_class_accessor_property(
                 span,
                 key,
                 computed,
-                r#static,
-                r#abstract,
+                class_element_modifiers,
                 definite,
-                accessibility,
             )
             .map(Some)
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
@@ -361,12 +387,9 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
                 kind,
                 key,
                 computed,
-                r#static,
+                class_element_modifiers,
                 r#async,
                 generator,
-                r#override,
-                r#abstract,
-                accessibility,
                 optional,
             )?;
             if let Some(definition) =
@@ -397,14 +420,9 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             }
             let mut definition = self.parse_class_property_definition(
                 span,
+                class_element_modifiers,
                 key,
                 computed,
-                r#static,
-                declare,
-                r#override,
-                readonly,
-                r#abstract,
-                accessibility,
                 optional,
                 definite,
             )?;
@@ -441,15 +459,12 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         mut kind: MethodDefinitionKind,
         key: PropertyKey<'a, A>,
         computed: bool,
-        r#static: bool,
+        modifiers: ClassElementModifiers,
         r#async: bool,
         generator: bool,
-        r#override: bool,
-        r#abstract: bool,
-        accessibility: Option<TSAccessibility>,
-        optional: bool,
+        optional: Option<TSOptionalMark>,
     ) -> Result<ClassElement<'a, A>> {
-        if !r#static && !computed {
+        if !modifiers.r#static && !computed {
             let is_constructor = if let Some(key) = cast_ref!(&key, PropertyKey<'a, A as Allocator>)
             {
                 key.prop_name().map_or(false, |(name, _)| name == "constructor")
@@ -476,28 +491,25 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
                 }
             }
 
-            if r#static {
+            if modifiers.r#static {
                 self.error(diagnostics::static_constructor(key.span()));
             }
         }
 
-        let r#type = if r#abstract {
+        let r#type = if modifiers.r#abstract {
             MethodDefinitionType::TSAbstractMethodDefinition
         } else {
             MethodDefinitionType::MethodDefinition
         };
         Ok(self.ast.class_element_method_definition(
-            r#type,
             self.end_span(span),
             decorators,
+            modifiers,
             key,
             value,
             kind,
             computed,
-            r#static,
-            r#override,
             optional,
-            accessibility,
         ))
     }
 
@@ -506,42 +518,27 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     fn parse_class_property_definition(
         &mut self,
         span: Span,
+        modifiers: ClassElementModifiers,
         key: PropertyKey<'a, A>,
         computed: bool,
-        r#static: bool,
-        declare: bool,
-        r#override: bool,
-        readonly: bool,
-        r#abstract: bool,
-        accessibility: Option<TSAccessibility>,
-        optional: bool,
-        definite: bool,
+        optional: Option<TSOptionalMark>,
+        definite: Option<TSDefiniteMark>,
     ) -> Result<ClassElement<'a, A>> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let decorators = self.consume_decorators();
         let value = if self.eat(Kind::Eq) { Some(self.parse_expr()?) } else { None };
         self.asi()?;
 
-        let r#type = if r#abstract {
-            PropertyDefinitionType::TSAbstractPropertyDefinition
-        } else {
-            PropertyDefinitionType::PropertyDefinition
-        };
         Ok(self.ast.class_element_property_definition(
-            r#type,
             self.end_span(span),
             decorators,
+            modifiers,
             key,
-            value,
-            computed,
-            r#static,
-            declare,
-            r#override,
             optional,
             definite,
-            readonly,
+            value,
+            computed,
             type_annotation,
-            accessibility,
         ))
     }
 
@@ -565,32 +562,23 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         span: Span,
         key: PropertyKey<'a, A>,
         computed: bool,
-        r#static: bool,
-        r#abstract: bool,
-        definite: bool,
-        accessibility: Option<TSAccessibility>,
+        modifiers: ClassElementModifiers,
+        definite: Option<TSDefiniteMark>,
     ) -> Result<ClassElement<'a, A>> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
-        let r#type = if r#abstract {
-            AccessorPropertyType::TSAbstractAccessorProperty
-        } else {
-            AccessorPropertyType::AccessorProperty
-        };
 
         let decorators = self.consume_decorators();
         Ok(self.ast.class_element_accessor_property(
-            r#type,
             self.end_span(span),
             decorators,
+            modifiers,
             key,
             value,
             computed,
-            r#static,
             definite,
             type_annotation,
-            accessibility,
         ))
     }
 }

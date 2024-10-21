@@ -395,6 +395,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_optional_mark(&mut self, it: &mut TSOptionalMark) {
+        walk_ts_optional_mark(self, it);
+    }
+
+    #[inline]
     fn visit_ts_function_type(&mut self, it: &mut TSFunctionType<'a>) {
         walk_ts_function_type(self, it);
     }
@@ -802,8 +807,8 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_class_head(&mut self, it: &mut ClassHead<'a>) {
-        walk_class_head(self, it);
+    fn visit_class_modifiers(&mut self, it: &mut ClassModifiers) {
+        walk_class_modifiers(self, it);
     }
 
     #[inline]
@@ -847,6 +852,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_class_element_modifiers(&mut self, it: &mut ClassElementModifiers) {
+        walk_class_element_modifiers(self, it);
+    }
+
+    #[inline]
     fn visit_function(&mut self, it: &mut Function<'a>, flags: ScopeFlags) {
         walk_function(self, it, flags);
     }
@@ -854,6 +864,11 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_property_definition(&mut self, it: &mut PropertyDefinition<'a>) {
         walk_property_definition(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_definite_mark(&mut self, it: &mut TSDefiniteMark) {
+        walk_ts_definite_mark(self, it);
     }
 
     #[inline]
@@ -2046,6 +2061,9 @@ pub mod walk_mut {
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
         }
+        if let Some(optional) = &mut it.optional {
+            visitor.visit_ts_optional_mark(optional);
+        }
     }
 
     #[inline]
@@ -2158,6 +2176,13 @@ pub mod walk_mut {
         let kind = AstType::TSTypeAnnotation;
         visitor.enter_node(kind);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_optional_mark<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSOptionalMark) {
+        let kind = AstType::TSOptionalMark;
+        visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
@@ -3090,7 +3115,10 @@ pub mod walk_mut {
         let kind = AstType::Class;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
-        visitor.visit_class_head(&mut it.head);
+        visitor.visit_class_modifiers(&mut it.modifiers);
+        if let Some(id) = &mut it.id {
+            visitor.visit_binding_identifier(id);
+        }
         visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -3110,12 +3138,9 @@ pub mod walk_mut {
     }
 
     #[inline]
-    pub fn walk_class_head<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassHead<'a>) {
-        let kind = AstType::ClassHead;
+    pub fn walk_class_modifiers<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassModifiers) {
+        let kind = AstType::ClassModifiers;
         visitor.enter_node(kind);
-        if let Some(id) = &mut it.id {
-            visitor.visit_binding_identifier(id);
-        }
         visitor.leave_node(kind);
     }
 
@@ -3197,6 +3222,7 @@ pub mod walk_mut {
         let kind = AstType::MethodDefinition;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
+        visitor.visit_class_element_modifiers(&mut it.modifiers);
         visitor.visit_property_key(&mut it.key);
         {
             let flags = match it.kind {
@@ -3207,6 +3233,19 @@ pub mod walk_mut {
             };
             visitor.visit_function(&mut it.value, flags);
         }
+        if let Some(optional) = &mut it.optional {
+            visitor.visit_ts_optional_mark(optional);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_element_modifiers<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ClassElementModifiers,
+    ) {
+        let kind = AstType::ClassElementModifiers;
+        visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
@@ -3247,7 +3286,6 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    #[inline]
     pub fn walk_property_definition<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut PropertyDefinition<'a>,
@@ -3255,7 +3293,14 @@ pub mod walk_mut {
         let kind = AstType::PropertyDefinition;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
+        visitor.visit_class_element_modifiers(&mut it.modifiers);
         visitor.visit_property_key(&mut it.key);
+        if let Some(optional) = &mut it.optional {
+            visitor.visit_ts_optional_mark(optional);
+        }
+        if let Some(definite) = &mut it.definite {
+            visitor.visit_ts_definite_mark(definite);
+        }
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);
         }
@@ -3266,15 +3311,25 @@ pub mod walk_mut {
     }
 
     #[inline]
+    pub fn walk_ts_definite_mark<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSDefiniteMark) {
+        let kind = AstType::TSDefiniteMark;
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
     pub fn walk_accessor_property<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AccessorProperty<'a>,
     ) {
         // NOTE: AstType doesn't exists!
         visitor.visit_decorators(&mut it.decorators);
+        visitor.visit_class_element_modifiers(&mut it.modifiers);
         visitor.visit_property_key(&mut it.key);
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);
+        }
+        if let Some(definite) = &mut it.definite {
+            visitor.visit_ts_definite_mark(definite);
         }
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
@@ -3775,6 +3830,9 @@ pub mod walk_mut {
         visitor.visit_binding_pattern(&mut it.id);
         if let Some(init) = &mut it.init {
             visitor.visit_expression(init);
+        }
+        if let Some(definite) = &mut it.definite {
+            visitor.visit_ts_definite_mark(definite);
         }
         visitor.leave_node(kind);
     }

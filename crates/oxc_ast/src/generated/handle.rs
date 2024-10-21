@@ -196,6 +196,9 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_ts_type_annotation(&mut self, _: &TSTypeAnnotation<'a, A>) {}
 
     #[inline]
+    fn handle_ts_optional_mark(&mut self, _: &TSOptionalMark) {}
+
+    #[inline]
     fn handle_ts_function_type(&mut self, _: &TSFunctionType<'a, A>) {}
 
     #[inline]
@@ -424,7 +427,7 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_class(&mut self, _: &Class<'a, A>) {}
 
     #[inline]
-    fn handle_class_head(&mut self, _: &ClassHead<'a>) {}
+    fn handle_class_modifiers(&mut self, _: &ClassModifiers) {}
 
     #[inline]
     fn handle_class_heritage(&mut self, _: &Expression<'a, A>) {}
@@ -445,10 +448,16 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_method_definition(&mut self, _: &MethodDefinition<'a, A>) {}
 
     #[inline]
+    fn handle_class_element_modifiers(&mut self, _: &ClassElementModifiers) {}
+
+    #[inline]
     fn handle_function(&mut self, _: &Function<'a, A>) {}
 
     #[inline]
     fn handle_property_definition(&mut self, _: &PropertyDefinition<'a, A>) {}
+
+    #[inline]
+    fn handle_ts_definite_mark(&mut self, _: &TSDefiniteMark) {}
 
     #[inline]
     fn handle_accessor_property(&mut self, _: &AccessorProperty<'a, A>) {}

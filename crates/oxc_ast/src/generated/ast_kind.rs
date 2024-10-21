@@ -89,11 +89,12 @@ pub enum AstType {
     FunctionBody,
     ArrowFunctionExpression,
     YieldExpression,
-    ClassHead,
+    ClassModifiers,
     Class,
     ClassHeritage,
     ClassBody,
     MethodDefinition,
+    ClassElementModifiers,
     PropertyDefinition,
     PrivateIdentifier,
     StaticBlock,
@@ -164,6 +165,8 @@ pub enum AstType {
     Decorator,
     TSExportAssignment,
     TSInstantiationExpression,
+    TSOptionalMark,
+    TSDefiniteMark,
     JSXElement,
     JSXOpeningElement,
     JSXClosingElement,
@@ -264,11 +267,12 @@ pub enum AstKind<'a> {
     FunctionBody(&'a FunctionBody<'a>),
     ArrowFunctionExpression(&'a ArrowFunctionExpression<'a>),
     YieldExpression(&'a YieldExpression<'a>),
-    ClassHead(&'a ClassHead<'a>),
+    ClassModifiers(&'a ClassModifiers),
     Class(&'a Class<'a>),
     ClassHeritage(&'a Expression<'a>),
     ClassBody(&'a ClassBody<'a>),
     MethodDefinition(&'a MethodDefinition<'a>),
+    ClassElementModifiers(&'a ClassElementModifiers),
     PropertyDefinition(&'a PropertyDefinition<'a>),
     PrivateIdentifier(&'a PrivateIdentifier<'a>),
     StaticBlock(&'a StaticBlock<'a>),
@@ -339,6 +343,8 @@ pub enum AstKind<'a> {
     Decorator(&'a Decorator<'a>),
     TSExportAssignment(&'a TSExportAssignment<'a>),
     TSInstantiationExpression(&'a TSInstantiationExpression<'a>),
+    TSOptionalMark(&'a TSOptionalMark),
+    TSDefiniteMark(&'a TSDefiniteMark),
     JSXElement(&'a JSXElement<'a>),
     JSXOpeningElement(&'a JSXOpeningElement<'a>),
     JSXClosingElement(&'a JSXClosingElement<'a>),
@@ -440,11 +446,12 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::FunctionBody(it) => it.span(),
             Self::ArrowFunctionExpression(it) => it.span(),
             Self::YieldExpression(it) => it.span(),
-            Self::ClassHead(it) => it.span(),
+            Self::ClassModifiers(it) => it.span(),
             Self::Class(it) => it.span(),
             Self::ClassHeritage(it) => it.span(),
             Self::ClassBody(it) => it.span(),
             Self::MethodDefinition(it) => it.span(),
+            Self::ClassElementModifiers(it) => it.span(),
             Self::PropertyDefinition(it) => it.span(),
             Self::PrivateIdentifier(it) => it.span(),
             Self::StaticBlock(it) => it.span(),
@@ -515,6 +522,8 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::Decorator(it) => it.span(),
             Self::TSExportAssignment(it) => it.span(),
             Self::TSInstantiationExpression(it) => it.span(),
+            Self::TSOptionalMark(it) => it.span(),
+            Self::TSDefiniteMark(it) => it.span(),
             Self::JSXElement(it) => it.span(),
             Self::JSXOpeningElement(it) => it.span(),
             Self::JSXClosingElement(it) => it.span(),
@@ -1264,8 +1273,8 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
-    pub fn as_class_head(&self) -> Option<&'a ClassHead<'a>> {
-        if let Self::ClassHead(v) = self {
+    pub fn as_class_modifiers(&self) -> Option<&'a ClassModifiers> {
+        if let Self::ClassModifiers(v) = self {
             Some(*v)
         } else {
             None
@@ -1302,6 +1311,15 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_method_definition(&self) -> Option<&'a MethodDefinition<'a>> {
         if let Self::MethodDefinition(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_class_element_modifiers(&self) -> Option<&'a ClassElementModifiers> {
+        if let Self::ClassElementModifiers(v) = self {
             Some(*v)
         } else {
             None
@@ -1936,6 +1954,24 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_instantiation_expression(&self) -> Option<&'a TSInstantiationExpression<'a>> {
         if let Self::TSInstantiationExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_ts_optional_mark(&self) -> Option<&'a TSOptionalMark> {
+        if let Self::TSOptionalMark(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_ts_definite_mark(&self) -> Option<&'a TSDefiniteMark> {
+        if let Self::TSDefiniteMark(v) = self {
             Some(*v)
         } else {
             None

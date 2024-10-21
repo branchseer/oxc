@@ -98,22 +98,18 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let (id, definite) = if self.is_ts {
             // const x!: number = 1
             //        ^ definite
-            let mut definite = false;
-            if binding_kind.is_binding_identifier()
-                && self.at(Kind::Bang)
-                && !self.cur_token().is_on_new_line
-            {
-                self.eat(Kind::Bang);
-                definite = true;
+            let mut definite = None;
+            if binding_kind.is_binding_identifier() && !self.cur_token().is_on_new_line {
+                definite = self.eat_ts_definite_mark();
             }
-            let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
+            let optional = self.eat_ts_optional_mark(); // not allowed, but checked in checker/typescript.rs
             let type_annotation = self.parse_ts_type_annotation()?;
             if let Some(type_annotation) = &type_annotation {
                 Self::extend_binding_pattern_span_end(type_annotation.span(), &mut binding_kind);
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
-            (self.ast.binding_pattern(binding_kind, NONE, false), false)
+            (self.ast.binding_pattern(binding_kind, NONE, None), None)
         };
 
         let init =

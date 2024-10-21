@@ -1512,6 +1512,12 @@ pub(crate) unsafe fn walk_variable_declarator<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::VariableDeclaratorInit);
         walk_expression(traverser, field as *mut _, ctx);
     }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATOR_DEFINITE)
+        as *mut Option<TSDefiniteMark>)
+    {
+        ctx.retag_stack(AncestorType::VariableDeclaratorDefinite);
+        walk_ts_definite_mark(traverser, field as *mut _, ctx);
+    }
     ctx.pop_stack(pop_token);
     traverser.exit_variable_declarator(&mut *node, ctx);
 }
@@ -2115,6 +2121,12 @@ pub(crate) unsafe fn walk_binding_pattern<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::BindingPatternTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_BINDING_PATTERN_OPTIONAL)
+        as *mut Option<TSOptionalMark>)
+    {
+        ctx.retag_stack(AncestorType::BindingPatternOptional);
+        walk_ts_optional_mark(traverser, field as *mut _, ctx);
+    }
     ctx.pop_stack(pop_token);
     traverser.exit_binding_pattern(&mut *node, ctx);
 }
@@ -2457,6 +2469,15 @@ pub(crate) unsafe fn walk_yield_expression<'a, Tr: Traverse<'a>>(
     traverser.exit_yield_expression(&mut *node, ctx);
 }
 
+pub(crate) unsafe fn walk_class_modifiers<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ClassModifiers,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class_modifiers(&mut *node, ctx);
+    traverser.exit_class_modifiers(&mut *node, ctx);
+}
+
 pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Class<'a>,
@@ -2470,6 +2491,12 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::ClassModifiers);
+    walk_class_modifiers(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CLASS_MODIFIERS) as *mut ClassModifiers,
+        ctx,
+    );
     if let Some(field) =
         &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_ID) as *mut Option<BindingIdentifier>)
     {
@@ -2579,6 +2606,13 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::MethodDefinitionModifiers);
+    walk_class_element_modifiers(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_MODIFIERS)
+            as *mut ClassElementModifiers,
+        ctx,
+    );
     ctx.retag_stack(AncestorType::MethodDefinitionKey);
     walk_property_key(
         traverser,
@@ -2592,8 +2626,23 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
             as *mut Box<Function>)) as *mut _,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_OPTIONAL)
+        as *mut Option<TSOptionalMark>)
+    {
+        ctx.retag_stack(AncestorType::MethodDefinitionOptional);
+        walk_ts_optional_mark(traverser, field as *mut _, ctx);
+    }
     ctx.pop_stack(pop_token);
     traverser.exit_method_definition(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_class_element_modifiers<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ClassElementModifiers,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class_element_modifiers(&mut *node, ctx);
+    traverser.exit_class_element_modifiers(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
@@ -2611,12 +2660,31 @@ pub(crate) unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::PropertyDefinitionModifiers);
+    walk_class_element_modifiers(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_MODIFIERS)
+            as *mut ClassElementModifiers,
+        ctx,
+    );
     ctx.retag_stack(AncestorType::PropertyDefinitionKey);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_KEY) as *mut PropertyKey,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_OPTIONAL)
+        as *mut Option<TSOptionalMark>)
+    {
+        ctx.retag_stack(AncestorType::PropertyDefinitionOptional);
+        walk_ts_optional_mark(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_DEFINITE)
+        as *mut Option<TSDefiniteMark>)
+    {
+        ctx.retag_stack(AncestorType::PropertyDefinitionDefinite);
+        walk_ts_definite_mark(traverser, field as *mut _, ctx);
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_VALUE)
         as *mut Option<Expression>)
     {
@@ -2712,6 +2780,13 @@ pub(crate) unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::AccessorPropertyModifiers);
+    walk_class_element_modifiers(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_MODIFIERS)
+            as *mut ClassElementModifiers,
+        ctx,
+    );
     ctx.retag_stack(AncestorType::AccessorPropertyKey);
     walk_property_key(
         traverser,
@@ -2723,6 +2798,12 @@ pub(crate) unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
     {
         ctx.retag_stack(AncestorType::AccessorPropertyValue);
         walk_expression(traverser, field as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_DEFINITE)
+        as *mut Option<TSDefiniteMark>)
+    {
+        ctx.retag_stack(AncestorType::AccessorPropertyDefinite);
+        walk_ts_definite_mark(traverser, field as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
@@ -5411,24 +5492,44 @@ pub(crate) unsafe fn walk_ts_satisfies_expression<'a, Tr: Traverse<'a>>(
     traverser.exit_ts_satisfies_expression(&mut *node, ctx);
 }
 
+pub(crate) unsafe fn walk_ts_type_assertion_annotation<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSTypeAssertionAnnotation<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_type_assertion_annotation(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionAnnotationTypeAnnotation(
+        ancestor::TSTypeAssertionAnnotationWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_ANNOTATION_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_type_assertion_annotation(&mut *node, ctx);
+}
+
 pub(crate) unsafe fn walk_ts_type_assertion<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeAssertion<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_assertion(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionExpression(
-        ancestor::TSTypeAssertionWithoutExpression(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionTypeAnnotation(
+        ancestor::TSTypeAssertionWithoutTypeAnnotation(node, PhantomData),
     ));
+    walk_ts_type_assertion_annotation(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION)
+            as *mut TSTypeAssertionAnnotation,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSTypeAssertionExpression);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSTypeAssertionTypeAnnotation);
-    walk_ts_type(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION) as *mut TSType,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5595,6 +5696,24 @@ pub(crate) unsafe fn walk_ts_instantiation_expression<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack(pop_token);
     traverser.exit_ts_instantiation_expression(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_ts_optional_mark<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSOptionalMark,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_optional_mark(&mut *node, ctx);
+    traverser.exit_ts_optional_mark(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_ts_definite_mark<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSDefiniteMark,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_definite_mark(&mut *node, ctx);
+    traverser.exit_ts_definite_mark(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_js_doc_nullable_type<'a, Tr: Traverse<'a>>(

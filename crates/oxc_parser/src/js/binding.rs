@@ -21,7 +21,8 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         allow_question: bool,
     ) -> Result<BindingPattern<'a, A>> {
         let mut kind = self.parse_binding_pattern_kind()?;
-        let optional = if allow_question && self.is_ts { self.eat(Kind::Question) } else { false };
+        let optional =
+            if allow_question && self.is_ts { self.eat_ts_optional_mark() } else { None };
         let type_annotation = self.parse_ts_type_annotation()?;
         if let Some(type_annotation) = &type_annotation {
             Self::extend_binding_pattern_span_end(type_annotation.span(), &mut kind);
@@ -119,7 +120,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         }
         // The span is not extended to its type_annotation
         let type_annotation = self.parse_ts_type_annotation()?;
-        let pattern = self.ast.binding_pattern(kind, type_annotation, false);
+        let pattern = self.ast.binding_pattern(kind, type_annotation, None);
         // Rest element does not allow `= initializer`
         let argument = self
             .context(Context::In, Context::empty(), |p| p.parse_initializer(init_span, pattern))?;
@@ -151,7 +152,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                 };
                 let identifier =
                     self.ast.binding_pattern_kind_binding_identifier(ident.span(), name);
-                let left = self.ast.binding_pattern(identifier, NONE, false);
+                let left = self.ast.binding_pattern(identifier, NONE, None);
                 self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, left))?
             } else {
                 return Err(self.unexpected());
@@ -177,7 +178,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             let expr = self.parse_assignment_expression_or_higher()?;
             let kind =
                 self.ast.binding_pattern_kind_assignment_pattern(self.end_span(span), left, expr);
-            Ok(self.ast.binding_pattern(kind, NONE, false))
+            Ok(self.ast.binding_pattern(kind, NONE, None))
         } else {
             Ok(left)
         }

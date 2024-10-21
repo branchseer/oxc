@@ -1023,7 +1023,7 @@ impl<'a, A: AstAllocator> GetSpanMut for YieldExpression<'a, A> {
     }
 }
 
-impl<'a> GetSpanMut for ClassHead<'a> {
+impl GetSpanMut for ClassModifiers {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -1057,6 +1057,13 @@ impl<'a, A: AstAllocator> GetSpanMut for ClassElement<'a, A> {
 }
 
 impl<'a, A: AstAllocator> GetSpanMut for MethodDefinition<'a, A> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ClassElementModifiers {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -1983,6 +1990,20 @@ impl<'a> GetSpanMut for TSNamespaceExportDeclaration<'a> {
 }
 
 impl<'a, A: AstAllocator> GetSpanMut for TSInstantiationExpression<'a, A> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for TSOptionalMark {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for TSDefiniteMark {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

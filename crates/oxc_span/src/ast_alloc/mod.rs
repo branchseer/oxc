@@ -11,47 +11,32 @@ use crate::ast_alloc::void::VoidVec;
 pub use cast::*;
 pub use void::VoidAllocator;
 
-#[cfg(feature = "serialize")]
-pub trait SerializeIfEnabled: serde::Serialize {}
-#[cfg(not(feature = "serialize"))]
-pub trait SerializeIfEnabled {}
-
-#[cfg(feature = "serialize")]
-impl<T: ?Sized + serde::Serialize> SerializeIfEnabled for T {}
-#[cfg(not(feature = "serialize"))]
-impl<T: ?Sized> SerializeIfEnabled for T {}
-
-pub trait AstNode: Debug + SerializeIfEnabled {}
-impl<T: Debug + SerializeIfEnabled> AstNode for T {}
-
 trait Sealed {}
 
 #[allow(private_bounds)]
 pub trait AstAllocator: Sized + 'static + Sealed {
     // For runtime specialization
     const IS_VOID: bool;
-    type Box<'a, T: AstNode + GetSpan + GetSpanMut>: Box<'a, Target = T>
+    type Box<'a, T: Debug + GetSpan + GetSpanMut>: Box<'a, Target = T>
         + GetSpan
         + GetSpanMut
         + FromIn<'a, T, Self>
-        + SerializeIfEnabled
         + Debug
     where
         Self: 'a;
 
-    type Vec<'a, T: AstNode>: Vec<'a, Item = T> + Debug + SerializeIfEnabled
+    type Vec<'a, T: Debug>: Vec<'a, Item = T> + Debug
     where
         Self: 'a;
 
-    fn alloc<'a, T: AstNode + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T>;
+    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T>;
     fn alloc_str<'a>(&'a self, src: &str) -> &'a str;
 
-    fn box_from_span<'a, T: AstNode + GetSpan + GetSpanMut>(span: Span)
-        -> Option<Self::Box<'a, T>>;
+    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(span: Span) -> Option<Self::Box<'a, T>>;
 
-    fn vec<'a, T: AstNode>(&'a self) -> Self::Vec<'a, T>;
-    fn vec_with_capacity<'a, T: AstNode>(&'a self, capacity: usize) -> Self::Vec<'a, T>;
-    fn vec_from_iter<'a, T: AstNode, I: IntoIterator<Item = T>>(
+    fn vec<'a, T: Debug>(&'a self) -> Self::Vec<'a, T>;
+    fn vec_with_capacity<'a, T: Debug>(&'a self, capacity: usize) -> Self::Vec<'a, T>;
+    fn vec_from_iter<'a, T: Debug, I: IntoIterator<Item = T>>(
         &'a self,
         iter: I,
     ) -> Self::Vec<'a, T>;
@@ -197,11 +182,11 @@ impl Sealed for oxc_allocator::Allocator {}
 
 impl AstAllocator for oxc_allocator::Allocator {
     const IS_VOID: bool = false;
-    type Box<'a, T: AstNode + GetSpan + GetSpanMut> = oxc_allocator::Box<'a, T>;
-    type Vec<'a, T: AstNode> = oxc_allocator::Vec<'a, T>;
+    type Box<'a, T: Debug + GetSpan + GetSpanMut> = oxc_allocator::Box<'a, T>;
+    type Vec<'a, T: Debug> = oxc_allocator::Vec<'a, T>;
 
     #[inline]
-    fn alloc<'a, T: AstNode + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T> {
+    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T> {
         oxc_allocator::Box::new_in(value, self)
     }
 
@@ -211,24 +196,22 @@ impl AstAllocator for oxc_allocator::Allocator {
     }
 
     #[inline]
-    fn box_from_span<'a, T: AstNode + GetSpan + GetSpanMut>(
-        _span: Span,
-    ) -> Option<Self::Box<'a, T>> {
+    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(_span: Span) -> Option<Self::Box<'a, T>> {
         None
     }
 
     #[inline]
-    fn vec<'a, T: AstNode>(&'a self) -> Self::Vec<'a, T> {
+    fn vec<'a, T: Debug>(&'a self) -> Self::Vec<'a, T> {
         oxc_allocator::Vec::new_in(self)
     }
 
     #[inline]
-    fn vec_with_capacity<'a, T: AstNode>(&'a self, capacity: usize) -> Self::Vec<'a, T> {
+    fn vec_with_capacity<'a, T: Debug>(&'a self, capacity: usize) -> Self::Vec<'a, T> {
         oxc_allocator::Vec::with_capacity_in(capacity, self)
     }
 
     #[inline]
-    fn vec_from_iter<'a, T: AstNode, I: IntoIterator<Item = T>>(
+    fn vec_from_iter<'a, T: Debug, I: IntoIterator<Item = T>>(
         &'a self,
         iter: I,
     ) -> Self::Vec<'a, T> {

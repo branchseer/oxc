@@ -370,13 +370,13 @@ const _: () = {
     assert!(size_of::<VariableDeclarationKind>() == 1usize);
     assert!(align_of::<VariableDeclarationKind>() == 1usize);
 
-    assert!(size_of::<VariableDeclarator>() == 72usize);
+    assert!(size_of::<VariableDeclarator>() == 88usize);
     assert!(align_of::<VariableDeclarator>() == 8usize);
     assert!(offset_of!(VariableDeclarator, span) == 0usize);
     assert!(offset_of!(VariableDeclarator, kind) == 8usize);
     assert!(offset_of!(VariableDeclarator, id) == 16usize);
-    assert!(offset_of!(VariableDeclarator, init) == 48usize);
-    assert!(offset_of!(VariableDeclarator, definite) == 64usize);
+    assert!(offset_of!(VariableDeclarator, init) == 56usize);
+    assert!(offset_of!(VariableDeclarator, definite) == 72usize);
 
     assert!(size_of::<EmptyStatement>() == 8usize);
     assert!(align_of::<EmptyStatement>() == 4usize);
@@ -490,14 +490,14 @@ const _: () = {
     assert!(offset_of!(TryStatement, handler) == 16usize);
     assert!(offset_of!(TryStatement, finalizer) == 24usize);
 
-    assert!(size_of::<CatchClause>() == 64usize);
+    assert!(size_of::<CatchClause>() == 72usize);
     assert!(align_of::<CatchClause>() == 8usize);
     assert!(offset_of!(CatchClause, span) == 0usize);
     assert!(offset_of!(CatchClause, param) == 8usize);
-    assert!(offset_of!(CatchClause, body) == 48usize);
-    assert!(offset_of!(CatchClause, scope_id) == 56usize);
+    assert!(offset_of!(CatchClause, body) == 56usize);
+    assert!(offset_of!(CatchClause, scope_id) == 64usize);
 
-    assert!(size_of::<CatchParameter>() == 40usize);
+    assert!(size_of::<CatchParameter>() == 48usize);
     assert!(align_of::<CatchParameter>() == 8usize);
     assert!(offset_of!(CatchParameter, span) == 0usize);
     assert!(offset_of!(CatchParameter, pattern) == 8usize);
@@ -506,7 +506,7 @@ const _: () = {
     assert!(align_of::<DebuggerStatement>() == 4usize);
     assert!(offset_of!(DebuggerStatement, span) == 0usize);
 
-    assert!(size_of::<BindingPattern>() == 32usize);
+    assert!(size_of::<BindingPattern>() == 40usize);
     assert!(align_of::<BindingPattern>() == 8usize);
     assert!(offset_of!(BindingPattern, kind) == 0usize);
     assert!(offset_of!(BindingPattern, type_annotation) == 16usize);
@@ -515,11 +515,11 @@ const _: () = {
     assert!(size_of::<BindingPatternKind>() == 16usize);
     assert!(align_of::<BindingPatternKind>() == 8usize);
 
-    assert!(size_of::<AssignmentPattern>() == 56usize);
+    assert!(size_of::<AssignmentPattern>() == 64usize);
     assert!(align_of::<AssignmentPattern>() == 8usize);
     assert!(offset_of!(AssignmentPattern, span) == 0usize);
     assert!(offset_of!(AssignmentPattern, left) == 8usize);
-    assert!(offset_of!(AssignmentPattern, right) == 40usize);
+    assert!(offset_of!(AssignmentPattern, right) == 48usize);
 
     assert!(size_of::<ObjectPattern>() == 48usize);
     assert!(align_of::<ObjectPattern>() == 8usize);
@@ -527,13 +527,13 @@ const _: () = {
     assert!(offset_of!(ObjectPattern, properties) == 8usize);
     assert!(offset_of!(ObjectPattern, rest) == 40usize);
 
-    assert!(size_of::<BindingProperty>() == 64usize);
+    assert!(size_of::<BindingProperty>() == 72usize);
     assert!(align_of::<BindingProperty>() == 8usize);
     assert!(offset_of!(BindingProperty, span) == 0usize);
     assert!(offset_of!(BindingProperty, key) == 8usize);
     assert!(offset_of!(BindingProperty, value) == 24usize);
-    assert!(offset_of!(BindingProperty, shorthand) == 56usize);
-    assert!(offset_of!(BindingProperty, computed) == 57usize);
+    assert!(offset_of!(BindingProperty, shorthand) == 64usize);
+    assert!(offset_of!(BindingProperty, computed) == 65usize);
 
     assert!(size_of::<ArrayPattern>() == 48usize);
     assert!(align_of::<ArrayPattern>() == 8usize);
@@ -541,7 +541,7 @@ const _: () = {
     assert!(offset_of!(ArrayPattern, elements) == 8usize);
     assert!(offset_of!(ArrayPattern, rest) == 40usize);
 
-    assert!(size_of::<BindingRestElement>() == 40usize);
+    assert!(size_of::<BindingRestElement>() == 48usize);
     assert!(align_of::<BindingRestElement>() == 8usize);
     assert!(offset_of!(BindingRestElement, span) == 0usize);
     assert!(offset_of!(BindingRestElement, argument) == 8usize);
@@ -571,14 +571,14 @@ const _: () = {
     assert!(offset_of!(FormalParameters, items) == 16usize);
     assert!(offset_of!(FormalParameters, rest) == 48usize);
 
-    assert!(size_of::<FormalParameter>() == 80usize);
+    assert!(size_of::<FormalParameter>() == 88usize);
     assert!(align_of::<FormalParameter>() == 8usize);
     assert!(offset_of!(FormalParameter, span) == 0usize);
     assert!(offset_of!(FormalParameter, decorators) == 8usize);
     assert!(offset_of!(FormalParameter, pattern) == 40usize);
-    assert!(offset_of!(FormalParameter, accessibility) == 72usize);
-    assert!(offset_of!(FormalParameter, readonly) == 73usize);
-    assert!(offset_of!(FormalParameter, r#override) == 74usize);
+    assert!(offset_of!(FormalParameter, accessibility) == 80usize);
+    assert!(offset_of!(FormalParameter, readonly) == 81usize);
+    assert!(offset_of!(FormalParameter, r#override) == 82usize);
 
     assert!(size_of::<FormalParameterKind>() == 1usize);
     assert!(align_of::<FormalParameterKind>() == 1usize);
@@ -606,19 +606,19 @@ const _: () = {
     assert!(offset_of!(YieldExpression, delegate) == 8usize);
     assert!(offset_of!(YieldExpression, argument) == 16usize);
 
-    assert!(size_of::<ClassHead>() == 48usize);
-    assert!(align_of::<ClassHead>() == 8usize);
-    assert!(offset_of!(ClassHead, span) == 0usize);
-    assert!(offset_of!(ClassHead, r#abstract) == 8usize);
-    assert!(offset_of!(ClassHead, declare) == 9usize);
-    assert!(offset_of!(ClassHead, id) == 16usize);
+    assert!(size_of::<ClassModifiers>() == 12usize);
+    assert!(align_of::<ClassModifiers>() == 4usize);
+    assert!(offset_of!(ClassModifiers, span) == 0usize);
+    assert!(offset_of!(ClassModifiers, r#abstract) == 8usize);
+    assert!(offset_of!(ClassModifiers, declare) == 9usize);
 
     assert!(size_of::<Class>() == 176usize);
     assert!(align_of::<Class>() == 8usize);
     assert!(offset_of!(Class, r#type) == 0usize);
     assert!(offset_of!(Class, span) == 4usize);
     assert!(offset_of!(Class, decorators) == 16usize);
-    assert!(offset_of!(Class, head) == 48usize);
+    assert!(offset_of!(Class, modifiers) == 48usize);
+    assert!(offset_of!(Class, id) == 64usize);
     assert!(offset_of!(Class, type_parameters) == 96usize);
     assert!(offset_of!(Class, super_class) == 104usize);
     assert!(offset_of!(Class, super_type_parameters) == 120usize);
@@ -637,39 +637,42 @@ const _: () = {
     assert!(size_of::<ClassElement>() == 16usize);
     assert!(align_of::<ClassElement>() == 8usize);
 
-    assert!(size_of::<MethodDefinition>() == 80usize);
+    assert!(size_of::<MethodDefinition>() == 96usize);
     assert!(align_of::<MethodDefinition>() == 8usize);
-    assert!(offset_of!(MethodDefinition, r#type) == 0usize);
-    assert!(offset_of!(MethodDefinition, span) == 4usize);
-    assert!(offset_of!(MethodDefinition, decorators) == 16usize);
-    assert!(offset_of!(MethodDefinition, key) == 48usize);
-    assert!(offset_of!(MethodDefinition, value) == 64usize);
-    assert!(offset_of!(MethodDefinition, kind) == 72usize);
-    assert!(offset_of!(MethodDefinition, computed) == 73usize);
-    assert!(offset_of!(MethodDefinition, r#static) == 74usize);
-    assert!(offset_of!(MethodDefinition, r#override) == 75usize);
-    assert!(offset_of!(MethodDefinition, optional) == 76usize);
-    assert!(offset_of!(MethodDefinition, accessibility) == 77usize);
+    assert!(offset_of!(MethodDefinition, span) == 0usize);
+    assert!(offset_of!(MethodDefinition, decorators) == 8usize);
+    assert!(offset_of!(MethodDefinition, modifiers) == 40usize);
+    assert!(offset_of!(MethodDefinition, key) == 56usize);
+    assert!(offset_of!(MethodDefinition, value) == 72usize);
+    assert!(offset_of!(MethodDefinition, kind) == 80usize);
+    assert!(offset_of!(MethodDefinition, computed) == 81usize);
+    assert!(offset_of!(MethodDefinition, optional) == 84usize);
 
     assert!(size_of::<MethodDefinitionType>() == 1usize);
     assert!(align_of::<MethodDefinitionType>() == 1usize);
 
-    assert!(size_of::<PropertyDefinition>() == 104usize);
+    assert!(size_of::<ClassElementModifiers>() == 16usize);
+    assert!(align_of::<ClassElementModifiers>() == 4usize);
+    assert!(offset_of!(ClassElementModifiers, span) == 0usize);
+    assert!(offset_of!(ClassElementModifiers, r#async) == 8usize);
+    assert!(offset_of!(ClassElementModifiers, r#abstract) == 9usize);
+    assert!(offset_of!(ClassElementModifiers, r#static) == 10usize);
+    assert!(offset_of!(ClassElementModifiers, declare) == 11usize);
+    assert!(offset_of!(ClassElementModifiers, r#override) == 12usize);
+    assert!(offset_of!(ClassElementModifiers, readonly) == 13usize);
+    assert!(offset_of!(ClassElementModifiers, accessibility) == 14usize);
+
+    assert!(size_of::<PropertyDefinition>() == 128usize);
     assert!(align_of::<PropertyDefinition>() == 8usize);
-    assert!(offset_of!(PropertyDefinition, r#type) == 0usize);
-    assert!(offset_of!(PropertyDefinition, span) == 4usize);
-    assert!(offset_of!(PropertyDefinition, decorators) == 16usize);
-    assert!(offset_of!(PropertyDefinition, key) == 48usize);
-    assert!(offset_of!(PropertyDefinition, value) == 64usize);
-    assert!(offset_of!(PropertyDefinition, computed) == 80usize);
-    assert!(offset_of!(PropertyDefinition, r#static) == 81usize);
-    assert!(offset_of!(PropertyDefinition, declare) == 82usize);
-    assert!(offset_of!(PropertyDefinition, r#override) == 83usize);
-    assert!(offset_of!(PropertyDefinition, optional) == 84usize);
-    assert!(offset_of!(PropertyDefinition, definite) == 85usize);
-    assert!(offset_of!(PropertyDefinition, readonly) == 86usize);
-    assert!(offset_of!(PropertyDefinition, type_annotation) == 88usize);
-    assert!(offset_of!(PropertyDefinition, accessibility) == 96usize);
+    assert!(offset_of!(PropertyDefinition, span) == 0usize);
+    assert!(offset_of!(PropertyDefinition, decorators) == 8usize);
+    assert!(offset_of!(PropertyDefinition, modifiers) == 40usize);
+    assert!(offset_of!(PropertyDefinition, key) == 56usize);
+    assert!(offset_of!(PropertyDefinition, optional) == 72usize);
+    assert!(offset_of!(PropertyDefinition, definite) == 84usize);
+    assert!(offset_of!(PropertyDefinition, value) == 96usize);
+    assert!(offset_of!(PropertyDefinition, computed) == 112usize);
+    assert!(offset_of!(PropertyDefinition, type_annotation) == 120usize);
 
     assert!(size_of::<PropertyDefinitionType>() == 1usize);
     assert!(align_of::<PropertyDefinitionType>() == 1usize);
@@ -694,18 +697,16 @@ const _: () = {
     assert!(size_of::<AccessorPropertyType>() == 1usize);
     assert!(align_of::<AccessorPropertyType>() == 1usize);
 
-    assert!(size_of::<AccessorProperty>() == 104usize);
+    assert!(size_of::<AccessorProperty>() == 112usize);
     assert!(align_of::<AccessorProperty>() == 8usize);
-    assert!(offset_of!(AccessorProperty, r#type) == 0usize);
-    assert!(offset_of!(AccessorProperty, span) == 4usize);
-    assert!(offset_of!(AccessorProperty, decorators) == 16usize);
-    assert!(offset_of!(AccessorProperty, key) == 48usize);
-    assert!(offset_of!(AccessorProperty, value) == 64usize);
-    assert!(offset_of!(AccessorProperty, computed) == 80usize);
-    assert!(offset_of!(AccessorProperty, r#static) == 81usize);
-    assert!(offset_of!(AccessorProperty, definite) == 82usize);
-    assert!(offset_of!(AccessorProperty, type_annotation) == 88usize);
-    assert!(offset_of!(AccessorProperty, accessibility) == 96usize);
+    assert!(offset_of!(AccessorProperty, span) == 0usize);
+    assert!(offset_of!(AccessorProperty, decorators) == 8usize);
+    assert!(offset_of!(AccessorProperty, modifiers) == 40usize);
+    assert!(offset_of!(AccessorProperty, key) == 56usize);
+    assert!(offset_of!(AccessorProperty, value) == 72usize);
+    assert!(offset_of!(AccessorProperty, computed) == 88usize);
+    assert!(offset_of!(AccessorProperty, definite) == 92usize);
+    assert!(offset_of!(AccessorProperty, type_annotation) == 104usize);
 
     assert!(size_of::<ImportExpression>() == 56usize);
     assert!(align_of::<ImportExpression>() == 8usize);
@@ -1266,6 +1267,14 @@ const _: () = {
 
     assert!(size_of::<ImportOrExportKind>() == 1usize);
     assert!(align_of::<ImportOrExportKind>() == 1usize);
+
+    assert!(size_of::<TSOptionalMark>() == 8usize);
+    assert!(align_of::<TSOptionalMark>() == 4usize);
+    assert!(offset_of!(TSOptionalMark, span) == 0usize);
+
+    assert!(size_of::<TSDefiniteMark>() == 8usize);
+    assert!(align_of::<TSDefiniteMark>() == 4usize);
+    assert!(offset_of!(TSDefiniteMark, span) == 0usize);
 
     assert!(size_of::<JSDocNullableType>() == 32usize);
     assert!(align_of::<JSDocNullableType>() == 8usize);
@@ -1939,13 +1948,13 @@ const _: () = {
     assert!(size_of::<VariableDeclarationKind>() == 1usize);
     assert!(align_of::<VariableDeclarationKind>() == 1usize);
 
-    assert!(size_of::<VariableDeclarator>() == 40usize);
+    assert!(size_of::<VariableDeclarator>() == 56usize);
     assert!(align_of::<VariableDeclarator>() == 4usize);
     assert!(offset_of!(VariableDeclarator, span) == 0usize);
     assert!(offset_of!(VariableDeclarator, kind) == 8usize);
     assert!(offset_of!(VariableDeclarator, id) == 12usize);
-    assert!(offset_of!(VariableDeclarator, init) == 28usize);
-    assert!(offset_of!(VariableDeclarator, definite) == 36usize);
+    assert!(offset_of!(VariableDeclarator, init) == 36usize);
+    assert!(offset_of!(VariableDeclarator, definite) == 44usize);
 
     assert!(size_of::<EmptyStatement>() == 8usize);
     assert!(align_of::<EmptyStatement>() == 4usize);
@@ -2059,14 +2068,14 @@ const _: () = {
     assert!(offset_of!(TryStatement, handler) == 12usize);
     assert!(offset_of!(TryStatement, finalizer) == 16usize);
 
-    assert!(size_of::<CatchClause>() == 40usize);
+    assert!(size_of::<CatchClause>() == 48usize);
     assert!(align_of::<CatchClause>() == 4usize);
     assert!(offset_of!(CatchClause, span) == 0usize);
     assert!(offset_of!(CatchClause, param) == 8usize);
-    assert!(offset_of!(CatchClause, body) == 32usize);
-    assert!(offset_of!(CatchClause, scope_id) == 36usize);
+    assert!(offset_of!(CatchClause, body) == 40usize);
+    assert!(offset_of!(CatchClause, scope_id) == 44usize);
 
-    assert!(size_of::<CatchParameter>() == 24usize);
+    assert!(size_of::<CatchParameter>() == 32usize);
     assert!(align_of::<CatchParameter>() == 4usize);
     assert!(offset_of!(CatchParameter, span) == 0usize);
     assert!(offset_of!(CatchParameter, pattern) == 8usize);
@@ -2075,7 +2084,7 @@ const _: () = {
     assert!(align_of::<DebuggerStatement>() == 4usize);
     assert!(offset_of!(DebuggerStatement, span) == 0usize);
 
-    assert!(size_of::<BindingPattern>() == 16usize);
+    assert!(size_of::<BindingPattern>() == 24usize);
     assert!(align_of::<BindingPattern>() == 4usize);
     assert!(offset_of!(BindingPattern, kind) == 0usize);
     assert!(offset_of!(BindingPattern, type_annotation) == 8usize);
@@ -2084,11 +2093,11 @@ const _: () = {
     assert!(size_of::<BindingPatternKind>() == 8usize);
     assert!(align_of::<BindingPatternKind>() == 4usize);
 
-    assert!(size_of::<AssignmentPattern>() == 32usize);
+    assert!(size_of::<AssignmentPattern>() == 40usize);
     assert!(align_of::<AssignmentPattern>() == 4usize);
     assert!(offset_of!(AssignmentPattern, span) == 0usize);
     assert!(offset_of!(AssignmentPattern, left) == 8usize);
-    assert!(offset_of!(AssignmentPattern, right) == 24usize);
+    assert!(offset_of!(AssignmentPattern, right) == 32usize);
 
     assert!(size_of::<ObjectPattern>() == 28usize);
     assert!(align_of::<ObjectPattern>() == 4usize);
@@ -2096,13 +2105,13 @@ const _: () = {
     assert!(offset_of!(ObjectPattern, properties) == 8usize);
     assert!(offset_of!(ObjectPattern, rest) == 24usize);
 
-    assert!(size_of::<BindingProperty>() == 36usize);
+    assert!(size_of::<BindingProperty>() == 44usize);
     assert!(align_of::<BindingProperty>() == 4usize);
     assert!(offset_of!(BindingProperty, span) == 0usize);
     assert!(offset_of!(BindingProperty, key) == 8usize);
     assert!(offset_of!(BindingProperty, value) == 16usize);
-    assert!(offset_of!(BindingProperty, shorthand) == 32usize);
-    assert!(offset_of!(BindingProperty, computed) == 33usize);
+    assert!(offset_of!(BindingProperty, shorthand) == 40usize);
+    assert!(offset_of!(BindingProperty, computed) == 41usize);
 
     assert!(size_of::<ArrayPattern>() == 28usize);
     assert!(align_of::<ArrayPattern>() == 4usize);
@@ -2110,7 +2119,7 @@ const _: () = {
     assert!(offset_of!(ArrayPattern, elements) == 8usize);
     assert!(offset_of!(ArrayPattern, rest) == 24usize);
 
-    assert!(size_of::<BindingRestElement>() == 24usize);
+    assert!(size_of::<BindingRestElement>() == 32usize);
     assert!(align_of::<BindingRestElement>() == 4usize);
     assert!(offset_of!(BindingRestElement, span) == 0usize);
     assert!(offset_of!(BindingRestElement, argument) == 8usize);
@@ -2140,14 +2149,14 @@ const _: () = {
     assert!(offset_of!(FormalParameters, items) == 12usize);
     assert!(offset_of!(FormalParameters, rest) == 28usize);
 
-    assert!(size_of::<FormalParameter>() == 44usize);
+    assert!(size_of::<FormalParameter>() == 52usize);
     assert!(align_of::<FormalParameter>() == 4usize);
     assert!(offset_of!(FormalParameter, span) == 0usize);
     assert!(offset_of!(FormalParameter, decorators) == 8usize);
     assert!(offset_of!(FormalParameter, pattern) == 24usize);
-    assert!(offset_of!(FormalParameter, accessibility) == 40usize);
-    assert!(offset_of!(FormalParameter, readonly) == 41usize);
-    assert!(offset_of!(FormalParameter, r#override) == 42usize);
+    assert!(offset_of!(FormalParameter, accessibility) == 48usize);
+    assert!(offset_of!(FormalParameter, readonly) == 49usize);
+    assert!(offset_of!(FormalParameter, r#override) == 50usize);
 
     assert!(size_of::<FormalParameterKind>() == 1usize);
     assert!(align_of::<FormalParameterKind>() == 1usize);
@@ -2175,19 +2184,19 @@ const _: () = {
     assert!(offset_of!(YieldExpression, delegate) == 8usize);
     assert!(offset_of!(YieldExpression, argument) == 12usize);
 
-    assert!(size_of::<ClassHead>() == 32usize);
-    assert!(align_of::<ClassHead>() == 4usize);
-    assert!(offset_of!(ClassHead, span) == 0usize);
-    assert!(offset_of!(ClassHead, r#abstract) == 8usize);
-    assert!(offset_of!(ClassHead, declare) == 9usize);
-    assert!(offset_of!(ClassHead, id) == 12usize);
+    assert!(size_of::<ClassModifiers>() == 12usize);
+    assert!(align_of::<ClassModifiers>() == 4usize);
+    assert!(offset_of!(ClassModifiers, span) == 0usize);
+    assert!(offset_of!(ClassModifiers, r#abstract) == 8usize);
+    assert!(offset_of!(ClassModifiers, declare) == 9usize);
 
     assert!(size_of::<Class>() == 100usize);
     assert!(align_of::<Class>() == 4usize);
     assert!(offset_of!(Class, r#type) == 0usize);
     assert!(offset_of!(Class, span) == 4usize);
     assert!(offset_of!(Class, decorators) == 12usize);
-    assert!(offset_of!(Class, head) == 28usize);
+    assert!(offset_of!(Class, modifiers) == 28usize);
+    assert!(offset_of!(Class, id) == 40usize);
     assert!(offset_of!(Class, type_parameters) == 60usize);
     assert!(offset_of!(Class, super_class) == 64usize);
     assert!(offset_of!(Class, super_type_parameters) == 72usize);
@@ -2206,39 +2215,42 @@ const _: () = {
     assert!(size_of::<ClassElement>() == 8usize);
     assert!(align_of::<ClassElement>() == 4usize);
 
-    assert!(size_of::<MethodDefinition>() == 48usize);
+    assert!(size_of::<MethodDefinition>() == 68usize);
     assert!(align_of::<MethodDefinition>() == 4usize);
-    assert!(offset_of!(MethodDefinition, r#type) == 0usize);
-    assert!(offset_of!(MethodDefinition, span) == 4usize);
-    assert!(offset_of!(MethodDefinition, decorators) == 12usize);
-    assert!(offset_of!(MethodDefinition, key) == 28usize);
-    assert!(offset_of!(MethodDefinition, value) == 36usize);
-    assert!(offset_of!(MethodDefinition, kind) == 40usize);
-    assert!(offset_of!(MethodDefinition, computed) == 41usize);
-    assert!(offset_of!(MethodDefinition, r#static) == 42usize);
-    assert!(offset_of!(MethodDefinition, r#override) == 43usize);
-    assert!(offset_of!(MethodDefinition, optional) == 44usize);
-    assert!(offset_of!(MethodDefinition, accessibility) == 45usize);
+    assert!(offset_of!(MethodDefinition, span) == 0usize);
+    assert!(offset_of!(MethodDefinition, decorators) == 8usize);
+    assert!(offset_of!(MethodDefinition, modifiers) == 24usize);
+    assert!(offset_of!(MethodDefinition, key) == 40usize);
+    assert!(offset_of!(MethodDefinition, value) == 48usize);
+    assert!(offset_of!(MethodDefinition, kind) == 52usize);
+    assert!(offset_of!(MethodDefinition, computed) == 53usize);
+    assert!(offset_of!(MethodDefinition, optional) == 56usize);
 
     assert!(size_of::<MethodDefinitionType>() == 1usize);
     assert!(align_of::<MethodDefinitionType>() == 1usize);
 
-    assert!(size_of::<PropertyDefinition>() == 60usize);
+    assert!(size_of::<ClassElementModifiers>() == 16usize);
+    assert!(align_of::<ClassElementModifiers>() == 4usize);
+    assert!(offset_of!(ClassElementModifiers, span) == 0usize);
+    assert!(offset_of!(ClassElementModifiers, r#async) == 8usize);
+    assert!(offset_of!(ClassElementModifiers, r#abstract) == 9usize);
+    assert!(offset_of!(ClassElementModifiers, r#static) == 10usize);
+    assert!(offset_of!(ClassElementModifiers, declare) == 11usize);
+    assert!(offset_of!(ClassElementModifiers, r#override) == 12usize);
+    assert!(offset_of!(ClassElementModifiers, readonly) == 13usize);
+    assert!(offset_of!(ClassElementModifiers, accessibility) == 14usize);
+
+    assert!(size_of::<PropertyDefinition>() == 88usize);
     assert!(align_of::<PropertyDefinition>() == 4usize);
-    assert!(offset_of!(PropertyDefinition, r#type) == 0usize);
-    assert!(offset_of!(PropertyDefinition, span) == 4usize);
-    assert!(offset_of!(PropertyDefinition, decorators) == 12usize);
-    assert!(offset_of!(PropertyDefinition, key) == 28usize);
-    assert!(offset_of!(PropertyDefinition, value) == 36usize);
-    assert!(offset_of!(PropertyDefinition, computed) == 44usize);
-    assert!(offset_of!(PropertyDefinition, r#static) == 45usize);
-    assert!(offset_of!(PropertyDefinition, declare) == 46usize);
-    assert!(offset_of!(PropertyDefinition, r#override) == 47usize);
+    assert!(offset_of!(PropertyDefinition, span) == 0usize);
+    assert!(offset_of!(PropertyDefinition, decorators) == 8usize);
+    assert!(offset_of!(PropertyDefinition, modifiers) == 24usize);
+    assert!(offset_of!(PropertyDefinition, key) == 40usize);
     assert!(offset_of!(PropertyDefinition, optional) == 48usize);
-    assert!(offset_of!(PropertyDefinition, definite) == 49usize);
-    assert!(offset_of!(PropertyDefinition, readonly) == 50usize);
-    assert!(offset_of!(PropertyDefinition, type_annotation) == 52usize);
-    assert!(offset_of!(PropertyDefinition, accessibility) == 56usize);
+    assert!(offset_of!(PropertyDefinition, definite) == 60usize);
+    assert!(offset_of!(PropertyDefinition, value) == 72usize);
+    assert!(offset_of!(PropertyDefinition, computed) == 80usize);
+    assert!(offset_of!(PropertyDefinition, type_annotation) == 84usize);
 
     assert!(size_of::<PropertyDefinitionType>() == 1usize);
     assert!(align_of::<PropertyDefinitionType>() == 1usize);
@@ -2263,18 +2275,16 @@ const _: () = {
     assert!(size_of::<AccessorPropertyType>() == 1usize);
     assert!(align_of::<AccessorPropertyType>() == 1usize);
 
-    assert!(size_of::<AccessorProperty>() == 56usize);
+    assert!(size_of::<AccessorProperty>() == 76usize);
     assert!(align_of::<AccessorProperty>() == 4usize);
-    assert!(offset_of!(AccessorProperty, r#type) == 0usize);
-    assert!(offset_of!(AccessorProperty, span) == 4usize);
-    assert!(offset_of!(AccessorProperty, decorators) == 12usize);
-    assert!(offset_of!(AccessorProperty, key) == 28usize);
-    assert!(offset_of!(AccessorProperty, value) == 36usize);
-    assert!(offset_of!(AccessorProperty, computed) == 44usize);
-    assert!(offset_of!(AccessorProperty, r#static) == 45usize);
-    assert!(offset_of!(AccessorProperty, definite) == 46usize);
-    assert!(offset_of!(AccessorProperty, type_annotation) == 48usize);
-    assert!(offset_of!(AccessorProperty, accessibility) == 52usize);
+    assert!(offset_of!(AccessorProperty, span) == 0usize);
+    assert!(offset_of!(AccessorProperty, decorators) == 8usize);
+    assert!(offset_of!(AccessorProperty, modifiers) == 24usize);
+    assert!(offset_of!(AccessorProperty, key) == 40usize);
+    assert!(offset_of!(AccessorProperty, value) == 48usize);
+    assert!(offset_of!(AccessorProperty, computed) == 56usize);
+    assert!(offset_of!(AccessorProperty, definite) == 60usize);
+    assert!(offset_of!(AccessorProperty, type_annotation) == 72usize);
 
     assert!(size_of::<ImportExpression>() == 32usize);
     assert!(align_of::<ImportExpression>() == 4usize);
@@ -2835,6 +2845,14 @@ const _: () = {
 
     assert!(size_of::<ImportOrExportKind>() == 1usize);
     assert!(align_of::<ImportOrExportKind>() == 1usize);
+
+    assert!(size_of::<TSOptionalMark>() == 8usize);
+    assert!(align_of::<TSOptionalMark>() == 4usize);
+    assert!(offset_of!(TSOptionalMark, span) == 0usize);
+
+    assert!(size_of::<TSDefiniteMark>() == 8usize);
+    assert!(align_of::<TSDefiniteMark>() == 4usize);
+    assert!(offset_of!(TSDefiniteMark, span) == 0usize);
 
     assert!(size_of::<JSDocNullableType>() == 20usize);
     assert!(align_of::<JSDocNullableType>() == 4usize);

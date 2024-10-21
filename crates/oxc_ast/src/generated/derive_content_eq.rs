@@ -2072,11 +2072,10 @@ impl<'a> ContentEq for YieldExpression<'a> {
     }
 }
 
-impl<'a> ContentEq for ClassHead<'a> {
+impl ContentEq for ClassModifiers {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
             && ContentEq::content_eq(&self.declare, &other.declare)
-            && ContentEq::content_eq(&self.id, &other.id)
     }
 }
 
@@ -2084,7 +2083,8 @@ impl<'a> ContentEq for Class<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.r#type, &other.r#type)
             && ContentEq::content_eq(&self.decorators, &other.decorators)
-            && ContentEq::content_eq(&self.head, &other.head)
+            && ContentEq::content_eq(&self.modifiers, &other.modifiers)
+            && ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.super_class, &other.super_class)
             && ContentEq::content_eq(&self.super_type_parameters, &other.super_type_parameters)
@@ -2134,16 +2134,13 @@ impl<'a> ContentEq for ClassElement<'a> {
 
 impl<'a> ContentEq for MethodDefinition<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.r#type, &other.r#type)
-            && ContentEq::content_eq(&self.decorators, &other.decorators)
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.modifiers, &other.modifiers)
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.computed, &other.computed)
-            && ContentEq::content_eq(&self.r#static, &other.r#static)
-            && ContentEq::content_eq(&self.r#override, &other.r#override)
             && ContentEq::content_eq(&self.optional, &other.optional)
-            && ContentEq::content_eq(&self.accessibility, &other.accessibility)
     }
 }
 
@@ -2153,21 +2150,28 @@ impl ContentEq for MethodDefinitionType {
     }
 }
 
-impl<'a> ContentEq for PropertyDefinition<'a> {
+impl ContentEq for ClassElementModifiers {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.r#type, &other.r#type)
-            && ContentEq::content_eq(&self.decorators, &other.decorators)
-            && ContentEq::content_eq(&self.key, &other.key)
-            && ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.computed, &other.computed)
+        ContentEq::content_eq(&self.r#async, &other.r#async)
+            && ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.declare, &other.declare)
             && ContentEq::content_eq(&self.r#override, &other.r#override)
+            && ContentEq::content_eq(&self.readonly, &other.readonly)
+            && ContentEq::content_eq(&self.accessibility, &other.accessibility)
+    }
+}
+
+impl<'a> ContentEq for PropertyDefinition<'a> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.modifiers, &other.modifiers)
+            && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.definite, &other.definite)
-            && ContentEq::content_eq(&self.readonly, &other.readonly)
+            && ContentEq::content_eq(&self.value, &other.value)
+            && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
-            && ContentEq::content_eq(&self.accessibility, &other.accessibility)
     }
 }
 
@@ -2236,15 +2240,13 @@ impl ContentEq for AccessorPropertyType {
 
 impl<'a> ContentEq for AccessorProperty<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.r#type, &other.r#type)
-            && ContentEq::content_eq(&self.decorators, &other.decorators)
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.modifiers, &other.modifiers)
             && ContentEq::content_eq(&self.key, &other.key)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.computed, &other.computed)
-            && ContentEq::content_eq(&self.r#static, &other.r#static)
             && ContentEq::content_eq(&self.definite, &other.definite)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
-            && ContentEq::content_eq(&self.accessibility, &other.accessibility)
     }
 }
 
@@ -3801,6 +3803,18 @@ impl<'a> ContentEq for TSInstantiationExpression<'a> {
 impl ContentEq for ImportOrExportKind {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
+    }
+}
+
+impl ContentEq for TSOptionalMark {
+    fn content_eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+impl ContentEq for TSDefiniteMark {
+    fn content_eq(&self, _: &Self) -> bool {
+        true
     }
 }
 

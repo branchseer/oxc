@@ -351,7 +351,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         allow_decorators: bool,
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
-    ) -> Modifiers<'a> {
+    ) -> (Modifiers<'a>, Span) {
         let mut has_seen_static_modifier = false;
         let mut has_leading_modifier = false;
         let mut has_trailing_decorator = false;
@@ -363,6 +363,8 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         if allow_decorators && matches!(self.cur_kind(), Kind::At) {
             self.try_parse(Self::eat_decorators);
         }
+
+        let start_span = self.start_span();
 
         // parse leading modifiers
         while let Some(modifier) = self.try_parse_modifier(
@@ -400,7 +402,15 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             }
         }
 
-        Modifiers::new(modifiers, modifier_flags)
+        let span = if start_span.start > self.prev_token_end { 
+            // no token bumped
+            start_span
+        } else {
+            self.end_span(start_span)
+        };
+
+
+        (Modifiers::new(modifiers, modifier_flags), span)
     }
 
     fn try_parse_modifier(
