@@ -155,6 +155,7 @@ pub enum AstType {
     TSTemplateLiteralType,
     TSAsExpression,
     TSSatisfiesExpression,
+    TSTypeAssertionAnnotation,
     TSTypeAssertion,
     TSImportEqualsDeclaration,
     TSModuleReference,
@@ -329,6 +330,7 @@ pub enum AstKind<'a> {
     TSTemplateLiteralType(&'a TSTemplateLiteralType<'a>),
     TSAsExpression(&'a TSAsExpression<'a>),
     TSSatisfiesExpression(&'a TSSatisfiesExpression<'a>),
+    TSTypeAssertionAnnotation(&'a TSTypeAssertionAnnotation<'a>),
     TSTypeAssertion(&'a TSTypeAssertion<'a>),
     TSImportEqualsDeclaration(&'a TSImportEqualsDeclaration<'a>),
     TSModuleReference(&'a TSModuleReference<'a>),
@@ -504,6 +506,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSTemplateLiteralType(it) => it.span(),
             Self::TSAsExpression(it) => it.span(),
             Self::TSSatisfiesExpression(it) => it.span(),
+            Self::TSTypeAssertionAnnotation(it) => it.span(),
             Self::TSTypeAssertion(it) => it.span(),
             Self::TSImportEqualsDeclaration(it) => it.span(),
             Self::TSModuleReference(it) => it.span(),
@@ -1852,6 +1855,15 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_satisfies_expression(&self) -> Option<&'a TSSatisfiesExpression<'a>> {
         if let Self::TSSatisfiesExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_ts_type_assertion_annotation(&self) -> Option<&'a TSTypeAssertionAnnotation<'a>> {
+        if let Self::TSTypeAssertionAnnotation(v) = self {
             Some(*v)
         } else {
             None

@@ -396,6 +396,7 @@ impl<'a> AstKind<'a> {
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
             Self::TSTypeAnnotation(_) => "TSTypeAnnotation".into(),
             Self::TSTypeQuery(_) => "TSTypeQuery".into(),
+            Self::TSTypeAssertionAnnotation(_) => "TSTypeAssertionAnnotation".into(),
             Self::TSTypeAssertion(_) => "TSTypeAssertion".into(),
             Self::TSThisParameter(_) => "TSThisParameter".into(),
             Self::TSTypeParameter(t) => format!("TSTypeParameter({})", t.name).into(),

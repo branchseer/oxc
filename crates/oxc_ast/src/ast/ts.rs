@@ -1751,11 +1751,22 @@ pub struct TSSatisfiesExpression<'a, A: AstAllocator = oxc_allocator::Allocator>
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
+pub struct TSTypeAssertionAnnotation<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    #[serde(flatten)]
+    pub span: Span,
+    pub type_annotation: TSType<'a, A>,
+}
+
+#[ast(visit)]
+#[derive_where(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeAssertion<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
+    pub type_annotation: TSTypeAssertionAnnotation<'a, A>,
     pub expression: Expression<'a, A>,
-    pub type_annotation: TSType<'a, A>,
 }
 
 #[ast(visit)]

@@ -3721,10 +3721,16 @@ impl<'a> ContentEq for TSSatisfiesExpression<'a> {
     }
 }
 
+impl<'a> ContentEq for TSTypeAssertionAnnotation<'a> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+    }
+}
+
 impl<'a> ContentEq for TSTypeAssertion<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+        ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+            && ContentEq::content_eq(&self.expression, &other.expression)
     }
 }
 

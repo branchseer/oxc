@@ -3735,13 +3735,23 @@ impl<'old_alloc> CloneIn for TSSatisfiesExpression<'old_alloc> {
     }
 }
 
+impl<'old_alloc> CloneIn for TSTypeAssertionAnnotation<'old_alloc> {
+    type Cloned<'a> = TSTypeAssertionAnnotation<'a>;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        TSTypeAssertionAnnotation {
+            span: CloneIn::clone_in(&self.span, allocator),
+            type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
+        }
+    }
+}
+
 impl<'old_alloc> CloneIn for TSTypeAssertion<'old_alloc> {
     type Cloned<'a> = TSTypeAssertion<'a>;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         TSTypeAssertion {
             span: CloneIn::clone_in(&self.span, allocator),
-            expression: CloneIn::clone_in(&self.expression, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
+            expression: CloneIn::clone_in(&self.expression, allocator),
         }
     }
 }

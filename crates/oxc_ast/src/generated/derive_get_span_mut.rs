@@ -1916,6 +1916,13 @@ impl<'a, A: AstAllocator> GetSpanMut for TSSatisfiesExpression<'a, A> {
     }
 }
 
+impl<'a, A: AstAllocator> GetSpanMut for TSTypeAssertionAnnotation<'a, A> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl<'a, A: AstAllocator> GetSpanMut for TSTypeAssertion<'a, A> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {

@@ -681,6 +681,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_type_assertion_annotation(&mut self, it: &TSTypeAssertionAnnotation<'a>) {
+        walk_ts_type_assertion_annotation(self, it);
+    }
+
+    #[inline]
     fn visit_ts_instantiation_expression(&mut self, it: &TSInstantiationExpression<'a>) {
         walk_ts_instantiation_expression(self, it);
     }
@@ -2682,7 +2687,18 @@ pub mod walk {
     pub fn walk_ts_type_assertion<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeAssertion<'a>) {
         let kind = AstKind::TSTypeAssertion(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.visit_ts_type_assertion_annotation(&it.type_annotation);
         visitor.visit_expression(&it.expression);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_type_assertion_annotation<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &TSTypeAssertionAnnotation<'a>,
+    ) {
+        let kind = AstKind::TSTypeAssertionAnnotation(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_ts_type(&it.type_annotation);
         visitor.leave_node(kind);
     }

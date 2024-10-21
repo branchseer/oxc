@@ -463,12 +463,14 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a, A>> {
         let span = self.start_span();
+        
         self.expect(Kind::LAngle)?;
-        let type_annotation = self.parse_ts_type()?;
+        let ts_type = self.parse_ts_type()?;
         self.expect(Kind::RAngle)?;
+        let type_annotation = self.ast.ts_type_assertion_annotation(self.end_span(span), ts_type);
         let lhs_span = self.start_span();
         let expression = self.parse_simple_unary_expression(lhs_span)?;
-        Ok(self.ast.expression_ts_type_assertion(self.end_span(span), expression, type_annotation))
+        Ok(self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression))
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(

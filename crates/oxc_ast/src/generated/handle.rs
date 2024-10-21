@@ -350,6 +350,9 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_ts_type_assertion(&mut self, _: &TSTypeAssertion<'a, A>) {}
 
     #[inline]
+    fn handle_ts_type_assertion_annotation(&mut self, _: &TSTypeAssertionAnnotation<'a, A>) {}
+
+    #[inline]
     fn handle_ts_instantiation_expression(&mut self, _: &TSInstantiationExpression<'a, A>) {}
 
     #[inline]

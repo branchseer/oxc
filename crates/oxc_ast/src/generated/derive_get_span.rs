@@ -1916,6 +1916,13 @@ impl<'a, A: AstAllocator> GetSpan for TSSatisfiesExpression<'a, A> {
     }
 }
 
+impl<'a, A: AstAllocator> GetSpan for TSTypeAssertionAnnotation<'a, A> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a, A: AstAllocator> GetSpan for TSTypeAssertion<'a, A> {
     #[inline]
     fn span(&self) -> Span {

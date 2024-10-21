@@ -2084,10 +2084,16 @@ impl<'a> ContentHash for TSSatisfiesExpression<'a> {
     }
 }
 
+impl<'a> ContentHash for TSTypeAssertionAnnotation<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.type_annotation, state);
+    }
+}
+
 impl<'a> ContentHash for TSTypeAssertion<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.type_annotation, state);
+        ContentHash::content_hash(&self.expression, state);
     }
 }
 

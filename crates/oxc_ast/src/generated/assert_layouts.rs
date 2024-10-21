@@ -1212,11 +1212,16 @@ const _: () = {
     assert!(offset_of!(TSSatisfiesExpression, expression) == 8usize);
     assert!(offset_of!(TSSatisfiesExpression, type_annotation) == 24usize);
 
-    assert!(size_of::<TSTypeAssertion>() == 40usize);
+    assert!(size_of::<TSTypeAssertionAnnotation>() == 24usize);
+    assert!(align_of::<TSTypeAssertionAnnotation>() == 8usize);
+    assert!(offset_of!(TSTypeAssertionAnnotation, span) == 0usize);
+    assert!(offset_of!(TSTypeAssertionAnnotation, type_annotation) == 8usize);
+
+    assert!(size_of::<TSTypeAssertion>() == 48usize);
     assert!(align_of::<TSTypeAssertion>() == 8usize);
     assert!(offset_of!(TSTypeAssertion, span) == 0usize);
-    assert!(offset_of!(TSTypeAssertion, expression) == 8usize);
-    assert!(offset_of!(TSTypeAssertion, type_annotation) == 24usize);
+    assert!(offset_of!(TSTypeAssertion, type_annotation) == 8usize);
+    assert!(offset_of!(TSTypeAssertion, expression) == 32usize);
 
     assert!(size_of::<TSImportEqualsDeclaration>() == 64usize);
     assert!(align_of::<TSImportEqualsDeclaration>() == 8usize);
@@ -2776,11 +2781,16 @@ const _: () = {
     assert!(offset_of!(TSSatisfiesExpression, expression) == 8usize);
     assert!(offset_of!(TSSatisfiesExpression, type_annotation) == 16usize);
 
-    assert!(size_of::<TSTypeAssertion>() == 24usize);
+    assert!(size_of::<TSTypeAssertionAnnotation>() == 16usize);
+    assert!(align_of::<TSTypeAssertionAnnotation>() == 4usize);
+    assert!(offset_of!(TSTypeAssertionAnnotation, span) == 0usize);
+    assert!(offset_of!(TSTypeAssertionAnnotation, type_annotation) == 8usize);
+
+    assert!(size_of::<TSTypeAssertion>() == 32usize);
     assert!(align_of::<TSTypeAssertion>() == 4usize);
     assert!(offset_of!(TSTypeAssertion, span) == 0usize);
-    assert!(offset_of!(TSTypeAssertion, expression) == 8usize);
-    assert!(offset_of!(TSTypeAssertion, type_annotation) == 16usize);
+    assert!(offset_of!(TSTypeAssertion, type_annotation) == 8usize);
+    assert!(offset_of!(TSTypeAssertion, expression) == 24usize);
 
     assert!(size_of::<TSImportEqualsDeclaration>() == 40usize);
     assert!(align_of::<TSImportEqualsDeclaration>() == 4usize);

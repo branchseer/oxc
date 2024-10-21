@@ -1487,16 +1487,16 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
     /// - type_annotation
+    /// - expression
     #[inline]
     pub fn expression_ts_type_assertion(
         self,
         span: Span,
+        type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-        type_annotation: TSType<'a, A>,
     ) -> Expression<'a, A> {
-        let value = self.ts_type_assertion(span, expression, type_annotation);
+        let value = self.ts_type_assertion(span, type_annotation, expression);
         let value = Expression::TSTypeAssertion(self.allocator.alloc(value));
         value
     }
@@ -3106,16 +3106,16 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
     /// - type_annotation
+    /// - expression
     #[inline]
     pub fn simple_assignment_target_ts_type_assertion(
         self,
         span: Span,
+        type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-        type_annotation: TSType<'a, A>,
     ) -> SimpleAssignmentTarget<'a, A> {
-        let value = self.ts_type_assertion(span, expression, type_annotation);
+        let value = self.ts_type_assertion(span, type_annotation, expression);
         let value = SimpleAssignmentTarget::TSTypeAssertion(self.allocator.alloc(value));
         value
     }
@@ -12933,22 +12933,55 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self.allocator.alloc(self.ts_satisfies_expression(span, expression, type_annotation))
     }
 
+    /// Builds a [`TSTypeAssertionAnnotation`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_assertion_annotation`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - type_annotation
+    #[inline]
+    pub fn ts_type_assertion_annotation(
+        self,
+        span: Span,
+        type_annotation: TSType<'a, A>,
+    ) -> TSTypeAssertionAnnotation<'a, A> {
+        let value = TSTypeAssertionAnnotation { span, type_annotation };
+        value
+    }
+
+    /// Builds a [`TSTypeAssertionAnnotation`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_type_assertion_annotation`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - type_annotation
+    #[inline]
+    pub fn alloc_ts_type_assertion_annotation(
+        self,
+        span: Span,
+        type_annotation: TSType<'a, A>,
+    ) -> A::Box<'a, TSTypeAssertionAnnotation<'a, A>> {
+        self.allocator.alloc(self.ts_type_assertion_annotation(span, type_annotation))
+    }
+
     /// Builds a [`TSTypeAssertion`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_assertion`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
     /// - type_annotation
+    /// - expression
     #[inline]
     pub fn ts_type_assertion(
         self,
         span: Span,
+        type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-        type_annotation: TSType<'a, A>,
     ) -> TSTypeAssertion<'a, A> {
-        let value = TSTypeAssertion { span, expression, type_annotation };
+        let value = TSTypeAssertion { span, type_annotation, expression };
         value
     }
 
@@ -12958,16 +12991,16 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
     /// - type_annotation
+    /// - expression
     #[inline]
     pub fn alloc_ts_type_assertion(
         self,
         span: Span,
+        type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-        type_annotation: TSType<'a, A>,
     ) -> A::Box<'a, TSTypeAssertion<'a, A>> {
-        self.allocator.alloc(self.ts_type_assertion(span, expression, type_annotation))
+        self.allocator.alloc(self.ts_type_assertion(span, type_annotation, expression))
     }
 
     /// Builds a [`TSImportEqualsDeclaration`]
@@ -16094,16 +16127,16 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
     /// - type_annotation
+    /// - expression
     #[inline]
     pub fn expression_ts_type_assertion(
         &mut self,
         span: Span,
+        type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-        type_annotation: TSType<'a, A>,
     ) -> Expression<'a, A> {
-        let value = self.ts_type_assertion(span, expression, type_annotation);
+        let value = self.ts_type_assertion(span, type_annotation, expression);
         let value = Expression::TSTypeAssertion(self.allocator.alloc(value));
         self.handler.handle_expression(&value);
         value
@@ -17799,16 +17832,16 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
     /// - type_annotation
+    /// - expression
     #[inline]
     pub fn simple_assignment_target_ts_type_assertion(
         &mut self,
         span: Span,
+        type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-        type_annotation: TSType<'a, A>,
     ) -> SimpleAssignmentTarget<'a, A> {
-        let value = self.ts_type_assertion(span, expression, type_annotation);
+        let value = self.ts_type_assertion(span, type_annotation, expression);
         let value = SimpleAssignmentTarget::TSTypeAssertion(self.allocator.alloc(value));
         self.handler.handle_simple_assignment_target(&value);
         value
@@ -28231,22 +28264,56 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         self.allocator.alloc(self.ts_satisfies_expression(span, expression, type_annotation))
     }
 
+    /// Builds a [`TSTypeAssertionAnnotation`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_assertion_annotation`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - type_annotation
+    #[inline]
+    pub fn ts_type_assertion_annotation(
+        &mut self,
+        span: Span,
+        type_annotation: TSType<'a, A>,
+    ) -> TSTypeAssertionAnnotation<'a, A> {
+        let value = TSTypeAssertionAnnotation { span, type_annotation };
+        self.handler.handle_ts_type_assertion_annotation(&value);
+        value
+    }
+
+    /// Builds a [`TSTypeAssertionAnnotation`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_type_assertion_annotation`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - type_annotation
+    #[inline]
+    pub fn alloc_ts_type_assertion_annotation(
+        &mut self,
+        span: Span,
+        type_annotation: TSType<'a, A>,
+    ) -> A::Box<'a, TSTypeAssertionAnnotation<'a, A>> {
+        self.allocator.alloc(self.ts_type_assertion_annotation(span, type_annotation))
+    }
+
     /// Builds a [`TSTypeAssertion`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_type_assertion`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
     /// - type_annotation
+    /// - expression
     #[inline]
     pub fn ts_type_assertion(
         &mut self,
         span: Span,
+        type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-        type_annotation: TSType<'a, A>,
     ) -> TSTypeAssertion<'a, A> {
-        let value = TSTypeAssertion { span, expression, type_annotation };
+        let value = TSTypeAssertion { span, type_annotation, expression };
         self.handler.handle_ts_type_assertion(&value);
         value
     }
@@ -28257,16 +28324,16 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
     /// - type_annotation
+    /// - expression
     #[inline]
     pub fn alloc_ts_type_assertion(
         &mut self,
         span: Span,
+        type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-        type_annotation: TSType<'a, A>,
     ) -> A::Box<'a, TSTypeAssertion<'a, A>> {
-        self.allocator.alloc(self.ts_type_assertion(span, expression, type_annotation))
+        self.allocator.alloc(self.ts_type_assertion(span, type_annotation, expression))
     }
 
     /// Builds a [`TSImportEqualsDeclaration`]
