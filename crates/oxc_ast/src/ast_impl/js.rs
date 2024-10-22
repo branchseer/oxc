@@ -1046,12 +1046,15 @@ impl<'a> FormalParameters<'a> {
 
 impl<'a> FormalParameter<'a> {
     pub fn is_public(&self) -> bool {
-        matches!(self.accessibility, Some(TSAccessibility::Public))
+        matches!(
+            self.modifiers,
+            Some(FormalParameterModifiers { accessibility: Some(TSAccessibility::Public), .. })
+        )
     }
 
     #[inline]
     pub fn has_modifier(&self) -> bool {
-        self.accessibility.is_some() || self.readonly || self.r#override
+        self.modifiers.is_some()
     }
 }
 
@@ -1126,7 +1129,7 @@ impl<'a> Class<'a> {
         body: Box<'a, ClassBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-        implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        implements: Option<TSClassImplements<'a>>,
     ) -> Self {
         Self {
             r#type,

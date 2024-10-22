@@ -340,6 +340,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_formal_parameter_modifiers(&mut self, it: &mut FormalParameterModifiers) {
+        walk_formal_parameter_modifiers(self, it);
+    }
+
+    #[inline]
     fn visit_binding_pattern(&mut self, it: &mut BindingPattern<'a>) {
         walk_binding_pattern(self, it);
     }
@@ -550,6 +555,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_class_element_modifiers(&mut self, it: &mut ClassElementModifiers) {
+        walk_class_element_modifiers(self, it);
+    }
+
+    #[inline]
     fn visit_ts_index_signature_names(&mut self, it: &mut Vec<'a, TSIndexSignatureName<'a>>) {
         walk_ts_index_signature_names(self, it);
     }
@@ -670,6 +680,11 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_ts_non_null_expression(&mut self, it: &mut TSNonNullExpression<'a>) {
         walk_ts_non_null_expression(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_definite_mark(&mut self, it: &mut TSDefiniteMark) {
+        walk_ts_definite_mark(self, it);
     }
 
     #[inline]
@@ -817,13 +832,18 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_class_implementses(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
-        walk_ts_class_implementses(self, it);
+    fn visit_ts_class_implements(&mut self, it: &mut TSClassImplements<'a>) {
+        walk_ts_class_implements(self, it);
     }
 
     #[inline]
-    fn visit_ts_class_implements(&mut self, it: &mut TSClassImplements<'a>) {
-        walk_ts_class_implements(self, it);
+    fn visit_ts_class_implements_items(&mut self, it: &mut Vec<'a, TSClassImplementsItem<'a>>) {
+        walk_ts_class_implements_items(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_class_implements_item(&mut self, it: &mut TSClassImplementsItem<'a>) {
+        walk_ts_class_implements_item(self, it);
     }
 
     #[inline]
@@ -852,11 +872,6 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_class_element_modifiers(&mut self, it: &mut ClassElementModifiers) {
-        walk_class_element_modifiers(self, it);
-    }
-
-    #[inline]
     fn visit_function(&mut self, it: &mut Function<'a>, flags: ScopeFlags) {
         walk_function(self, it, flags);
     }
@@ -864,11 +879,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_property_definition(&mut self, it: &mut PropertyDefinition<'a>) {
         walk_property_definition(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_definite_mark(&mut self, it: &mut TSDefiniteMark) {
-        walk_ts_definite_mark(self, it);
     }
 
     #[inline]
@@ -2035,6 +2045,9 @@ pub mod walk_mut {
         let kind = AstType::FormalParameter;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
+        if let Some(modifiers) = &mut it.modifiers {
+            visitor.visit_formal_parameter_modifiers(modifiers);
+        }
         visitor.visit_binding_pattern(&mut it.pattern);
         visitor.leave_node(kind);
     }
@@ -2051,6 +2064,16 @@ pub mod walk_mut {
         let kind = AstType::Decorator;
         visitor.enter_node(kind);
         visitor.visit_expression(&mut it.expression);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_formal_parameter_modifiers<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut FormalParameterModifiers,
+    ) {
+        let kind = AstType::FormalParameterModifiers;
+        visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
@@ -2506,8 +2529,19 @@ pub mod walk_mut {
         it: &mut TSIndexSignature<'a>,
     ) {
         // NOTE: AstType doesn't exists!
+        visitor.visit_class_element_modifiers(&mut it.modifiers);
         visitor.visit_ts_index_signature_names(&mut it.parameters);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
+    }
+
+    #[inline]
+    pub fn walk_class_element_modifiers<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ClassElementModifiers,
+    ) {
+        let kind = AstType::ClassElementModifiers;
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2817,6 +2851,14 @@ pub mod walk_mut {
         let kind = AstType::TSNonNullExpression;
         visitor.enter_node(kind);
         visitor.visit_expression(&mut it.expression);
+        visitor.visit_ts_definite_mark(&mut it.definite_mark);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_definite_mark<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSDefiniteMark) {
+        let kind = AstType::TSDefiniteMark;
+        visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
@@ -3130,7 +3172,7 @@ pub mod walk_mut {
             visitor.visit_ts_type_parameter_instantiation(super_type_parameters);
         }
         if let Some(implements) = &mut it.implements {
-            visitor.visit_ts_class_implementses(implements);
+            visitor.visit_ts_class_implements(implements);
         }
         visitor.visit_class_body(&mut it.body);
         visitor.leave_scope();
@@ -3152,21 +3194,32 @@ pub mod walk_mut {
     }
 
     #[inline]
-    pub fn walk_ts_class_implementses<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut Vec<'a, TSClassImplements<'a>>,
-    ) {
-        for el in it.iter_mut() {
-            visitor.visit_ts_class_implements(el);
-        }
-    }
-
-    #[inline]
     pub fn walk_ts_class_implements<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSClassImplements<'a>,
     ) {
         let kind = AstType::TSClassImplements;
+        visitor.enter_node(kind);
+        visitor.visit_ts_class_implements_items(&mut it.items);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_class_implements_items<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut Vec<'a, TSClassImplementsItem<'a>>,
+    ) {
+        for el in it.iter_mut() {
+            visitor.visit_ts_class_implements_item(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_ts_class_implements_item<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TSClassImplementsItem<'a>,
+    ) {
+        let kind = AstType::TSClassImplementsItem;
         visitor.enter_node(kind);
         visitor.visit_ts_type_name(&mut it.expression);
         if let Some(type_parameters) = &mut it.type_parameters {
@@ -3239,16 +3292,6 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    #[inline]
-    pub fn walk_class_element_modifiers<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut ClassElementModifiers,
-    ) {
-        let kind = AstType::ClassElementModifiers;
-        visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
     pub fn walk_function<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Function<'a>,
@@ -3307,13 +3350,6 @@ pub mod walk_mut {
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
         }
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_ts_definite_mark<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSDefiniteMark) {
-        let kind = AstType::TSDefiniteMark;
-        visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 

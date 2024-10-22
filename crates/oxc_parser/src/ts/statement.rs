@@ -233,7 +233,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_type_signature(&mut self) -> Result<Option<TSSignature<'a, A>>> {
         if self.is_at_ts_index_signature_member() {
-            return self.parse_ts_index_signature_member().map(Some);
+            return self.parse_ts_index_signature_member(None).map(Some);
         }
 
         match self.cur_kind() {

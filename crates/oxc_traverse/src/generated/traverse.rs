@@ -1911,6 +1911,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_ts_class_implements_item(
+        &mut self,
+        node: &mut TSClassImplementsItem<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_class_implements_item(
+        &mut self,
+        node: &mut TSClassImplementsItem<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_class_implements(
         &mut self,
         node: &mut TSClassImplements<'a>,

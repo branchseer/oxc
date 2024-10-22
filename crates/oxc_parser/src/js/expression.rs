@@ -663,8 +663,8 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                     }
                 }
                 Kind::Bang if !self.cur_token().is_on_new_line && self.is_ts => {
-                    self.bump_any();
-                    self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs)
+                    let definite_mark = self.eat_ts_definite_mark().unwrap();
+                    self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs, definite_mark)
                 }
                 kind if kind.is_template_start_of_tagged_template() => {
                     let (expr, type_parameters) =

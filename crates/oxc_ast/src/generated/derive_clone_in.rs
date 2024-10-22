@@ -1952,16 +1952,26 @@ impl<'old_alloc> CloneIn for FormalParameters<'old_alloc> {
     }
 }
 
+impl CloneIn for FormalParameterModifiers {
+    type Cloned<'a> = FormalParameterModifiers;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        FormalParameterModifiers {
+            span: CloneIn::clone_in(&self.span, allocator),
+            accessibility: CloneIn::clone_in(&self.accessibility, allocator),
+            readonly: CloneIn::clone_in(&self.readonly, allocator),
+            r#override: CloneIn::clone_in(&self.r#override, allocator),
+        }
+    }
+}
+
 impl<'old_alloc> CloneIn for FormalParameter<'old_alloc> {
     type Cloned<'a> = FormalParameter<'a>;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         FormalParameter {
             span: CloneIn::clone_in(&self.span, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
+            modifiers: CloneIn::clone_in(&self.modifiers, allocator),
             pattern: CloneIn::clone_in(&self.pattern, allocator),
-            accessibility: CloneIn::clone_in(&self.accessibility, allocator),
-            readonly: CloneIn::clone_in(&self.readonly, allocator),
-            r#override: CloneIn::clone_in(&self.r#override, allocator),
         }
     }
 }
@@ -3307,13 +3317,23 @@ impl CloneIn for TSAccessibility {
     }
 }
 
+impl<'old_alloc> CloneIn for TSClassImplementsItem<'old_alloc> {
+    type Cloned<'a> = TSClassImplementsItem<'a>;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        TSClassImplementsItem {
+            span: CloneIn::clone_in(&self.span, allocator),
+            expression: CloneIn::clone_in(&self.expression, allocator),
+            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+        }
+    }
+}
+
 impl<'old_alloc> CloneIn for TSClassImplements<'old_alloc> {
     type Cloned<'a> = TSClassImplements<'a>;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         TSClassImplements {
             span: CloneIn::clone_in(&self.span, allocator),
-            expression: CloneIn::clone_in(&self.expression, allocator),
-            type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
+            items: CloneIn::clone_in(&self.items, allocator),
         }
     }
 }
@@ -3385,9 +3405,9 @@ impl<'old_alloc> CloneIn for TSIndexSignature<'old_alloc> {
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         TSIndexSignature {
             span: CloneIn::clone_in(&self.span, allocator),
+            modifiers: CloneIn::clone_in(&self.modifiers, allocator),
             parameters: CloneIn::clone_in(&self.parameters, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
-            readonly: CloneIn::clone_in(&self.readonly, allocator),
         }
     }
 }
@@ -3807,6 +3827,7 @@ impl<'old_alloc> CloneIn for TSNonNullExpression<'old_alloc> {
         TSNonNullExpression {
             span: CloneIn::clone_in(&self.span, allocator),
             expression: CloneIn::clone_in(&self.expression, allocator),
+            definite_mark: CloneIn::clone_in(&self.definite_mark, allocator),
         }
     }
 }

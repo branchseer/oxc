@@ -1893,6 +1893,17 @@ pub struct FormalParameters<'a, A: AstAllocator = oxc_allocator::Allocator> {
 }
 
 #[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+pub struct FormalParameterModifiers {
+    #[serde(flatten)]
+    pub span: Span,
+    pub accessibility: Option<TSAccessibility>,
+    pub readonly: bool,
+    pub r#override: bool,
+}
+#[ast(visit)]
 #[derive_where(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
@@ -1901,10 +1912,8 @@ pub struct FormalParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub modifiers: Option<FormalParameterModifiers>,
     pub pattern: BindingPattern<'a, A>,
-    pub accessibility: Option<TSAccessibility>,
-    pub readonly: bool,
-    pub r#override: bool,
 }
 
 #[ast]
@@ -2054,7 +2063,7 @@ pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// class Foo implements Bar {}
     /// //                   ^^^
     /// ```
-    pub implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+    pub implements: Option<TSClassImplements<'a, A>>,
     pub body: A::Box<'a, ClassBody<'a, A>>,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
@@ -2167,7 +2176,7 @@ pub enum MethodDefinitionType {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]

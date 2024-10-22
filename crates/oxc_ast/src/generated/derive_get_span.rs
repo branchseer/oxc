@@ -995,6 +995,13 @@ impl<'a, A: AstAllocator> GetSpan for FormalParameters<'a, A> {
     }
 }
 
+impl GetSpan for FormalParameterModifiers {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a, A: AstAllocator> GetSpan for FormalParameter<'a, A> {
     #[inline]
     fn span(&self) -> Span {
@@ -1684,6 +1691,13 @@ impl<'a, A: AstAllocator> GetSpan for TSTypeParameterDeclaration<'a, A> {
 }
 
 impl<'a, A: AstAllocator> GetSpan for TSTypeAliasDeclaration<'a, A> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl<'a, A: AstAllocator> GetSpan for TSClassImplementsItem<'a, A> {
     #[inline]
     fn span(&self) -> Span {
         self.span

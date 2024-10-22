@@ -204,6 +204,11 @@ impl<'a> Modifiers<'a> {
     pub fn contains_override(&self) -> bool {
         self.flags.contains(ModifierFlags::OVERRIDE)
     }
+
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.flags.is_empty()
+    }
 }
 
 impl GetSpan for Modifiers<'_> {
@@ -402,13 +407,12 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             }
         }
 
-        let span = if start_span.start > self.prev_token_end { 
+        let span = if start_span.start > self.prev_token_end {
             // no token bumped
             start_span
         } else {
             self.end_span(start_span)
         };
-
 
         (Modifiers::new(modifiers, modifier_flags), span)
     }

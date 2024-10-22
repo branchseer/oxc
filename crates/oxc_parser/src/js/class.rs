@@ -20,8 +20,6 @@ type Extends<'a, A> = <A as AstAllocator>::Vec<
     ),
 >;
 
-type Implements<'a, A> = <A as AstAllocator>::Vec<'a, TSClassImplements<'a, A>>;
-
 /// Section 15.7 Class Definitions
 impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     // `start_span` points at the start of all decoractors and `class` keyword.
@@ -130,7 +128,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
 
     pub(crate) fn parse_heritage_clause(
         &mut self,
-    ) -> Result<(Option<Extends<'a, A>>, Option<Implements<'a, A>>)> {
+    ) -> Result<(Option<Extends<'a, A>>, Option<TSClassImplements<'a, A>>)> {
         let mut extends = None;
         let mut implements = None;
 
@@ -140,7 +138,9 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
                     extends = Some(self.parse_extends_clause()?);
                 }
                 Kind::Implements => {
-                    implements = Some(self.parse_ts_implements_clause()?);
+                    let span = self.start_span();
+                    let items = self.parse_ts_implements_clause()?;
+                    implements = Some(self.ast.ts_class_implements(self.end_span(span), items));
                 }
                 _ => break,
             }
@@ -305,8 +305,10 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         });
 
         if self.is_at_ts_index_signature_member() {
-            if let TSSignature::TSIndexSignature(sig) = self.parse_ts_index_signature_member()? {
-                return Ok(Some(ClassElement::TSIndexSignature(sig)));
+            if let TSSignature::TSIndexSignature(sig) =
+                self.parse_ts_index_signature_member(Some(class_element_modifiers))?
+            {
+                return Ok(Some(self.ast.class_element_from_ts_index_signature(sig)));
             }
         }
 

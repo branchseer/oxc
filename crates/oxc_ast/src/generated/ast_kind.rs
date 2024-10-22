@@ -85,6 +85,7 @@ pub enum AstType {
     BindingRestElement,
     Function,
     FormalParameters,
+    FormalParameterModifiers,
     FormalParameter,
     FunctionBody,
     ArrowFunctionExpression,
@@ -140,6 +141,7 @@ pub enum AstType {
     TSTypeParameter,
     TSTypeParameterDeclaration,
     TSTypeAliasDeclaration,
+    TSClassImplementsItem,
     TSClassImplements,
     TSInterfaceDeclaration,
     TSPropertySignature,
@@ -263,6 +265,7 @@ pub enum AstKind<'a> {
     BindingRestElement(&'a BindingRestElement<'a>),
     Function(&'a Function<'a>),
     FormalParameters(&'a FormalParameters<'a>),
+    FormalParameterModifiers(&'a FormalParameterModifiers),
     FormalParameter(&'a FormalParameter<'a>),
     FunctionBody(&'a FunctionBody<'a>),
     ArrowFunctionExpression(&'a ArrowFunctionExpression<'a>),
@@ -318,6 +321,7 @@ pub enum AstKind<'a> {
     TSTypeParameter(&'a TSTypeParameter<'a>),
     TSTypeParameterDeclaration(&'a TSTypeParameterDeclaration<'a>),
     TSTypeAliasDeclaration(&'a TSTypeAliasDeclaration<'a>),
+    TSClassImplementsItem(&'a TSClassImplementsItem<'a>),
     TSClassImplements(&'a TSClassImplements<'a>),
     TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>),
     TSPropertySignature(&'a TSPropertySignature<'a>),
@@ -442,6 +446,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::BindingRestElement(it) => it.span(),
             Self::Function(it) => it.span(),
             Self::FormalParameters(it) => it.span(),
+            Self::FormalParameterModifiers(it) => it.span(),
             Self::FormalParameter(it) => it.span(),
             Self::FunctionBody(it) => it.span(),
             Self::ArrowFunctionExpression(it) => it.span(),
@@ -497,6 +502,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSTypeParameter(it) => it.span(),
             Self::TSTypeParameterDeclaration(it) => it.span(),
             Self::TSTypeAliasDeclaration(it) => it.span(),
+            Self::TSClassImplementsItem(it) => it.span(),
             Self::TSClassImplements(it) => it.span(),
             Self::TSInterfaceDeclaration(it) => it.span(),
             Self::TSPropertySignature(it) => it.span(),
@@ -1237,6 +1243,15 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
+    pub fn as_formal_parameter_modifiers(&self) -> Option<&'a FormalParameterModifiers> {
+        if let Self::FormalParameterModifiers(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
     pub fn as_formal_parameter(&self) -> Option<&'a FormalParameter<'a>> {
         if let Self::FormalParameter(v) = self {
             Some(*v)
@@ -1727,6 +1742,15 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_type_alias_declaration(&self) -> Option<&'a TSTypeAliasDeclaration<'a>> {
         if let Self::TSTypeAliasDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_ts_class_implements_item(&self) -> Option<&'a TSClassImplementsItem<'a>> {
+        if let Self::TSClassImplementsItem(v) = self {
             Some(*v)
         } else {
             None

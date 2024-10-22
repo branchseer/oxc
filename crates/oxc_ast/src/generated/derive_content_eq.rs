@@ -2031,13 +2031,19 @@ impl<'a> ContentEq for FormalParameters<'a> {
     }
 }
 
+impl ContentEq for FormalParameterModifiers {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.accessibility, &other.accessibility)
+            && ContentEq::content_eq(&self.readonly, &other.readonly)
+            && ContentEq::content_eq(&self.r#override, &other.r#override)
+    }
+}
+
 impl<'a> ContentEq for FormalParameter<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.modifiers, &other.modifiers)
             && ContentEq::content_eq(&self.pattern, &other.pattern)
-            && ContentEq::content_eq(&self.accessibility, &other.accessibility)
-            && ContentEq::content_eq(&self.readonly, &other.readonly)
-            && ContentEq::content_eq(&self.r#override, &other.r#override)
     }
 }
 
@@ -3394,10 +3400,16 @@ impl ContentEq for TSAccessibility {
     }
 }
 
-impl<'a> ContentEq for TSClassImplements<'a> {
+impl<'a> ContentEq for TSClassImplementsItem<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+    }
+}
+
+impl<'a> ContentEq for TSClassImplements<'a> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.items, &other.items)
     }
 }
 
@@ -3460,9 +3472,9 @@ impl<'a> ContentEq for TSSignature<'a> {
 
 impl<'a> ContentEq for TSIndexSignature<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.parameters, &other.parameters)
+        ContentEq::content_eq(&self.modifiers, &other.modifiers)
+            && ContentEq::content_eq(&self.parameters, &other.parameters)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
-            && ContentEq::content_eq(&self.readonly, &other.readonly)
     }
 }
 
@@ -3772,6 +3784,7 @@ impl<'a> ContentEq for TSExternalModuleReference<'a> {
 impl<'a> ContentEq for TSNonNullExpression<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
+            && ContentEq::content_eq(&self.definite_mark, &other.definite_mark)
     }
 }
 

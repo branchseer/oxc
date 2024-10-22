@@ -1053,13 +1053,19 @@ impl<'a> ContentHash for FormalParameters<'a> {
     }
 }
 
-impl<'a> ContentHash for FormalParameter<'a> {
+impl ContentHash for FormalParameterModifiers {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.decorators, state);
-        ContentHash::content_hash(&self.pattern, state);
         ContentHash::content_hash(&self.accessibility, state);
         ContentHash::content_hash(&self.readonly, state);
         ContentHash::content_hash(&self.r#override, state);
+    }
+}
+
+impl<'a> ContentHash for FormalParameter<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.decorators, state);
+        ContentHash::content_hash(&self.modifiers, state);
+        ContentHash::content_hash(&self.pattern, state);
     }
 }
 
@@ -1803,10 +1809,16 @@ impl ContentHash for TSAccessibility {
     }
 }
 
-impl<'a> ContentHash for TSClassImplements<'a> {
+impl<'a> ContentHash for TSClassImplementsItem<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.type_parameters, state);
+    }
+}
+
+impl<'a> ContentHash for TSClassImplements<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.items, state);
     }
 }
 
@@ -1851,9 +1863,9 @@ impl<'a> ContentHash for TSSignature<'a> {
 
 impl<'a> ContentHash for TSIndexSignature<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.modifiers, state);
         ContentHash::content_hash(&self.parameters, state);
         ContentHash::content_hash(&self.type_annotation, state);
-        ContentHash::content_hash(&self.readonly, state);
     }
 }
 
@@ -2127,6 +2139,7 @@ impl<'a> ContentHash for TSExternalModuleReference<'a> {
 impl<'a> ContentHash for TSNonNullExpression<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
+        ContentHash::content_hash(&self.definite_mark, state);
     }
 }
 

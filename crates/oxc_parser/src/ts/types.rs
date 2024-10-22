@@ -170,7 +170,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_implements_clause(
         &mut self,
-    ) -> Result<A::Vec<'a, TSClassImplements<'a, A>>> {
+    ) -> Result<A::Vec<'a, TSClassImplementsItem<'a, A>>> {
         self.expect(Kind::Implements)?;
         let first = self.parse_ts_implement_name()?;
         let mut implements = self.ast.vec();
@@ -783,11 +783,11 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         Ok(self.ast.ts_type_type_reference(self.end_span(span), type_name, type_parameters))
     }
 
-    fn parse_ts_implement_name(&mut self) -> Result<TSClassImplements<'a, A>> {
+    fn parse_ts_implement_name(&mut self) -> Result<TSClassImplementsItem<'a, A>> {
         let span = self.start_span();
         let type_name = self.parse_ts_type_name()?;
         let type_parameters = self.parse_type_arguments_of_type_reference()?;
-        Ok(self.ast.ts_class_implements(self.end_span(span), type_name, type_parameters))
+        Ok(self.ast.ts_class_implements_item(self.end_span(span), type_name, type_parameters))
     }
 
     pub(crate) fn parse_ts_type_name(&mut self) -> Result<TSTypeName<'a, A>> {
@@ -1322,16 +1322,29 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         ))
     }
 
-    pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a, A>> {
+    pub(crate) fn parse_ts_index_signature_member(
+        &mut self,
+        parsed_modifiers: Option<ClassElementModifiers>,
+    ) -> Result<TSSignature<'a, A>> {
         let span = self.start_span();
 
-        let modifiers = self.parse_class_element_modifiers(false);
-        self.verify_modifiers(
-            &modifiers,
-            ModifierFlags::READONLY,
-            diagnostics::cannot_appear_on_an_index_signature,
-        );
-        let readonly = modifiers.contains(ModifierKind::Readonly);
+        let modifiers = parsed_modifiers.unwrap_or_else(|| {
+            let modifiers = self.parse_class_element_modifiers(false);
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::READONLY,
+                diagnostics::cannot_appear_on_an_index_signature,
+            );
+            let readonly = modifiers.contains(ModifierKind::Readonly);
+            let span = if span.start > self.prev_token_end {
+                // no token bumped
+                span
+            } else {
+                self.end_span(span)
+            };
+            self.ast
+                .class_element_modifiers(span, false, false, false, false, false, readonly, None)
+        });
 
         self.bump(Kind::LBrack);
         let index_name = self.parse_ts_index_signature_name()?;
@@ -1345,9 +1358,9 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             self.bump(Kind::Semicolon);
             Ok(self.ast.ts_signature_index_signature(
                 self.end_span(span),
+                modifiers,
                 parameters,
                 type_annotation,
-                readonly,
             ))
         } else {
             Err(self.unexpected())

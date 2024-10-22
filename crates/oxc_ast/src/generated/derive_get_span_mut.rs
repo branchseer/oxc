@@ -995,6 +995,13 @@ impl<'a, A: AstAllocator> GetSpanMut for FormalParameters<'a, A> {
     }
 }
 
+impl GetSpanMut for FormalParameterModifiers {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl<'a, A: AstAllocator> GetSpanMut for FormalParameter<'a, A> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
@@ -1684,6 +1691,13 @@ impl<'a, A: AstAllocator> GetSpanMut for TSTypeParameterDeclaration<'a, A> {
 }
 
 impl<'a, A: AstAllocator> GetSpanMut for TSTypeAliasDeclaration<'a, A> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl<'a, A: AstAllocator> GetSpanMut for TSClassImplementsItem<'a, A> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

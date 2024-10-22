@@ -153,7 +153,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         pattern: BindingPattern<'a>,
     ) -> FormalParameter<'a> {
-        self.formal_parameter(span, self.vec(), pattern, None, false, false)
+        self.formal_parameter(span, self.vec(), None, pattern)
     }
 
     #[inline]
@@ -274,7 +274,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         pattern: BindingPattern<'a, A>,
     ) -> FormalParameter<'a, A> {
-        let param = self.formal_parameter(span, self.vec(), pattern, None, false, false);
+        let param = self.formal_parameter(span, self.vec(), None, pattern);
         self.handler.handle_formal_parameter(&param);
         param
     }

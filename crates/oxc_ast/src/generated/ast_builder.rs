@@ -860,7 +860,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> Expression<'a, A>
     where
@@ -1521,13 +1521,15 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
+    /// - definite_mark
     #[inline]
     pub fn expression_ts_non_null(
         self,
         span: Span,
         expression: Expression<'a, A>,
+        definite_mark: TSDefiniteMark,
     ) -> Expression<'a, A> {
-        let value = self.ts_non_null_expression(span, expression);
+        let value = self.ts_non_null_expression(span, expression, definite_mark);
         let value = Expression::TSNonNullExpression(self.allocator.alloc(value));
         value
     }
@@ -3079,13 +3081,15 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
+    /// - definite_mark
     #[inline]
     pub fn simple_assignment_target_ts_non_null_expression(
         self,
         span: Span,
         expression: Expression<'a, A>,
+        definite_mark: TSDefiniteMark,
     ) -> SimpleAssignmentTarget<'a, A> {
-        let value = self.ts_non_null_expression(span, expression);
+        let value = self.ts_non_null_expression(span, expression, definite_mark);
         let value = SimpleAssignmentTarget::TSNonNullExpression(self.allocator.alloc(value));
         value
     }
@@ -4562,7 +4566,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> Declaration<'a, A>
     where
@@ -6224,6 +6228,52 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self.allocator.alloc(self.formal_parameters(span, kind, items, rest))
     }
 
+    /// Builds a [`FormalParameterModifiers`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_formal_parameter_modifiers`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - accessibility
+    /// - readonly
+    /// - r#override
+    #[inline]
+    pub fn formal_parameter_modifiers(
+        self,
+        span: Span,
+        accessibility: Option<TSAccessibility>,
+        readonly: bool,
+        r#override: bool,
+    ) -> FormalParameterModifiers {
+        let value = FormalParameterModifiers { span, accessibility, readonly, r#override };
+        value
+    }
+
+    /// Builds a [`FormalParameterModifiers`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::formal_parameter_modifiers`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - accessibility
+    /// - readonly
+    /// - r#override
+    #[inline]
+    pub fn alloc_formal_parameter_modifiers(
+        self,
+        span: Span,
+        accessibility: Option<TSAccessibility>,
+        readonly: bool,
+        r#override: bool,
+    ) -> A::Box<'a, FormalParameterModifiers> {
+        self.allocator.alloc(self.formal_parameter_modifiers(
+            span,
+            accessibility,
+            readonly,
+            r#override,
+        ))
+    }
+
     /// Builds a [`FormalParameter`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_formal_parameter`] instead.
@@ -6231,22 +6281,17 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - pattern
-    /// - accessibility
-    /// - readonly
-    /// - r#override
     #[inline]
     pub fn formal_parameter(
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: Option<FormalParameterModifiers>,
         pattern: BindingPattern<'a, A>,
-        accessibility: Option<TSAccessibility>,
-        readonly: bool,
-        r#override: bool,
     ) -> FormalParameter<'a, A> {
-        let value =
-            FormalParameter { span, decorators, pattern, accessibility, readonly, r#override };
+        let value = FormalParameter { span, decorators, modifiers, pattern };
         value
     }
 
@@ -6257,28 +6302,17 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - pattern
-    /// - accessibility
-    /// - readonly
-    /// - r#override
     #[inline]
     pub fn alloc_formal_parameter(
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: Option<FormalParameterModifiers>,
         pattern: BindingPattern<'a, A>,
-        accessibility: Option<TSAccessibility>,
-        readonly: bool,
-        r#override: bool,
     ) -> A::Box<'a, FormalParameter<'a, A>> {
-        self.allocator.alloc(self.formal_parameter(
-            span,
-            decorators,
-            pattern,
-            accessibility,
-            readonly,
-            r#override,
-        ))
+        self.allocator.alloc(self.formal_parameter(span, decorators, modifiers, pattern))
     }
 
     /// Builds a [`FunctionBody`]
@@ -6495,7 +6529,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> Class<'a, A>
     where
@@ -6545,7 +6579,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> A::Box<'a, Class<'a, A>>
     where
@@ -6781,21 +6815,21 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - modifiers
     /// - parameters
     /// - type_annotation
-    /// - readonly
     #[inline]
     pub fn class_element_ts_index_signature<T1>(
         self,
         span: Span,
+        modifiers: ClassElementModifiers,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
-        readonly: bool,
     ) -> ClassElement<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
     {
-        let value = self.ts_index_signature(span, parameters, type_annotation, readonly);
+        let value = self.ts_index_signature(span, modifiers, parameters, type_annotation);
         let value = ClassElement::TSIndexSignature(self.allocator.alloc(value));
         value
     }
@@ -8160,7 +8194,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
@@ -11081,29 +11115,67 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         ))
     }
 
-    /// Builds a [`TSClassImplements`]
+    /// Builds a [`TSClassImplementsItem`]
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_class_implements`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_class_implements_item`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
     /// - type_parameters
     #[inline]
-    pub fn ts_class_implements<T1>(
+    pub fn ts_class_implements_item<T1>(
         self,
         span: Span,
         expression: TSTypeName<'a, A>,
         type_parameters: T1,
-    ) -> TSClassImplements<'a, A>
+    ) -> TSClassImplementsItem<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
     {
-        let value = TSClassImplements {
+        let value = TSClassImplementsItem {
             span,
             expression,
             type_parameters: type_parameters.into_in(self.allocator),
         };
+        value
+    }
+
+    /// Builds a [`TSClassImplementsItem`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_class_implements_item`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression
+    /// - type_parameters
+    #[inline]
+    pub fn alloc_ts_class_implements_item<T1>(
+        self,
+        span: Span,
+        expression: TSTypeName<'a, A>,
+        type_parameters: T1,
+    ) -> A::Box<'a, TSClassImplementsItem<'a, A>>
+    where
+        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+    {
+        self.allocator.alloc(self.ts_class_implements_item(span, expression, type_parameters))
+    }
+
+    /// Builds a [`TSClassImplements`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_class_implements`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - items
+    #[inline]
+    pub fn ts_class_implements(
+        self,
+        span: Span,
+        items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
+    ) -> TSClassImplements<'a, A> {
+        let value = TSClassImplements { span, items };
         value
     }
 
@@ -11113,19 +11185,14 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
-    /// - type_parameters
+    /// - items
     #[inline]
-    pub fn alloc_ts_class_implements<T1>(
+    pub fn alloc_ts_class_implements(
         self,
         span: Span,
-        expression: TSTypeName<'a, A>,
-        type_parameters: T1,
-    ) -> A::Box<'a, TSClassImplements<'a, A>>
-    where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-    {
-        self.allocator.alloc(self.ts_class_implements(span, expression, type_parameters))
+        items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
+    ) -> A::Box<'a, TSClassImplements<'a, A>> {
+        self.allocator.alloc(self.ts_class_implements(span, items))
     }
 
     /// Builds a [`TSInterfaceDeclaration`]
@@ -11308,21 +11375,21 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - modifiers
     /// - parameters
     /// - type_annotation
-    /// - readonly
     #[inline]
     pub fn ts_signature_index_signature<T1>(
         self,
         span: Span,
+        modifiers: ClassElementModifiers,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
-        readonly: bool,
     ) -> TSSignature<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
     {
-        let value = self.ts_index_signature(span, parameters, type_annotation, readonly);
+        let value = self.ts_index_signature(span, modifiers, parameters, type_annotation);
         let value = TSSignature::TSIndexSignature(self.allocator.alloc(value));
         value
     }
@@ -11527,25 +11594,25 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - modifiers
     /// - parameters
     /// - type_annotation
-    /// - readonly
     #[inline]
     pub fn ts_index_signature<T1>(
         self,
         span: Span,
+        modifiers: ClassElementModifiers,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
-        readonly: bool,
     ) -> TSIndexSignature<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
     {
         let value = TSIndexSignature {
             span,
+            modifiers,
             parameters,
             type_annotation: type_annotation.into_in(self.allocator),
-            readonly,
         };
         value
     }
@@ -11556,21 +11623,21 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - modifiers
     /// - parameters
     /// - type_annotation
-    /// - readonly
     #[inline]
     pub fn alloc_ts_index_signature<T1>(
         self,
         span: Span,
+        modifiers: ClassElementModifiers,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
-        readonly: bool,
     ) -> A::Box<'a, TSIndexSignature<'a, A>>
     where
         T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
     {
-        self.allocator.alloc(self.ts_index_signature(span, parameters, type_annotation, readonly))
+        self.allocator.alloc(self.ts_index_signature(span, modifiers, parameters, type_annotation))
     }
 
     /// Builds a [`TSCallSignatureDeclaration`]
@@ -13107,13 +13174,15 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
+    /// - definite_mark
     #[inline]
     pub fn ts_non_null_expression(
         self,
         span: Span,
         expression: Expression<'a, A>,
+        definite_mark: TSDefiniteMark,
     ) -> TSNonNullExpression<'a, A> {
-        let value = TSNonNullExpression { span, expression };
+        let value = TSNonNullExpression { span, expression, definite_mark };
         value
     }
 
@@ -13124,13 +13193,15 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
+    /// - definite_mark
     #[inline]
     pub fn alloc_ts_non_null_expression(
         self,
         span: Span,
         expression: Expression<'a, A>,
+        definite_mark: TSDefiniteMark,
     ) -> A::Box<'a, TSNonNullExpression<'a, A>> {
-        self.allocator.alloc(self.ts_non_null_expression(span, expression))
+        self.allocator.alloc(self.ts_non_null_expression(span, expression, definite_mark))
     }
 
     /// Builds a [`Decorator`]
@@ -15483,7 +15554,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> Expression<'a, A>
     where
@@ -16187,13 +16258,15 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
+    /// - definite_mark
     #[inline]
     pub fn expression_ts_non_null(
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
+        definite_mark: TSDefiniteMark,
     ) -> Expression<'a, A> {
-        let value = self.ts_non_null_expression(span, expression);
+        let value = self.ts_non_null_expression(span, expression, definite_mark);
         let value = Expression::TSNonNullExpression(self.allocator.alloc(value));
         self.handler.handle_expression(&value);
         value
@@ -17827,13 +17900,15 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
+    /// - definite_mark
     #[inline]
     pub fn simple_assignment_target_ts_non_null_expression(
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
+        definite_mark: TSDefiniteMark,
     ) -> SimpleAssignmentTarget<'a, A> {
-        let value = self.ts_non_null_expression(span, expression);
+        let value = self.ts_non_null_expression(span, expression, definite_mark);
         let value = SimpleAssignmentTarget::TSNonNullExpression(self.allocator.alloc(value));
         self.handler.handle_simple_assignment_target(&value);
         value
@@ -19405,7 +19480,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> Declaration<'a, A>
     where
@@ -21170,6 +21245,53 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         self.allocator.alloc(self.formal_parameters(span, kind, items, rest))
     }
 
+    /// Builds a [`FormalParameterModifiers`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_formal_parameter_modifiers`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - accessibility
+    /// - readonly
+    /// - r#override
+    #[inline]
+    pub fn formal_parameter_modifiers(
+        &mut self,
+        span: Span,
+        accessibility: Option<TSAccessibility>,
+        readonly: bool,
+        r#override: bool,
+    ) -> FormalParameterModifiers {
+        let value = FormalParameterModifiers { span, accessibility, readonly, r#override };
+        self.handler.handle_formal_parameter_modifiers(&value);
+        value
+    }
+
+    /// Builds a [`FormalParameterModifiers`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::formal_parameter_modifiers`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - accessibility
+    /// - readonly
+    /// - r#override
+    #[inline]
+    pub fn alloc_formal_parameter_modifiers(
+        &mut self,
+        span: Span,
+        accessibility: Option<TSAccessibility>,
+        readonly: bool,
+        r#override: bool,
+    ) -> A::Box<'a, FormalParameterModifiers> {
+        self.allocator.alloc(self.formal_parameter_modifiers(
+            span,
+            accessibility,
+            readonly,
+            r#override,
+        ))
+    }
+
     /// Builds a [`FormalParameter`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_formal_parameter`] instead.
@@ -21177,22 +21299,17 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - pattern
-    /// - accessibility
-    /// - readonly
-    /// - r#override
     #[inline]
     pub fn formal_parameter(
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: Option<FormalParameterModifiers>,
         pattern: BindingPattern<'a, A>,
-        accessibility: Option<TSAccessibility>,
-        readonly: bool,
-        r#override: bool,
     ) -> FormalParameter<'a, A> {
-        let value =
-            FormalParameter { span, decorators, pattern, accessibility, readonly, r#override };
+        let value = FormalParameter { span, decorators, modifiers, pattern };
         self.handler.handle_formal_parameter(&value);
         value
     }
@@ -21204,28 +21321,17 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - decorators
+    /// - modifiers
     /// - pattern
-    /// - accessibility
-    /// - readonly
-    /// - r#override
     #[inline]
     pub fn alloc_formal_parameter(
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
+        modifiers: Option<FormalParameterModifiers>,
         pattern: BindingPattern<'a, A>,
-        accessibility: Option<TSAccessibility>,
-        readonly: bool,
-        r#override: bool,
     ) -> A::Box<'a, FormalParameter<'a, A>> {
-        self.allocator.alloc(self.formal_parameter(
-            span,
-            decorators,
-            pattern,
-            accessibility,
-            readonly,
-            r#override,
-        ))
+        self.allocator.alloc(self.formal_parameter(span, decorators, modifiers, pattern))
     }
 
     /// Builds a [`FunctionBody`]
@@ -21456,7 +21562,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> Class<'a, A>
     where
@@ -21509,7 +21615,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> A::Box<'a, Class<'a, A>>
     where
@@ -21760,21 +21866,21 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - modifiers
     /// - parameters
     /// - type_annotation
-    /// - readonly
     #[inline]
     pub fn class_element_ts_index_signature<T1>(
         &mut self,
         span: Span,
+        modifiers: ClassElementModifiers,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
-        readonly: bool,
     ) -> ClassElement<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
     {
-        let value = self.ts_index_signature(span, parameters, type_annotation, readonly);
+        let value = self.ts_index_signature(span, modifiers, parameters, type_annotation);
         let value = ClassElement::TSIndexSignature(self.allocator.alloc(value));
         self.handler.handle_class_element(&value);
         value
@@ -23201,7 +23307,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
         super_type_parameters: T2,
-        implements: Option<A::Vec<'a, TSClassImplements<'a, A>>>,
+        implements: Option<TSClassImplements<'a, A>>,
         body: T3,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
@@ -26347,29 +26453,68 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         ))
     }
 
-    /// Builds a [`TSClassImplements`]
+    /// Builds a [`TSClassImplementsItem`]
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_class_implements`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_class_implements_item`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
     /// - type_parameters
     #[inline]
-    pub fn ts_class_implements<T1>(
+    pub fn ts_class_implements_item<T1>(
         &mut self,
         span: Span,
         expression: TSTypeName<'a, A>,
         type_parameters: T1,
-    ) -> TSClassImplements<'a, A>
+    ) -> TSClassImplementsItem<'a, A>
     where
         T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
     {
-        let value = TSClassImplements {
+        let value = TSClassImplementsItem {
             span,
             expression,
             type_parameters: type_parameters.into_in(self.allocator),
         };
+        self.handler.handle_ts_class_implements_item(&value);
+        value
+    }
+
+    /// Builds a [`TSClassImplementsItem`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_class_implements_item`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression
+    /// - type_parameters
+    #[inline]
+    pub fn alloc_ts_class_implements_item<T1>(
+        &mut self,
+        span: Span,
+        expression: TSTypeName<'a, A>,
+        type_parameters: T1,
+    ) -> A::Box<'a, TSClassImplementsItem<'a, A>>
+    where
+        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+    {
+        self.allocator.alloc(self.ts_class_implements_item(span, expression, type_parameters))
+    }
+
+    /// Builds a [`TSClassImplements`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_class_implements`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - items
+    #[inline]
+    pub fn ts_class_implements(
+        &mut self,
+        span: Span,
+        items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
+    ) -> TSClassImplements<'a, A> {
+        let value = TSClassImplements { span, items };
         self.handler.handle_ts_class_implements(&value);
         value
     }
@@ -26380,19 +26525,14 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
-    /// - type_parameters
+    /// - items
     #[inline]
-    pub fn alloc_ts_class_implements<T1>(
+    pub fn alloc_ts_class_implements(
         &mut self,
         span: Span,
-        expression: TSTypeName<'a, A>,
-        type_parameters: T1,
-    ) -> A::Box<'a, TSClassImplements<'a, A>>
-    where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-    {
-        self.allocator.alloc(self.ts_class_implements(span, expression, type_parameters))
+        items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
+    ) -> A::Box<'a, TSClassImplements<'a, A>> {
+        self.allocator.alloc(self.ts_class_implements(span, items))
     }
 
     /// Builds a [`TSInterfaceDeclaration`]
@@ -26582,21 +26722,21 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - modifiers
     /// - parameters
     /// - type_annotation
-    /// - readonly
     #[inline]
     pub fn ts_signature_index_signature<T1>(
         &mut self,
         span: Span,
+        modifiers: ClassElementModifiers,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
-        readonly: bool,
     ) -> TSSignature<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
     {
-        let value = self.ts_index_signature(span, parameters, type_annotation, readonly);
+        let value = self.ts_index_signature(span, modifiers, parameters, type_annotation);
         let value = TSSignature::TSIndexSignature(self.allocator.alloc(value));
         self.handler.handle_ts_signature(&value);
         value
@@ -26822,25 +26962,25 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - modifiers
     /// - parameters
     /// - type_annotation
-    /// - readonly
     #[inline]
     pub fn ts_index_signature<T1>(
         &mut self,
         span: Span,
+        modifiers: ClassElementModifiers,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
-        readonly: bool,
     ) -> TSIndexSignature<'a, A>
     where
         T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
     {
         let value = TSIndexSignature {
             span,
+            modifiers,
             parameters,
             type_annotation: type_annotation.into_in(self.allocator),
-            readonly,
         };
         self.handler.handle_ts_index_signature(&value);
         value
@@ -26852,21 +26992,21 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - modifiers
     /// - parameters
     /// - type_annotation
-    /// - readonly
     #[inline]
     pub fn alloc_ts_index_signature<T1>(
         &mut self,
         span: Span,
+        modifiers: ClassElementModifiers,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
-        readonly: bool,
     ) -> A::Box<'a, TSIndexSignature<'a, A>>
     where
         T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
     {
-        self.allocator.alloc(self.ts_index_signature(span, parameters, type_annotation, readonly))
+        self.allocator.alloc(self.ts_index_signature(span, modifiers, parameters, type_annotation))
     }
 
     /// Builds a [`TSCallSignatureDeclaration`]
@@ -28475,13 +28615,15 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
+    /// - definite_mark
     #[inline]
     pub fn ts_non_null_expression(
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
+        definite_mark: TSDefiniteMark,
     ) -> TSNonNullExpression<'a, A> {
-        let value = TSNonNullExpression { span, expression };
+        let value = TSNonNullExpression { span, expression, definite_mark };
         self.handler.handle_ts_non_null_expression(&value);
         value
     }
@@ -28493,13 +28635,15 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - expression
+    /// - definite_mark
     #[inline]
     pub fn alloc_ts_non_null_expression(
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
+        definite_mark: TSDefiniteMark,
     ) -> A::Box<'a, TSNonNullExpression<'a, A>> {
-        self.allocator.alloc(self.ts_non_null_expression(span, expression))
+        self.allocator.alloc(self.ts_non_null_expression(span, expression, definite_mark))
     }
 
     /// Builds a [`Decorator`]

@@ -257,80 +257,83 @@ pub(crate) enum AncestorType {
     TSTypeAliasDeclarationId = 229,
     TSTypeAliasDeclarationTypeParameters = 230,
     TSTypeAliasDeclarationTypeAnnotation = 231,
-    TSClassImplementsExpression = 232,
-    TSClassImplementsTypeParameters = 233,
-    TSInterfaceDeclarationId = 234,
-    TSInterfaceDeclarationExtends = 235,
-    TSInterfaceDeclarationTypeParameters = 236,
-    TSInterfaceDeclarationBody = 237,
-    TSInterfaceBodyBody = 238,
-    TSPropertySignatureKey = 239,
-    TSPropertySignatureTypeAnnotation = 240,
-    TSIndexSignatureParameters = 241,
-    TSIndexSignatureTypeAnnotation = 242,
-    TSCallSignatureDeclarationTypeParameters = 243,
-    TSCallSignatureDeclarationThisParam = 244,
-    TSCallSignatureDeclarationParams = 245,
-    TSCallSignatureDeclarationReturnType = 246,
-    TSMethodSignatureKey = 247,
-    TSMethodSignatureTypeParameters = 248,
-    TSMethodSignatureThisParam = 249,
-    TSMethodSignatureParams = 250,
-    TSMethodSignatureReturnType = 251,
-    TSConstructSignatureDeclarationTypeParameters = 252,
-    TSConstructSignatureDeclarationParams = 253,
-    TSConstructSignatureDeclarationReturnType = 254,
-    TSIndexSignatureNameTypeAnnotation = 255,
-    TSInterfaceHeritageExpression = 256,
-    TSInterfaceHeritageTypeParameters = 257,
-    TSTypePredicateParameterName = 258,
-    TSTypePredicateTypeAnnotation = 259,
-    TSModuleDeclarationId = 260,
-    TSModuleDeclarationBody = 261,
-    TSModuleBlockDirectives = 262,
-    TSModuleBlockBody = 263,
-    TSTypeLiteralMembers = 264,
-    TSInferTypeTypeParameter = 265,
-    TSTypeQueryExprName = 266,
-    TSTypeQueryTypeParameters = 267,
-    TSImportTypeParameter = 268,
-    TSImportTypeQualifier = 269,
-    TSImportTypeAttributes = 270,
-    TSImportTypeTypeParameters = 271,
-    TSImportAttributesAttributesKeyword = 272,
-    TSImportAttributesElements = 273,
-    TSImportAttributeName = 274,
-    TSImportAttributeValue = 275,
-    TSFunctionTypeTypeParameters = 276,
-    TSFunctionTypeThisParam = 277,
-    TSFunctionTypeParams = 278,
-    TSFunctionTypeReturnType = 279,
-    TSConstructorTypeTypeParameters = 280,
-    TSConstructorTypeParams = 281,
-    TSConstructorTypeReturnType = 282,
-    TSMappedTypeTypeParameter = 283,
-    TSMappedTypeNameType = 284,
-    TSMappedTypeTypeAnnotation = 285,
-    TSTemplateLiteralTypeQuasis = 286,
-    TSTemplateLiteralTypeTypes = 287,
-    TSAsExpressionExpression = 288,
-    TSAsExpressionTypeAnnotation = 289,
-    TSSatisfiesExpressionExpression = 290,
-    TSSatisfiesExpressionTypeAnnotation = 291,
-    TSTypeAssertionAnnotationTypeAnnotation = 292,
-    TSTypeAssertionTypeAnnotation = 293,
-    TSTypeAssertionExpression = 294,
-    TSImportEqualsDeclarationId = 295,
-    TSImportEqualsDeclarationModuleReference = 296,
-    TSExternalModuleReferenceExpression = 297,
-    TSNonNullExpressionExpression = 298,
-    DecoratorExpression = 299,
-    TSExportAssignmentExpression = 300,
-    TSNamespaceExportDeclarationId = 301,
-    TSInstantiationExpressionExpression = 302,
-    TSInstantiationExpressionTypeParameters = 303,
-    JSDocNullableTypeTypeAnnotation = 304,
-    JSDocNonNullableTypeTypeAnnotation = 305,
+    TSClassImplementsItemExpression = 232,
+    TSClassImplementsItemTypeParameters = 233,
+    TSClassImplementsItems = 234,
+    TSInterfaceDeclarationId = 235,
+    TSInterfaceDeclarationExtends = 236,
+    TSInterfaceDeclarationTypeParameters = 237,
+    TSInterfaceDeclarationBody = 238,
+    TSInterfaceBodyBody = 239,
+    TSPropertySignatureKey = 240,
+    TSPropertySignatureTypeAnnotation = 241,
+    TSIndexSignatureModifiers = 242,
+    TSIndexSignatureParameters = 243,
+    TSIndexSignatureTypeAnnotation = 244,
+    TSCallSignatureDeclarationTypeParameters = 245,
+    TSCallSignatureDeclarationThisParam = 246,
+    TSCallSignatureDeclarationParams = 247,
+    TSCallSignatureDeclarationReturnType = 248,
+    TSMethodSignatureKey = 249,
+    TSMethodSignatureTypeParameters = 250,
+    TSMethodSignatureThisParam = 251,
+    TSMethodSignatureParams = 252,
+    TSMethodSignatureReturnType = 253,
+    TSConstructSignatureDeclarationTypeParameters = 254,
+    TSConstructSignatureDeclarationParams = 255,
+    TSConstructSignatureDeclarationReturnType = 256,
+    TSIndexSignatureNameTypeAnnotation = 257,
+    TSInterfaceHeritageExpression = 258,
+    TSInterfaceHeritageTypeParameters = 259,
+    TSTypePredicateParameterName = 260,
+    TSTypePredicateTypeAnnotation = 261,
+    TSModuleDeclarationId = 262,
+    TSModuleDeclarationBody = 263,
+    TSModuleBlockDirectives = 264,
+    TSModuleBlockBody = 265,
+    TSTypeLiteralMembers = 266,
+    TSInferTypeTypeParameter = 267,
+    TSTypeQueryExprName = 268,
+    TSTypeQueryTypeParameters = 269,
+    TSImportTypeParameter = 270,
+    TSImportTypeQualifier = 271,
+    TSImportTypeAttributes = 272,
+    TSImportTypeTypeParameters = 273,
+    TSImportAttributesAttributesKeyword = 274,
+    TSImportAttributesElements = 275,
+    TSImportAttributeName = 276,
+    TSImportAttributeValue = 277,
+    TSFunctionTypeTypeParameters = 278,
+    TSFunctionTypeThisParam = 279,
+    TSFunctionTypeParams = 280,
+    TSFunctionTypeReturnType = 281,
+    TSConstructorTypeTypeParameters = 282,
+    TSConstructorTypeParams = 283,
+    TSConstructorTypeReturnType = 284,
+    TSMappedTypeTypeParameter = 285,
+    TSMappedTypeNameType = 286,
+    TSMappedTypeTypeAnnotation = 287,
+    TSTemplateLiteralTypeQuasis = 288,
+    TSTemplateLiteralTypeTypes = 289,
+    TSAsExpressionExpression = 290,
+    TSAsExpressionTypeAnnotation = 291,
+    TSSatisfiesExpressionExpression = 292,
+    TSSatisfiesExpressionTypeAnnotation = 293,
+    TSTypeAssertionAnnotationTypeAnnotation = 294,
+    TSTypeAssertionTypeAnnotation = 295,
+    TSTypeAssertionExpression = 296,
+    TSImportEqualsDeclarationId = 297,
+    TSImportEqualsDeclarationModuleReference = 298,
+    TSExternalModuleReferenceExpression = 299,
+    TSNonNullExpressionExpression = 300,
+    TSNonNullExpressionDefiniteMark = 301,
+    DecoratorExpression = 302,
+    TSExportAssignmentExpression = 303,
+    TSNamespaceExportDeclarationId = 304,
+    TSInstantiationExpressionExpression = 305,
+    TSInstantiationExpressionTypeParameters = 306,
+    JSDocNullableTypeTypeAnnotation = 307,
+    JSDocNonNullableTypeTypeAnnotation = 308,
 }
 
 /// Ancestor type used in AST traversal.
@@ -772,10 +775,12 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSTypeAliasDeclarationTypeParameters as u16,
     TSTypeAliasDeclarationTypeAnnotation(TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSTypeAliasDeclarationTypeAnnotation as u16,
-    TSClassImplementsExpression(TSClassImplementsWithoutExpression<'a, 't>) =
-        AncestorType::TSClassImplementsExpression as u16,
-    TSClassImplementsTypeParameters(TSClassImplementsWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSClassImplementsTypeParameters as u16,
+    TSClassImplementsItemExpression(TSClassImplementsItemWithoutExpression<'a, 't>) =
+        AncestorType::TSClassImplementsItemExpression as u16,
+    TSClassImplementsItemTypeParameters(TSClassImplementsItemWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSClassImplementsItemTypeParameters as u16,
+    TSClassImplementsItems(TSClassImplementsWithoutItems<'a, 't>) =
+        AncestorType::TSClassImplementsItems as u16,
     TSInterfaceDeclarationId(TSInterfaceDeclarationWithoutId<'a, 't>) =
         AncestorType::TSInterfaceDeclarationId as u16,
     TSInterfaceDeclarationExtends(TSInterfaceDeclarationWithoutExtends<'a, 't>) =
@@ -790,6 +795,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSPropertySignatureKey as u16,
     TSPropertySignatureTypeAnnotation(TSPropertySignatureWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSPropertySignatureTypeAnnotation as u16,
+    TSIndexSignatureModifiers(TSIndexSignatureWithoutModifiers<'a, 't>) =
+        AncestorType::TSIndexSignatureModifiers as u16,
     TSIndexSignatureParameters(TSIndexSignatureWithoutParameters<'a, 't>) =
         AncestorType::TSIndexSignatureParameters as u16,
     TSIndexSignatureTypeAnnotation(TSIndexSignatureWithoutTypeAnnotation<'a, 't>) =
@@ -909,6 +916,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSExternalModuleReferenceExpression as u16,
     TSNonNullExpressionExpression(TSNonNullExpressionWithoutExpression<'a, 't>) =
         AncestorType::TSNonNullExpressionExpression as u16,
+    TSNonNullExpressionDefiniteMark(TSNonNullExpressionWithoutDefiniteMark<'a, 't>) =
+        AncestorType::TSNonNullExpressionDefiniteMark as u16,
     DecoratorExpression(DecoratorWithoutExpression<'a, 't>) =
         AncestorType::DecoratorExpression as u16,
     TSExportAssignmentExpression(TSExportAssignmentWithoutExpression<'a, 't>) =
@@ -1668,11 +1677,16 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_ts_class_implements(self) -> bool {
+    pub fn is_ts_class_implements_item(self) -> bool {
         matches!(
             self,
-            Self::TSClassImplementsExpression(_) | Self::TSClassImplementsTypeParameters(_)
+            Self::TSClassImplementsItemExpression(_) | Self::TSClassImplementsItemTypeParameters(_)
         )
+    }
+
+    #[inline]
+    pub fn is_ts_class_implements(self) -> bool {
+        matches!(self, Self::TSClassImplementsItems(_))
     }
 
     #[inline]
@@ -1700,7 +1714,9 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_index_signature(self) -> bool {
         matches!(
             self,
-            Self::TSIndexSignatureParameters(_) | Self::TSIndexSignatureTypeAnnotation(_)
+            Self::TSIndexSignatureModifiers(_)
+                | Self::TSIndexSignatureParameters(_)
+                | Self::TSIndexSignatureTypeAnnotation(_)
         )
     }
 
@@ -1882,7 +1898,10 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_non_null_expression(self) -> bool {
-        matches!(self, Self::TSNonNullExpressionExpression(_))
+        matches!(
+            self,
+            Self::TSNonNullExpressionExpression(_) | Self::TSNonNullExpressionDefiniteMark(_)
+        )
     }
 
     #[inline]
@@ -2213,7 +2232,7 @@ impl<'a, 't> Ancestor<'a, 't> {
             self,
             Self::TSTypeReferenceTypeName(_)
                 | Self::TSQualifiedNameLeft(_)
-                | Self::TSClassImplementsExpression(_)
+                | Self::TSClassImplementsItemExpression(_)
                 | Self::TSImportTypeQualifier(_)
         )
     }
@@ -6711,10 +6730,10 @@ impl<'a, 't> ClassWithoutDecorators<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Option<TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Option<TSClassImplements<'a>>)
         }
     }
 
@@ -6787,10 +6806,10 @@ impl<'a, 't> ClassWithoutModifiers<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Option<TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Option<TSClassImplements<'a>>)
         }
     }
 
@@ -6858,10 +6877,10 @@ impl<'a, 't> ClassWithoutId<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Option<TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Option<TSClassImplements<'a>>)
         }
     }
 
@@ -6931,10 +6950,10 @@ impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Option<TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Option<TSClassImplements<'a>>)
         }
     }
 
@@ -7005,10 +7024,10 @@ impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Option<TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Option<TSClassImplements<'a>>)
         }
     }
 
@@ -7078,10 +7097,10 @@ impl<'a, 't> ClassWithoutSuperTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Option<TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Option<TSClassImplements<'a>>)
         }
     }
 
@@ -7229,10 +7248,10 @@ impl<'a, 't> ClassWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn implements(self) -> &'t Option<Vec<'a, TSClassImplements<'a>>> {
+    pub fn implements(self) -> &'t Option<TSClassImplements<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+                as *const Option<TSClassImplements<'a>>)
         }
     }
 
@@ -10816,29 +10835,32 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_SPAN: usize = offset_of!(TSClassImplements, span);
-pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION: usize =
-    offset_of!(TSClassImplements, expression);
-pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_TYPE_PARAMETERS: usize =
-    offset_of!(TSClassImplements, type_parameters);
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_ITEM_SPAN: usize =
+    offset_of!(TSClassImplementsItem, span);
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_ITEM_EXPRESSION: usize =
+    offset_of!(TSClassImplementsItem, expression);
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_ITEM_TYPE_PARAMETERS: usize =
+    offset_of!(TSClassImplementsItem, type_parameters);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSClassImplementsWithoutExpression<'a, 't>(
-    pub(crate) *const TSClassImplements<'a>,
+pub struct TSClassImplementsItemWithoutExpression<'a, 't>(
+    pub(crate) *const TSClassImplementsItem<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSClassImplementsWithoutExpression<'a, 't> {
+impl<'a, 't> TSClassImplementsItemWithoutExpression<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_SPAN) as *const Span) }
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_ITEM_SPAN) as *const Span)
+        }
     }
 
     #[inline]
     pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_ITEM_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
@@ -10846,23 +10868,42 @@ impl<'a, 't> TSClassImplementsWithoutExpression<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSClassImplementsWithoutTypeParameters<'a, 't>(
-    pub(crate) *const TSClassImplements<'a>,
+pub struct TSClassImplementsItemWithoutTypeParameters<'a, 't>(
+    pub(crate) *const TSClassImplementsItem<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSClassImplementsWithoutTypeParameters<'a, 't> {
+impl<'a, 't> TSClassImplementsItemWithoutTypeParameters<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_SPAN) as *const Span) }
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_ITEM_SPAN) as *const Span)
+        }
     }
 
     #[inline]
     pub fn expression(self) -> &'t TSTypeName<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION)
+            &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_ITEM_EXPRESSION)
                 as *const TSTypeName<'a>)
         }
+    }
+}
+
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_SPAN: usize = offset_of!(TSClassImplements, span);
+pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_ITEMS: usize = offset_of!(TSClassImplements, items);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSClassImplementsWithoutItems<'a, 't>(
+    pub(crate) *const TSClassImplements<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSClassImplementsWithoutItems<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_SPAN) as *const Span) }
     }
 }
 
@@ -11215,11 +11256,42 @@ impl<'a, 't> TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_SPAN: usize = offset_of!(TSIndexSignature, span);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_MODIFIERS: usize =
+    offset_of!(TSIndexSignature, modifiers);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_PARAMETERS: usize =
     offset_of!(TSIndexSignature, parameters);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION: usize =
     offset_of!(TSIndexSignature, type_annotation);
-pub(crate) const OFFSET_TS_INDEX_SIGNATURE_READONLY: usize = offset_of!(TSIndexSignature, readonly);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSIndexSignatureWithoutModifiers<'a, 't>(
+    pub(crate) *const TSIndexSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSIndexSignatureWithoutModifiers<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn parameters(self) -> &'t Vec<'a, TSIndexSignatureName<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
+                as *const Vec<'a, TSIndexSignatureName<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11235,16 +11307,19 @@ impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
     }
 
     #[inline]
+    pub fn modifiers(self) -> &'t ClassElementModifiers {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_MODIFIERS)
+                as *const ClassElementModifiers)
+        }
+    }
+
+    #[inline]
     pub fn type_annotation(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION)
                 as *const Box<'a, TSTypeAnnotation<'a>>)
         }
-    }
-
-    #[inline]
-    pub fn readonly(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_READONLY) as *const bool) }
     }
 }
 
@@ -11262,16 +11337,19 @@ impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
+    pub fn modifiers(self) -> &'t ClassElementModifiers {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_MODIFIERS)
+                as *const ClassElementModifiers)
+        }
+    }
+
+    #[inline]
     pub fn parameters(self) -> &'t Vec<'a, TSIndexSignatureName<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
                 as *const Vec<'a, TSIndexSignatureName<'a>>)
         }
-    }
-
-    #[inline]
-    pub fn readonly(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_READONLY) as *const bool) }
     }
 }
 
@@ -13366,6 +13444,8 @@ impl<'a, 't> TSExternalModuleReferenceWithoutExpression<'a, 't> {
 pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_SPAN: usize = offset_of!(TSNonNullExpression, span);
 pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_EXPRESSION: usize =
     offset_of!(TSNonNullExpression, expression);
+pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_DEFINITE_MARK: usize =
+    offset_of!(TSNonNullExpression, definite_mark);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -13378,6 +13458,36 @@ impl<'a, 't> TSNonNullExpressionWithoutExpression<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NON_NULL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn definite_mark(self) -> &'t TSDefiniteMark {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NON_NULL_EXPRESSION_DEFINITE_MARK)
+                as *const TSDefiniteMark)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSNonNullExpressionWithoutDefiniteMark<'a, 't>(
+    pub(crate) *const TSNonNullExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSNonNullExpressionWithoutDefiniteMark<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NON_NULL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn expression(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_NON_NULL_EXPRESSION_EXPRESSION)
+                as *const Expression<'a>)
+        }
     }
 }
 

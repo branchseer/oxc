@@ -2528,12 +2528,10 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
-        as *mut Option<Vec<TSClassImplements>>)
+        as *mut Option<TSClassImplements>)
     {
         ctx.retag_stack(AncestorType::ClassImplements);
-        for item in field.iter_mut() {
-            walk_ts_class_implements(traverser, item as *mut _, ctx);
-        }
+        walk_ts_class_implements(traverser, field as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ClassBody);
     walk_class_body(
@@ -4636,26 +4634,46 @@ pub(crate) unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
     traverser.exit_ts_type_alias_declaration(&mut *node, ctx);
 }
 
+pub(crate) unsafe fn walk_ts_class_implements_item<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSClassImplementsItem<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_class_implements_item(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSClassImplementsItemExpression(
+        ancestor::TSClassImplementsItemWithoutExpression(node, PhantomData),
+    ));
+    walk_ts_type_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_ITEM_EXPRESSION)
+            as *mut TSTypeName,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_ITEM_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::TSClassImplementsItemTypeParameters);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_class_implements_item(&mut *node, ctx);
+}
+
 pub(crate) unsafe fn walk_ts_class_implements<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSClassImplements<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_class_implements(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSClassImplementsExpression(
-        ancestor::TSClassImplementsWithoutExpression(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSClassImplementsItems(
+        ancestor::TSClassImplementsWithoutItems(node, PhantomData),
     ));
-    walk_ts_type_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION) as *mut TSTypeName,
-        ctx,
-    );
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterInstantiation>>)
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_ITEMS)
+        as *mut Vec<TSClassImplementsItem>))
+        .iter_mut()
     {
-        ctx.retag_stack(AncestorType::TSClassImplementsTypeParameters);
-        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+        walk_ts_class_implements_item(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_ts_class_implements(&mut *node, ctx);
@@ -4787,9 +4805,16 @@ pub(crate) unsafe fn walk_ts_index_signature<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_index_signature(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureParameters(
-        ancestor::TSIndexSignatureWithoutParameters(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureModifiers(
+        ancestor::TSIndexSignatureWithoutModifiers(node, PhantomData),
     ));
+    walk_class_element_modifiers(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_MODIFIERS)
+            as *mut ClassElementModifiers,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSIndexSignatureParameters);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
         as *mut Vec<TSIndexSignatureName>))
         .iter_mut()
@@ -5611,6 +5636,13 @@ pub(crate) unsafe fn walk_ts_non_null_expression<'a, Tr: Traverse<'a>>(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_NON_NULL_EXPRESSION_EXPRESSION)
             as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSNonNullExpressionDefiniteMark);
+    walk_ts_definite_mark(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NON_NULL_EXPRESSION_DEFINITE_MARK)
+            as *mut TSDefiniteMark,
         ctx,
     );
     ctx.pop_stack(pop_token);

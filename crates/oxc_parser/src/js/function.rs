@@ -68,8 +68,12 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         Ok((this_param, formal_parameters))
     }
 
-    fn parse_parameter_modifiers(&mut self) -> Modifiers<'a> {
+    fn parse_parameter_modifiers(&mut self) -> Option<FormalParameterModifiers> {
+        let start_span = self.start_span();
         let modifiers = self.parse_class_element_modifiers(true);
+        if modifiers.is_empty() {
+            return None;
+        }
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::ACCESSIBILITY
@@ -77,7 +81,12 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                 .union(ModifierFlags::OVERRIDE),
             diagnostics::cannot_appear_on_a_parameter,
         );
-        modifiers
+        Some(FormalParameterModifiers {
+            span: self.end_span(start_span),
+            accessibility: modifiers.accessibility(),
+            readonly: modifiers.contains_readonly(),
+            r#override: modifiers.contains_override(),
+        })
     }
 
     fn parse_formal_parameter(&mut self) -> Result<FormalParameter<'a, A>> {
@@ -86,14 +95,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let modifiers = self.parse_parameter_modifiers();
         let pattern = self.parse_binding_pattern_with_initializer()?;
         let decorators = self.consume_decorators();
-        Ok(self.ast.formal_parameter(
-            self.end_span(span),
-            decorators,
-            pattern,
-            modifiers.accessibility(),
-            modifiers.contains_readonly(),
-            modifiers.contains_override(),
-        ))
+        Ok(self.ast.formal_parameter(self.end_span(span), decorators, modifiers, pattern))
     }
 
     fn parse_rest_parameter(&mut self) -> Result<BindingRestElement<'a, A>> {

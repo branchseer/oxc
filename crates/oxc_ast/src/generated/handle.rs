@@ -166,6 +166,9 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_decorator(&mut self, _: &Decorator<'a, A>) {}
 
     #[inline]
+    fn handle_formal_parameter_modifiers(&mut self, _: &FormalParameterModifiers) {}
+
+    #[inline]
     fn handle_binding_pattern(&mut self, _: &BindingPattern<'a, A>) {}
 
     #[inline]
@@ -277,6 +280,9 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_ts_index_signature(&mut self, _: &TSIndexSignature<'a, A>) {}
 
     #[inline]
+    fn handle_class_element_modifiers(&mut self, _: &ClassElementModifiers) {}
+
+    #[inline]
     fn handle_ts_index_signature_name(&mut self, _: &TSIndexSignatureName<'a, A>) {}
 
     #[inline]
@@ -348,6 +354,9 @@ pub trait Handler<'a, A: AstAllocator> {
 
     #[inline]
     fn handle_ts_non_null_expression(&mut self, _: &TSNonNullExpression<'a, A>) {}
+
+    #[inline]
+    fn handle_ts_definite_mark(&mut self, _: &TSDefiniteMark) {}
 
     #[inline]
     fn handle_ts_type_assertion(&mut self, _: &TSTypeAssertion<'a, A>) {}
@@ -436,6 +445,9 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_ts_class_implements(&mut self, _: &TSClassImplements<'a, A>) {}
 
     #[inline]
+    fn handle_ts_class_implements_item(&mut self, _: &TSClassImplementsItem<'a, A>) {}
+
+    #[inline]
     fn handle_class_body(&mut self, _: &ClassBody<'a, A>) {}
 
     #[inline]
@@ -448,16 +460,10 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_method_definition(&mut self, _: &MethodDefinition<'a, A>) {}
 
     #[inline]
-    fn handle_class_element_modifiers(&mut self, _: &ClassElementModifiers) {}
-
-    #[inline]
     fn handle_function(&mut self, _: &Function<'a, A>) {}
 
     #[inline]
     fn handle_property_definition(&mut self, _: &PropertyDefinition<'a, A>) {}
-
-    #[inline]
-    fn handle_ts_definite_mark(&mut self, _: &TSDefiniteMark) {}
 
     #[inline]
     fn handle_accessor_property(&mut self, _: &AccessorProperty<'a, A>) {}

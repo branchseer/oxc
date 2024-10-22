@@ -1016,11 +1016,22 @@ pub enum TSAccessibility {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(tag = "type", rename_all = "camelCase")]
-pub struct TSClassImplements<'a, A: AstAllocator = oxc_allocator::Allocator> {
+pub struct TSClassImplementsItem<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub expression: TSTypeName<'a, A>,
     pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+}
+
+#[ast(visit)]
+#[derive_where(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub struct TSClassImplements<'a, A: AstAllocator = oxc_allocator::Allocator> {
+    #[serde(flatten)]
+    pub span: Span,
+    pub items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
 }
 
 /// TypeScriptInterface Declaration
@@ -1136,9 +1147,9 @@ pub enum TSSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSIndexSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
+    pub modifiers: ClassElementModifiers,
     pub parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
     pub type_annotation: A::Box<'a, TSTypeAnnotation<'a, A>>,
-    pub readonly: bool,
 }
 
 #[ast(visit)]
@@ -1820,6 +1831,7 @@ pub struct TSNonNullExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub expression: Expression<'a, A>,
+    pub definite_mark: TSDefiniteMark,
 }
 
 /// Decorator

@@ -63,7 +63,11 @@ impl<'a, A: AstAllocator> CoverGrammar<'a, Expression<'a, A>> for SimpleAssignme
     fn cover<C: CoverContext<'a>>(expr: Expression<'a, A>, p: &mut C) -> Result<Self> {
         let expr = match cast!(expr, Expression<'a, A as Allocator>) {
             Ok(ok) => ok,
-            Err(expr_void) => return todo!(),
+            Err(expr_void) => {
+                return Ok(SimpleAssignmentTarget::AssignmentTargetIdentifier(
+                    A::box_from_span(expr_void.span()).unwrap(),
+                ))
+            }
         };
         let assignment_target = match expr {
             Expression::Identifier(ident) => {

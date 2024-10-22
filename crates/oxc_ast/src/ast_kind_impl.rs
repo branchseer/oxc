@@ -309,11 +309,14 @@ impl<'a> AstKind<'a> {
                 p.pattern.get_identifier().unwrap_or(Atom::from(DESTRUCTURE.as_ref()))
             )
             .into(),
+            Self::FormalParameterModifiers(_) => "FormalParameterModifiers".into(),
+
             Self::CatchParameter(_) => "CatchParameter".into(),
 
             Self::ClassModifiers(c) => "ClassModifiers".into(),
             Self::ClassElementModifiers(c) => "ClassElementModifiers".into(),
             Self::Class(c) => format!("Class({})", or_anonymous(c.id.as_ref())).into(),
+            Self::TSClassImplementsItem(_) => "TSClassImplementsItem".into(),
             Self::TSClassImplements(_) => "TSClassImplements".into(),
             Self::ClassBody(_) => "ClassBody".into(),
             Self::ClassHeritage(_) => "ClassHeritage".into(),

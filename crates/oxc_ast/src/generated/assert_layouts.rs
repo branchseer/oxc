@@ -571,14 +571,19 @@ const _: () = {
     assert!(offset_of!(FormalParameters, items) == 16usize);
     assert!(offset_of!(FormalParameters, rest) == 48usize);
 
-    assert!(size_of::<FormalParameter>() == 88usize);
+    assert!(size_of::<FormalParameterModifiers>() == 12usize);
+    assert!(align_of::<FormalParameterModifiers>() == 4usize);
+    assert!(offset_of!(FormalParameterModifiers, span) == 0usize);
+    assert!(offset_of!(FormalParameterModifiers, accessibility) == 8usize);
+    assert!(offset_of!(FormalParameterModifiers, readonly) == 9usize);
+    assert!(offset_of!(FormalParameterModifiers, r#override) == 10usize);
+
+    assert!(size_of::<FormalParameter>() == 96usize);
     assert!(align_of::<FormalParameter>() == 8usize);
     assert!(offset_of!(FormalParameter, span) == 0usize);
     assert!(offset_of!(FormalParameter, decorators) == 8usize);
-    assert!(offset_of!(FormalParameter, pattern) == 40usize);
-    assert!(offset_of!(FormalParameter, accessibility) == 80usize);
-    assert!(offset_of!(FormalParameter, readonly) == 81usize);
-    assert!(offset_of!(FormalParameter, r#override) == 82usize);
+    assert!(offset_of!(FormalParameter, modifiers) == 40usize);
+    assert!(offset_of!(FormalParameter, pattern) == 56usize);
 
     assert!(size_of::<FormalParameterKind>() == 1usize);
     assert!(align_of::<FormalParameterKind>() == 1usize);
@@ -612,7 +617,7 @@ const _: () = {
     assert!(offset_of!(ClassModifiers, r#abstract) == 8usize);
     assert!(offset_of!(ClassModifiers, declare) == 9usize);
 
-    assert!(size_of::<Class>() == 176usize);
+    assert!(size_of::<Class>() == 184usize);
     assert!(align_of::<Class>() == 8usize);
     assert!(offset_of!(Class, r#type) == 0usize);
     assert!(offset_of!(Class, span) == 4usize);
@@ -623,8 +628,8 @@ const _: () = {
     assert!(offset_of!(Class, super_class) == 104usize);
     assert!(offset_of!(Class, super_type_parameters) == 120usize);
     assert!(offset_of!(Class, implements) == 128usize);
-    assert!(offset_of!(Class, body) == 160usize);
-    assert!(offset_of!(Class, scope_id) == 168usize);
+    assert!(offset_of!(Class, body) == 168usize);
+    assert!(offset_of!(Class, scope_id) == 176usize);
 
     assert!(size_of::<ClassType>() == 1usize);
     assert!(align_of::<ClassType>() == 1usize);
@@ -1005,11 +1010,16 @@ const _: () = {
     assert!(size_of::<TSAccessibility>() == 1usize);
     assert!(align_of::<TSAccessibility>() == 1usize);
 
-    assert!(size_of::<TSClassImplements>() == 32usize);
+    assert!(size_of::<TSClassImplementsItem>() == 32usize);
+    assert!(align_of::<TSClassImplementsItem>() == 8usize);
+    assert!(offset_of!(TSClassImplementsItem, span) == 0usize);
+    assert!(offset_of!(TSClassImplementsItem, expression) == 8usize);
+    assert!(offset_of!(TSClassImplementsItem, type_parameters) == 24usize);
+
+    assert!(size_of::<TSClassImplements>() == 40usize);
     assert!(align_of::<TSClassImplements>() == 8usize);
     assert!(offset_of!(TSClassImplements, span) == 0usize);
-    assert!(offset_of!(TSClassImplements, expression) == 8usize);
-    assert!(offset_of!(TSClassImplements, type_parameters) == 24usize);
+    assert!(offset_of!(TSClassImplements, items) == 8usize);
 
     assert!(size_of::<TSInterfaceDeclaration>() == 96usize);
     assert!(align_of::<TSInterfaceDeclaration>() == 8usize);
@@ -1038,12 +1048,12 @@ const _: () = {
     assert!(size_of::<TSSignature>() == 16usize);
     assert!(align_of::<TSSignature>() == 8usize);
 
-    assert!(size_of::<TSIndexSignature>() == 56usize);
+    assert!(size_of::<TSIndexSignature>() == 64usize);
     assert!(align_of::<TSIndexSignature>() == 8usize);
     assert!(offset_of!(TSIndexSignature, span) == 0usize);
-    assert!(offset_of!(TSIndexSignature, parameters) == 8usize);
-    assert!(offset_of!(TSIndexSignature, type_annotation) == 40usize);
-    assert!(offset_of!(TSIndexSignature, readonly) == 48usize);
+    assert!(offset_of!(TSIndexSignature, modifiers) == 8usize);
+    assert!(offset_of!(TSIndexSignature, parameters) == 24usize);
+    assert!(offset_of!(TSIndexSignature, type_annotation) == 56usize);
 
     assert!(size_of::<TSCallSignatureDeclaration>() == 64usize);
     assert!(align_of::<TSCallSignatureDeclaration>() == 8usize);
@@ -1239,10 +1249,11 @@ const _: () = {
     assert!(offset_of!(TSExternalModuleReference, span) == 0usize);
     assert!(offset_of!(TSExternalModuleReference, expression) == 8usize);
 
-    assert!(size_of::<TSNonNullExpression>() == 24usize);
+    assert!(size_of::<TSNonNullExpression>() == 32usize);
     assert!(align_of::<TSNonNullExpression>() == 8usize);
     assert!(offset_of!(TSNonNullExpression, span) == 0usize);
     assert!(offset_of!(TSNonNullExpression, expression) == 8usize);
+    assert!(offset_of!(TSNonNullExpression, definite_mark) == 24usize);
 
     assert!(size_of::<Decorator>() == 24usize);
     assert!(align_of::<Decorator>() == 8usize);
@@ -2149,14 +2160,19 @@ const _: () = {
     assert!(offset_of!(FormalParameters, items) == 12usize);
     assert!(offset_of!(FormalParameters, rest) == 28usize);
 
-    assert!(size_of::<FormalParameter>() == 52usize);
+    assert!(size_of::<FormalParameterModifiers>() == 12usize);
+    assert!(align_of::<FormalParameterModifiers>() == 4usize);
+    assert!(offset_of!(FormalParameterModifiers, span) == 0usize);
+    assert!(offset_of!(FormalParameterModifiers, accessibility) == 8usize);
+    assert!(offset_of!(FormalParameterModifiers, readonly) == 9usize);
+    assert!(offset_of!(FormalParameterModifiers, r#override) == 10usize);
+
+    assert!(size_of::<FormalParameter>() == 60usize);
     assert!(align_of::<FormalParameter>() == 4usize);
     assert!(offset_of!(FormalParameter, span) == 0usize);
     assert!(offset_of!(FormalParameter, decorators) == 8usize);
-    assert!(offset_of!(FormalParameter, pattern) == 24usize);
-    assert!(offset_of!(FormalParameter, accessibility) == 48usize);
-    assert!(offset_of!(FormalParameter, readonly) == 49usize);
-    assert!(offset_of!(FormalParameter, r#override) == 50usize);
+    assert!(offset_of!(FormalParameter, modifiers) == 24usize);
+    assert!(offset_of!(FormalParameter, pattern) == 36usize);
 
     assert!(size_of::<FormalParameterKind>() == 1usize);
     assert!(align_of::<FormalParameterKind>() == 1usize);
@@ -2190,7 +2206,7 @@ const _: () = {
     assert!(offset_of!(ClassModifiers, r#abstract) == 8usize);
     assert!(offset_of!(ClassModifiers, declare) == 9usize);
 
-    assert!(size_of::<Class>() == 100usize);
+    assert!(size_of::<Class>() == 108usize);
     assert!(align_of::<Class>() == 4usize);
     assert!(offset_of!(Class, r#type) == 0usize);
     assert!(offset_of!(Class, span) == 4usize);
@@ -2201,8 +2217,8 @@ const _: () = {
     assert!(offset_of!(Class, super_class) == 64usize);
     assert!(offset_of!(Class, super_type_parameters) == 72usize);
     assert!(offset_of!(Class, implements) == 76usize);
-    assert!(offset_of!(Class, body) == 92usize);
-    assert!(offset_of!(Class, scope_id) == 96usize);
+    assert!(offset_of!(Class, body) == 100usize);
+    assert!(offset_of!(Class, scope_id) == 104usize);
 
     assert!(size_of::<ClassType>() == 1usize);
     assert!(align_of::<ClassType>() == 1usize);
@@ -2583,11 +2599,16 @@ const _: () = {
     assert!(size_of::<TSAccessibility>() == 1usize);
     assert!(align_of::<TSAccessibility>() == 1usize);
 
-    assert!(size_of::<TSClassImplements>() == 20usize);
+    assert!(size_of::<TSClassImplementsItem>() == 20usize);
+    assert!(align_of::<TSClassImplementsItem>() == 4usize);
+    assert!(offset_of!(TSClassImplementsItem, span) == 0usize);
+    assert!(offset_of!(TSClassImplementsItem, expression) == 8usize);
+    assert!(offset_of!(TSClassImplementsItem, type_parameters) == 16usize);
+
+    assert!(size_of::<TSClassImplements>() == 24usize);
     assert!(align_of::<TSClassImplements>() == 4usize);
     assert!(offset_of!(TSClassImplements, span) == 0usize);
-    assert!(offset_of!(TSClassImplements, expression) == 8usize);
-    assert!(offset_of!(TSClassImplements, type_parameters) == 16usize);
+    assert!(offset_of!(TSClassImplements, items) == 8usize);
 
     assert!(size_of::<TSInterfaceDeclaration>() == 60usize);
     assert!(align_of::<TSInterfaceDeclaration>() == 4usize);
@@ -2616,12 +2637,12 @@ const _: () = {
     assert!(size_of::<TSSignature>() == 8usize);
     assert!(align_of::<TSSignature>() == 4usize);
 
-    assert!(size_of::<TSIndexSignature>() == 32usize);
+    assert!(size_of::<TSIndexSignature>() == 44usize);
     assert!(align_of::<TSIndexSignature>() == 4usize);
     assert!(offset_of!(TSIndexSignature, span) == 0usize);
-    assert!(offset_of!(TSIndexSignature, parameters) == 8usize);
-    assert!(offset_of!(TSIndexSignature, type_annotation) == 24usize);
-    assert!(offset_of!(TSIndexSignature, readonly) == 28usize);
+    assert!(offset_of!(TSIndexSignature, modifiers) == 8usize);
+    assert!(offset_of!(TSIndexSignature, parameters) == 24usize);
+    assert!(offset_of!(TSIndexSignature, type_annotation) == 40usize);
 
     assert!(size_of::<TSCallSignatureDeclaration>() == 44usize);
     assert!(align_of::<TSCallSignatureDeclaration>() == 4usize);
@@ -2817,10 +2838,11 @@ const _: () = {
     assert!(offset_of!(TSExternalModuleReference, span) == 0usize);
     assert!(offset_of!(TSExternalModuleReference, expression) == 8usize);
 
-    assert!(size_of::<TSNonNullExpression>() == 16usize);
+    assert!(size_of::<TSNonNullExpression>() == 24usize);
     assert!(align_of::<TSNonNullExpression>() == 4usize);
     assert!(offset_of!(TSNonNullExpression, span) == 0usize);
     assert!(offset_of!(TSNonNullExpression, expression) == 8usize);
+    assert!(offset_of!(TSNonNullExpression, definite_mark) == 16usize);
 
     assert!(size_of::<Decorator>() == 16usize);
     assert!(align_of::<Decorator>() == 4usize);
