@@ -448,7 +448,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         match self.cur_kind() {
             Kind::PrivateIdentifier => {
                 let private_ident = self.parse_private_identifier();
-                Ok((PropertyKey::PrivateIdentifier(self.ast.alloc(private_ident)), false))
+                Ok((self.ast.property_key_from_private_identifier(private_ident), false))
             }
             _ => self.parse_property_name(),
         }

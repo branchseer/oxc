@@ -152,10 +152,11 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         } else {
             None
         };
+        let property_key = self.ast.property_key_from_identifier_name(key);
         Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Init,
-            PropertyKey::StaticIdentifier(key),
+            property_key,
             value,
             init,
             /* method */ false,
@@ -192,16 +193,23 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     pub(crate) fn parse_property_name(&mut self) -> Result<(PropertyKey<'a, A>, bool)> {
         let mut computed = false;
         let key = match self.cur_kind() {
-            Kind::Str => self.parse_literal_expression().map(PropertyKey::from)?,
-            kind if kind.is_number() => self.parse_literal_expression().map(PropertyKey::from)?,
+            Kind::Str => {
+                let expr = self.parse_literal_expression()?;
+                self.ast.property_key_expression(expr)
+            }
+            kind if kind.is_number() => {
+                let expr = self.parse_literal_expression()?;
+                self.ast.property_key_expression(expr)
+            }
             // { [foo]() {} }
             Kind::LBrack => {
                 computed = true;
-                self.parse_computed_property_name().map(PropertyKey::from)?
+                let expr = self.parse_computed_property_name()?;
+                self.ast.property_key_expression(expr)
             }
             _ => {
                 let ident = self.parse_identifier_name()?;
-                PropertyKey::StaticIdentifier(self.ast.alloc(ident))
+                self.ast.property_key_from_identifier_name(ident)
             }
         };
         Ok((key, computed))
