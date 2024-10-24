@@ -2529,7 +2529,9 @@ pub mod walk_mut {
         it: &mut TSIndexSignature<'a>,
     ) {
         // NOTE: AstType doesn't exists!
-        visitor.visit_class_element_modifiers(&mut it.modifiers);
+        if let Some(modifiers) = &mut it.modifiers {
+            visitor.visit_class_element_modifiers(modifiers);
+        }
         visitor.visit_ts_index_signature_names(&mut it.parameters);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
     }
@@ -3157,7 +3159,9 @@ pub mod walk_mut {
         let kind = AstType::Class;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
-        visitor.visit_class_modifiers(&mut it.modifiers);
+        if let Some(modifiers) = &mut it.modifiers {
+            visitor.visit_class_modifiers(modifiers);
+        }
         if let Some(id) = &mut it.id {
             visitor.visit_binding_identifier(id);
         }
@@ -3275,7 +3279,9 @@ pub mod walk_mut {
         let kind = AstType::MethodDefinition;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
-        visitor.visit_class_element_modifiers(&mut it.modifiers);
+        if let Some(modifiers) = &mut it.modifiers {
+            visitor.visit_class_element_modifiers(modifiers);
+        }
         visitor.visit_property_key(&mut it.key);
         {
             let flags = match it.kind {
@@ -3336,7 +3342,9 @@ pub mod walk_mut {
         let kind = AstType::PropertyDefinition;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
-        visitor.visit_class_element_modifiers(&mut it.modifiers);
+        if let Some(modifiers) = &mut it.modifiers {
+            visitor.visit_class_element_modifiers(modifiers);
+        }
         visitor.visit_property_key(&mut it.key);
         if let Some(optional) = &mut it.optional {
             visitor.visit_ts_optional_mark(optional);
@@ -3359,7 +3367,9 @@ pub mod walk_mut {
     ) {
         // NOTE: AstType doesn't exists!
         visitor.visit_decorators(&mut it.decorators);
-        visitor.visit_class_element_modifiers(&mut it.modifiers);
+        if let Some(modifiers) = &mut it.modifiers {
+            visitor.visit_class_element_modifiers(modifiers);
+        }
         visitor.visit_property_key(&mut it.key);
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);

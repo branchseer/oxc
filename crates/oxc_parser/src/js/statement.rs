@@ -393,12 +393,12 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         }
 
         if is_for_in {
-            let scope_token = self.ast.enter_scope::<ForInStatement<'a, A>>();
+            let scope_token = self.ast.enter_scope();
             let body = self.parse_statement_list_item(StatementContext::For)?;
             let span = self.end_span(span);
             Ok(self.ast.statement_for_in(scope_token, span, left, right, body))
         } else {
-            let scope_token = self.ast.enter_scope::<ForOfStatement<'a, A>>();
+            let scope_token = self.ast.enter_scope();
             let body = self.parse_statement_list_item(StatementContext::For)?;
             let span = self.end_span(span);
             Ok(self.ast.statement_for_of(scope_token, span, r#await, left, right, body))

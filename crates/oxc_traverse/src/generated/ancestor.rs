@@ -145,195 +145,196 @@ pub(crate) enum AncestorType {
     FormalParametersItems = 117,
     FormalParametersRest = 118,
     FormalParameterDecorators = 119,
-    FormalParameterPattern = 120,
-    FunctionBodyDirectives = 121,
-    FunctionBodyStatements = 122,
-    ArrowFunctionExpressionTypeParameters = 123,
-    ArrowFunctionExpressionParams = 124,
-    ArrowFunctionExpressionReturnType = 125,
-    ArrowFunctionExpressionBody = 126,
-    YieldExpressionArgument = 127,
-    ClassDecorators = 128,
-    ClassModifiers = 129,
-    ClassId = 130,
-    ClassTypeParameters = 131,
-    ClassSuperClass = 132,
-    ClassSuperTypeParameters = 133,
-    ClassImplements = 134,
-    ClassBody = 135,
-    ClassBodyBody = 136,
-    MethodDefinitionDecorators = 137,
-    MethodDefinitionModifiers = 138,
-    MethodDefinitionKey = 139,
-    MethodDefinitionValue = 140,
-    MethodDefinitionOptional = 141,
-    PropertyDefinitionDecorators = 142,
-    PropertyDefinitionModifiers = 143,
-    PropertyDefinitionKey = 144,
-    PropertyDefinitionOptional = 145,
-    PropertyDefinitionDefinite = 146,
-    PropertyDefinitionValue = 147,
-    PropertyDefinitionTypeAnnotation = 148,
-    StaticBlockBody = 149,
-    AccessorPropertyDecorators = 150,
-    AccessorPropertyModifiers = 151,
-    AccessorPropertyKey = 152,
-    AccessorPropertyValue = 153,
-    AccessorPropertyDefinite = 154,
-    AccessorPropertyTypeAnnotation = 155,
-    ImportExpressionSource = 156,
-    ImportExpressionArguments = 157,
-    ImportDeclarationSpecifiers = 158,
-    ImportDeclarationSource = 159,
-    ImportDeclarationWithClause = 160,
-    ImportSpecifierImported = 161,
-    ImportSpecifierLocal = 162,
-    ImportDefaultSpecifierLocal = 163,
-    ImportNamespaceSpecifierLocal = 164,
-    WithClauseAttributesKeyword = 165,
-    WithClauseWithEntries = 166,
-    ImportAttributeKey = 167,
-    ImportAttributeValue = 168,
-    ExportNamedDeclarationDeclaration = 169,
-    ExportNamedDeclarationSpecifiers = 170,
-    ExportNamedDeclarationSource = 171,
-    ExportNamedDeclarationWithClause = 172,
-    ExportDefaultDeclarationDeclaration = 173,
-    ExportDefaultDeclarationExported = 174,
-    ExportAllDeclarationExported = 175,
-    ExportAllDeclarationSource = 176,
-    ExportAllDeclarationWithClause = 177,
-    ExportSpecifierLocal = 178,
-    ExportSpecifierExported = 179,
-    JSXElementOpeningElement = 180,
-    JSXElementClosingElement = 181,
-    JSXElementChildren = 182,
-    JSXOpeningElementName = 183,
-    JSXOpeningElementAttributes = 184,
-    JSXOpeningElementTypeParameters = 185,
-    JSXClosingElementName = 186,
-    JSXFragmentChildren = 187,
-    JSXNamespacedNameNamespace = 188,
-    JSXNamespacedNameProperty = 189,
-    JSXMemberExpressionObject = 190,
-    JSXMemberExpressionProperty = 191,
-    JSXExpressionContainerExpression = 192,
-    JSXAttributeName = 193,
-    JSXAttributeValue = 194,
-    JSXSpreadAttributeArgument = 195,
-    JSXSpreadChildExpression = 196,
-    TSThisParameterTypeAnnotation = 197,
-    TSEnumDeclarationId = 198,
-    TSEnumDeclarationMembers = 199,
-    TSEnumMemberId = 200,
-    TSEnumMemberInitializer = 201,
-    TSTypeAnnotationTypeAnnotation = 202,
-    TSLiteralTypeLiteral = 203,
-    TSConditionalTypeCheckType = 204,
-    TSConditionalTypeExtendsType = 205,
-    TSConditionalTypeTrueType = 206,
-    TSConditionalTypeFalseType = 207,
-    TSUnionTypeTypes = 208,
-    TSIntersectionTypeTypes = 209,
-    TSParenthesizedTypeTypeAnnotation = 210,
-    TSTypeOperatorTypeAnnotation = 211,
-    TSArrayTypeElementType = 212,
-    TSIndexedAccessTypeObjectType = 213,
-    TSIndexedAccessTypeIndexType = 214,
-    TSTupleTypeElementTypes = 215,
-    TSNamedTupleMemberElementType = 216,
-    TSNamedTupleMemberLabel = 217,
-    TSOptionalTypeTypeAnnotation = 218,
-    TSRestTypeTypeAnnotation = 219,
-    TSTypeReferenceTypeName = 220,
-    TSTypeReferenceTypeParameters = 221,
-    TSQualifiedNameLeft = 222,
-    TSQualifiedNameRight = 223,
-    TSTypeParameterInstantiationParams = 224,
-    TSTypeParameterName = 225,
-    TSTypeParameterConstraint = 226,
-    TSTypeParameterDefault = 227,
-    TSTypeParameterDeclarationParams = 228,
-    TSTypeAliasDeclarationId = 229,
-    TSTypeAliasDeclarationTypeParameters = 230,
-    TSTypeAliasDeclarationTypeAnnotation = 231,
-    TSClassImplementsItemExpression = 232,
-    TSClassImplementsItemTypeParameters = 233,
-    TSClassImplementsItems = 234,
-    TSInterfaceDeclarationId = 235,
-    TSInterfaceDeclarationExtends = 236,
-    TSInterfaceDeclarationTypeParameters = 237,
-    TSInterfaceDeclarationBody = 238,
-    TSInterfaceBodyBody = 239,
-    TSPropertySignatureKey = 240,
-    TSPropertySignatureTypeAnnotation = 241,
-    TSIndexSignatureModifiers = 242,
-    TSIndexSignatureParameters = 243,
-    TSIndexSignatureTypeAnnotation = 244,
-    TSCallSignatureDeclarationTypeParameters = 245,
-    TSCallSignatureDeclarationThisParam = 246,
-    TSCallSignatureDeclarationParams = 247,
-    TSCallSignatureDeclarationReturnType = 248,
-    TSMethodSignatureKey = 249,
-    TSMethodSignatureTypeParameters = 250,
-    TSMethodSignatureThisParam = 251,
-    TSMethodSignatureParams = 252,
-    TSMethodSignatureReturnType = 253,
-    TSConstructSignatureDeclarationTypeParameters = 254,
-    TSConstructSignatureDeclarationParams = 255,
-    TSConstructSignatureDeclarationReturnType = 256,
-    TSIndexSignatureNameTypeAnnotation = 257,
-    TSInterfaceHeritageExpression = 258,
-    TSInterfaceHeritageTypeParameters = 259,
-    TSTypePredicateParameterName = 260,
-    TSTypePredicateTypeAnnotation = 261,
-    TSModuleDeclarationId = 262,
-    TSModuleDeclarationBody = 263,
-    TSModuleBlockDirectives = 264,
-    TSModuleBlockBody = 265,
-    TSTypeLiteralMembers = 266,
-    TSInferTypeTypeParameter = 267,
-    TSTypeQueryExprName = 268,
-    TSTypeQueryTypeParameters = 269,
-    TSImportTypeParameter = 270,
-    TSImportTypeQualifier = 271,
-    TSImportTypeAttributes = 272,
-    TSImportTypeTypeParameters = 273,
-    TSImportAttributesAttributesKeyword = 274,
-    TSImportAttributesElements = 275,
-    TSImportAttributeName = 276,
-    TSImportAttributeValue = 277,
-    TSFunctionTypeTypeParameters = 278,
-    TSFunctionTypeThisParam = 279,
-    TSFunctionTypeParams = 280,
-    TSFunctionTypeReturnType = 281,
-    TSConstructorTypeTypeParameters = 282,
-    TSConstructorTypeParams = 283,
-    TSConstructorTypeReturnType = 284,
-    TSMappedTypeTypeParameter = 285,
-    TSMappedTypeNameType = 286,
-    TSMappedTypeTypeAnnotation = 287,
-    TSTemplateLiteralTypeQuasis = 288,
-    TSTemplateLiteralTypeTypes = 289,
-    TSAsExpressionExpression = 290,
-    TSAsExpressionTypeAnnotation = 291,
-    TSSatisfiesExpressionExpression = 292,
-    TSSatisfiesExpressionTypeAnnotation = 293,
-    TSTypeAssertionAnnotationTypeAnnotation = 294,
-    TSTypeAssertionTypeAnnotation = 295,
-    TSTypeAssertionExpression = 296,
-    TSImportEqualsDeclarationId = 297,
-    TSImportEqualsDeclarationModuleReference = 298,
-    TSExternalModuleReferenceExpression = 299,
-    TSNonNullExpressionExpression = 300,
-    TSNonNullExpressionDefiniteMark = 301,
-    DecoratorExpression = 302,
-    TSExportAssignmentExpression = 303,
-    TSNamespaceExportDeclarationId = 304,
-    TSInstantiationExpressionExpression = 305,
-    TSInstantiationExpressionTypeParameters = 306,
-    JSDocNullableTypeTypeAnnotation = 307,
-    JSDocNonNullableTypeTypeAnnotation = 308,
+    FormalParameterModifiers = 120,
+    FormalParameterPattern = 121,
+    FunctionBodyDirectives = 122,
+    FunctionBodyStatements = 123,
+    ArrowFunctionExpressionTypeParameters = 124,
+    ArrowFunctionExpressionParams = 125,
+    ArrowFunctionExpressionReturnType = 126,
+    ArrowFunctionExpressionBody = 127,
+    YieldExpressionArgument = 128,
+    ClassDecorators = 129,
+    ClassModifiers = 130,
+    ClassId = 131,
+    ClassTypeParameters = 132,
+    ClassSuperClass = 133,
+    ClassSuperTypeParameters = 134,
+    ClassImplements = 135,
+    ClassBody = 136,
+    ClassBodyBody = 137,
+    MethodDefinitionDecorators = 138,
+    MethodDefinitionModifiers = 139,
+    MethodDefinitionKey = 140,
+    MethodDefinitionValue = 141,
+    MethodDefinitionOptional = 142,
+    PropertyDefinitionDecorators = 143,
+    PropertyDefinitionModifiers = 144,
+    PropertyDefinitionKey = 145,
+    PropertyDefinitionOptional = 146,
+    PropertyDefinitionDefinite = 147,
+    PropertyDefinitionValue = 148,
+    PropertyDefinitionTypeAnnotation = 149,
+    StaticBlockBody = 150,
+    AccessorPropertyDecorators = 151,
+    AccessorPropertyModifiers = 152,
+    AccessorPropertyKey = 153,
+    AccessorPropertyValue = 154,
+    AccessorPropertyDefinite = 155,
+    AccessorPropertyTypeAnnotation = 156,
+    ImportExpressionSource = 157,
+    ImportExpressionArguments = 158,
+    ImportDeclarationSpecifiers = 159,
+    ImportDeclarationSource = 160,
+    ImportDeclarationWithClause = 161,
+    ImportSpecifierImported = 162,
+    ImportSpecifierLocal = 163,
+    ImportDefaultSpecifierLocal = 164,
+    ImportNamespaceSpecifierLocal = 165,
+    WithClauseAttributesKeyword = 166,
+    WithClauseWithEntries = 167,
+    ImportAttributeKey = 168,
+    ImportAttributeValue = 169,
+    ExportNamedDeclarationDeclaration = 170,
+    ExportNamedDeclarationSpecifiers = 171,
+    ExportNamedDeclarationSource = 172,
+    ExportNamedDeclarationWithClause = 173,
+    ExportDefaultDeclarationDeclaration = 174,
+    ExportDefaultDeclarationExported = 175,
+    ExportAllDeclarationExported = 176,
+    ExportAllDeclarationSource = 177,
+    ExportAllDeclarationWithClause = 178,
+    ExportSpecifierLocal = 179,
+    ExportSpecifierExported = 180,
+    JSXElementOpeningElement = 181,
+    JSXElementClosingElement = 182,
+    JSXElementChildren = 183,
+    JSXOpeningElementName = 184,
+    JSXOpeningElementAttributes = 185,
+    JSXOpeningElementTypeParameters = 186,
+    JSXClosingElementName = 187,
+    JSXFragmentChildren = 188,
+    JSXNamespacedNameNamespace = 189,
+    JSXNamespacedNameProperty = 190,
+    JSXMemberExpressionObject = 191,
+    JSXMemberExpressionProperty = 192,
+    JSXExpressionContainerExpression = 193,
+    JSXAttributeName = 194,
+    JSXAttributeValue = 195,
+    JSXSpreadAttributeArgument = 196,
+    JSXSpreadChildExpression = 197,
+    TSThisParameterTypeAnnotation = 198,
+    TSEnumDeclarationId = 199,
+    TSEnumDeclarationMembers = 200,
+    TSEnumMemberId = 201,
+    TSEnumMemberInitializer = 202,
+    TSTypeAnnotationTypeAnnotation = 203,
+    TSLiteralTypeLiteral = 204,
+    TSConditionalTypeCheckType = 205,
+    TSConditionalTypeExtendsType = 206,
+    TSConditionalTypeTrueType = 207,
+    TSConditionalTypeFalseType = 208,
+    TSUnionTypeTypes = 209,
+    TSIntersectionTypeTypes = 210,
+    TSParenthesizedTypeTypeAnnotation = 211,
+    TSTypeOperatorTypeAnnotation = 212,
+    TSArrayTypeElementType = 213,
+    TSIndexedAccessTypeObjectType = 214,
+    TSIndexedAccessTypeIndexType = 215,
+    TSTupleTypeElementTypes = 216,
+    TSNamedTupleMemberElementType = 217,
+    TSNamedTupleMemberLabel = 218,
+    TSOptionalTypeTypeAnnotation = 219,
+    TSRestTypeTypeAnnotation = 220,
+    TSTypeReferenceTypeName = 221,
+    TSTypeReferenceTypeParameters = 222,
+    TSQualifiedNameLeft = 223,
+    TSQualifiedNameRight = 224,
+    TSTypeParameterInstantiationParams = 225,
+    TSTypeParameterName = 226,
+    TSTypeParameterConstraint = 227,
+    TSTypeParameterDefault = 228,
+    TSTypeParameterDeclarationParams = 229,
+    TSTypeAliasDeclarationId = 230,
+    TSTypeAliasDeclarationTypeParameters = 231,
+    TSTypeAliasDeclarationTypeAnnotation = 232,
+    TSClassImplementsItemExpression = 233,
+    TSClassImplementsItemTypeParameters = 234,
+    TSClassImplementsItems = 235,
+    TSInterfaceDeclarationId = 236,
+    TSInterfaceDeclarationExtends = 237,
+    TSInterfaceDeclarationTypeParameters = 238,
+    TSInterfaceDeclarationBody = 239,
+    TSInterfaceBodyBody = 240,
+    TSPropertySignatureKey = 241,
+    TSPropertySignatureTypeAnnotation = 242,
+    TSIndexSignatureModifiers = 243,
+    TSIndexSignatureParameters = 244,
+    TSIndexSignatureTypeAnnotation = 245,
+    TSCallSignatureDeclarationTypeParameters = 246,
+    TSCallSignatureDeclarationThisParam = 247,
+    TSCallSignatureDeclarationParams = 248,
+    TSCallSignatureDeclarationReturnType = 249,
+    TSMethodSignatureKey = 250,
+    TSMethodSignatureTypeParameters = 251,
+    TSMethodSignatureThisParam = 252,
+    TSMethodSignatureParams = 253,
+    TSMethodSignatureReturnType = 254,
+    TSConstructSignatureDeclarationTypeParameters = 255,
+    TSConstructSignatureDeclarationParams = 256,
+    TSConstructSignatureDeclarationReturnType = 257,
+    TSIndexSignatureNameTypeAnnotation = 258,
+    TSInterfaceHeritageExpression = 259,
+    TSInterfaceHeritageTypeParameters = 260,
+    TSTypePredicateParameterName = 261,
+    TSTypePredicateTypeAnnotation = 262,
+    TSModuleDeclarationId = 263,
+    TSModuleDeclarationBody = 264,
+    TSModuleBlockDirectives = 265,
+    TSModuleBlockBody = 266,
+    TSTypeLiteralMembers = 267,
+    TSInferTypeTypeParameter = 268,
+    TSTypeQueryExprName = 269,
+    TSTypeQueryTypeParameters = 270,
+    TSImportTypeParameter = 271,
+    TSImportTypeQualifier = 272,
+    TSImportTypeAttributes = 273,
+    TSImportTypeTypeParameters = 274,
+    TSImportAttributesAttributesKeyword = 275,
+    TSImportAttributesElements = 276,
+    TSImportAttributeName = 277,
+    TSImportAttributeValue = 278,
+    TSFunctionTypeTypeParameters = 279,
+    TSFunctionTypeThisParam = 280,
+    TSFunctionTypeParams = 281,
+    TSFunctionTypeReturnType = 282,
+    TSConstructorTypeTypeParameters = 283,
+    TSConstructorTypeParams = 284,
+    TSConstructorTypeReturnType = 285,
+    TSMappedTypeTypeParameter = 286,
+    TSMappedTypeNameType = 287,
+    TSMappedTypeTypeAnnotation = 288,
+    TSTemplateLiteralTypeQuasis = 289,
+    TSTemplateLiteralTypeTypes = 290,
+    TSAsExpressionExpression = 291,
+    TSAsExpressionTypeAnnotation = 292,
+    TSSatisfiesExpressionExpression = 293,
+    TSSatisfiesExpressionTypeAnnotation = 294,
+    TSTypeAssertionAnnotationTypeAnnotation = 295,
+    TSTypeAssertionTypeAnnotation = 296,
+    TSTypeAssertionExpression = 297,
+    TSImportEqualsDeclarationId = 298,
+    TSImportEqualsDeclarationModuleReference = 299,
+    TSExternalModuleReferenceExpression = 300,
+    TSNonNullExpressionExpression = 301,
+    TSNonNullExpressionDefiniteMark = 302,
+    DecoratorExpression = 303,
+    TSExportAssignmentExpression = 304,
+    TSNamespaceExportDeclarationId = 305,
+    TSInstantiationExpressionExpression = 306,
+    TSInstantiationExpressionTypeParameters = 307,
+    JSDocNullableTypeTypeAnnotation = 308,
+    JSDocNonNullableTypeTypeAnnotation = 309,
 }
 
 /// Ancestor type used in AST traversal.
@@ -565,6 +566,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::FormalParametersRest as u16,
     FormalParameterDecorators(FormalParameterWithoutDecorators<'a, 't>) =
         AncestorType::FormalParameterDecorators as u16,
+    FormalParameterModifiers(FormalParameterWithoutModifiers<'a, 't>) =
+        AncestorType::FormalParameterModifiers as u16,
     FormalParameterPattern(FormalParameterWithoutPattern<'a, 't>) =
         AncestorType::FormalParameterPattern as u16,
     FunctionBodyDirectives(FunctionBodyWithoutDirectives<'a, 't>) =
@@ -1324,7 +1327,12 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_formal_parameter(self) -> bool {
-        matches!(self, Self::FormalParameterDecorators(_) | Self::FormalParameterPattern(_))
+        matches!(
+            self,
+            Self::FormalParameterDecorators(_)
+                | Self::FormalParameterModifiers(_)
+                | Self::FormalParameterPattern(_)
+        )
     }
 
     #[inline]
@@ -6237,11 +6245,8 @@ impl<'a, 't> FormalParametersWithoutRest<'a, 't> {
 pub(crate) const OFFSET_FORMAL_PARAMETER_SPAN: usize = offset_of!(FormalParameter, span);
 pub(crate) const OFFSET_FORMAL_PARAMETER_DECORATORS: usize =
     offset_of!(FormalParameter, decorators);
+pub(crate) const OFFSET_FORMAL_PARAMETER_MODIFIERS: usize = offset_of!(FormalParameter, modifiers);
 pub(crate) const OFFSET_FORMAL_PARAMETER_PATTERN: usize = offset_of!(FormalParameter, pattern);
-pub(crate) const OFFSET_FORMAL_PARAMETER_ACCESSIBILITY: usize =
-    offset_of!(FormalParameter, accessibility);
-pub(crate) const OFFSET_FORMAL_PARAMETER_READONLY: usize = offset_of!(FormalParameter, readonly);
-pub(crate) const OFFSET_FORMAL_PARAMETER_OVERRIDE: usize = offset_of!(FormalParameter, r#override);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -6257,29 +6262,49 @@ impl<'a, 't> FormalParameterWithoutDecorators<'a, 't> {
     }
 
     #[inline]
+    pub fn modifiers(self) -> &'t Option<FormalParameterModifiers> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_MODIFIERS)
+                as *const Option<FormalParameterModifiers>)
+        }
+    }
+
+    #[inline]
     pub fn pattern(self) -> &'t BindingPattern<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
                 as *const BindingPattern<'a>)
         }
     }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct FormalParameterWithoutModifiers<'a, 't>(
+    pub(crate) *const FormalParameter<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> FormalParameterWithoutModifiers<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
+    }
 
     #[inline]
-    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+    pub fn decorators(self) -> &'t Vec<'a, Decorator<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
         }
     }
 
     #[inline]
-    pub fn readonly(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_READONLY) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
+    pub fn pattern(self) -> &'t BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
+        }
     }
 }
 
@@ -6305,21 +6330,11 @@ impl<'a, 't> FormalParameterWithoutPattern<'a, 't> {
     }
 
     #[inline]
-    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+    pub fn modifiers(self) -> &'t Option<FormalParameterModifiers> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_MODIFIERS)
+                as *const Option<FormalParameterModifiers>)
         }
-    }
-
-    #[inline]
-    pub fn readonly(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_READONLY) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
     }
 }
 
@@ -6695,8 +6710,10 @@ impl<'a, 't> ClassWithoutDecorators<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassModifiers {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const ClassModifiers) }
+    pub fn modifiers(self) -> &'t Option<ClassModifiers> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Option<ClassModifiers>)
+        }
     }
 
     #[inline]
@@ -6849,8 +6866,10 @@ impl<'a, 't> ClassWithoutId<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassModifiers {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const ClassModifiers) }
+    pub fn modifiers(self) -> &'t Option<ClassModifiers> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Option<ClassModifiers>)
+        }
     }
 
     #[inline]
@@ -6923,8 +6942,10 @@ impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassModifiers {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const ClassModifiers) }
+    pub fn modifiers(self) -> &'t Option<ClassModifiers> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Option<ClassModifiers>)
+        }
     }
 
     #[inline]
@@ -6996,8 +7017,10 @@ impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassModifiers {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const ClassModifiers) }
+    pub fn modifiers(self) -> &'t Option<ClassModifiers> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Option<ClassModifiers>)
+        }
     }
 
     #[inline]
@@ -7070,8 +7093,10 @@ impl<'a, 't> ClassWithoutSuperTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassModifiers {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const ClassModifiers) }
+    pub fn modifiers(self) -> &'t Option<ClassModifiers> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Option<ClassModifiers>)
+        }
     }
 
     #[inline]
@@ -7143,8 +7168,10 @@ impl<'a, 't> ClassWithoutImplements<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassModifiers {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const ClassModifiers) }
+    pub fn modifiers(self) -> &'t Option<ClassModifiers> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Option<ClassModifiers>)
+        }
     }
 
     #[inline]
@@ -7213,8 +7240,10 @@ impl<'a, 't> ClassWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassModifiers {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const ClassModifiers) }
+    pub fn modifiers(self) -> &'t Option<ClassModifiers> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Option<ClassModifiers>)
+        }
     }
 
     #[inline]
@@ -7305,10 +7334,10 @@ impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -7320,10 +7349,9 @@ impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
     }
 
     #[inline]
-    pub fn value(self) -> &'t Box<'a, Function<'a>> {
+    pub fn value(self) -> &'t Function<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
-                as *const Box<'a, Function<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE) as *const Function<'a>)
         }
     }
 
@@ -7378,10 +7406,9 @@ impl<'a, 't> MethodDefinitionWithoutModifiers<'a, 't> {
     }
 
     #[inline]
-    pub fn value(self) -> &'t Box<'a, Function<'a>> {
+    pub fn value(self) -> &'t Function<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
-                as *const Box<'a, Function<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE) as *const Function<'a>)
         }
     }
 
@@ -7429,18 +7456,17 @@ impl<'a, 't> MethodDefinitionWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
     #[inline]
-    pub fn value(self) -> &'t Box<'a, Function<'a>> {
+    pub fn value(self) -> &'t Function<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
-                as *const Box<'a, Function<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE) as *const Function<'a>)
         }
     }
 
@@ -7488,10 +7514,10 @@ impl<'a, 't> MethodDefinitionWithoutValue<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -7546,10 +7572,10 @@ impl<'a, 't> MethodDefinitionWithoutOptional<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -7561,10 +7587,9 @@ impl<'a, 't> MethodDefinitionWithoutOptional<'a, 't> {
     }
 
     #[inline]
-    pub fn value(self) -> &'t Box<'a, Function<'a>> {
+    pub fn value(self) -> &'t Function<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE)
-                as *const Box<'a, Function<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_VALUE) as *const Function<'a>)
         }
     }
 
@@ -7612,10 +7637,10 @@ impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -7752,10 +7777,10 @@ impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -7819,10 +7844,10 @@ impl<'a, 't> PropertyDefinitionWithoutOptional<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -7885,10 +7910,10 @@ impl<'a, 't> PropertyDefinitionWithoutDefinite<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -7951,10 +7976,10 @@ impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -8017,10 +8042,10 @@ impl<'a, 't> PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -8113,10 +8138,10 @@ impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -8237,10 +8262,10 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -8296,10 +8321,10 @@ impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -8354,10 +8379,10 @@ impl<'a, 't> AccessorPropertyWithoutDefinite<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -8412,10 +8437,10 @@ impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -11307,10 +11332,10 @@ impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 
@@ -11337,10 +11362,10 @@ impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn modifiers(self) -> &'t ClassElementModifiers {
+    pub fn modifiers(self) -> &'t Option<ClassElementModifiers> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_MODIFIERS)
-                as *const ClassElementModifiers)
+                as *const Option<ClassElementModifiers>)
         }
     }
 

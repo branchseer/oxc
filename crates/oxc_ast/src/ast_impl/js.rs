@@ -762,7 +762,9 @@ impl<'a> Declaration<'a> {
         match self {
             Declaration::VariableDeclaration(decl) => decl.declare,
             Declaration::FunctionDeclaration(decl) => decl.declare,
-            Declaration::ClassDeclaration(decl) => decl.modifiers.declare,
+            Declaration::ClassDeclaration(decl) => {
+                decl.modifiers.as_ref().is_some_and(|modifiers| modifiers.declare)
+            }
             Declaration::TSEnumDeclaration(decl) => decl.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
@@ -1123,7 +1125,7 @@ impl<'a> Class<'a> {
         r#type: ClassType,
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         super_class: Option<Expression<'a>>,
         body: Box<'a, ClassBody<'a>>,
@@ -1169,7 +1171,7 @@ impl<'a> Class<'a> {
     }
 
     pub fn is_typescript_syntax(&self) -> bool {
-        self.modifiers.declare || self.modifiers.r#abstract
+        self.modifiers.as_ref().is_some_and(|modifiers| modifiers.declare || modifiers.r#abstract)
     }
 }
 
@@ -1184,9 +1186,15 @@ impl<'a> ClassElement<'a> {
     pub fn r#static(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
-            Self::MethodDefinition(def) => def.modifiers.r#static,
-            Self::PropertyDefinition(def) => def.modifiers.r#static,
-            Self::AccessorProperty(def) => def.modifiers.r#static,
+            Self::MethodDefinition(def) => {
+                def.modifiers.is_some_and(|modifiers| modifiers.r#static)
+            }
+            Self::PropertyDefinition(def) => {
+                def.modifiers.is_some_and(|modifiers| modifiers.r#static)
+            }
+            Self::AccessorProperty(def) => {
+                def.modifiers.is_some_and(|modifiers| modifiers.r#static)
+            }
         }
     }
 
@@ -1202,8 +1210,8 @@ impl<'a> ClassElement<'a> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         match self {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
-            Self::MethodDefinition(def) => def.modifiers.accessibility,
-            Self::PropertyDefinition(def) => def.modifiers.accessibility,
+            Self::MethodDefinition(def) => def.modifiers?.accessibility,
+            Self::PropertyDefinition(def) => def.modifiers?.accessibility,
         }
     }
 
@@ -1254,8 +1262,12 @@ impl<'a> ClassElement<'a> {
         match self {
             Self::TSIndexSignature(_) => true,
             Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
-            Self::PropertyDefinition(property) => property.modifiers.r#abstract,
-            Self::AccessorProperty(property) => property.modifiers.r#abstract,
+            Self::PropertyDefinition(property) => {
+                property.modifiers.is_some_and(|modifiers| modifiers.r#abstract)
+            }
+            Self::AccessorProperty(property) => {
+                property.modifiers.is_some_and(|modifiers| modifiers.r#abstract)
+            }
             Self::StaticBlock(_) => false,
         }
     }
@@ -1279,9 +1291,15 @@ impl<'a> ClassElement<'a> {
     /// ```
     pub fn is_abstract(&self) -> bool {
         match self {
-            Self::MethodDefinition(method) => method.modifiers.r#abstract,
-            Self::AccessorProperty(accessor) => accessor.modifiers.r#abstract,
-            Self::PropertyDefinition(property) => property.modifiers.r#abstract,
+            Self::MethodDefinition(method) => {
+                method.modifiers.is_some_and(|modifiers| modifiers.r#abstract)
+            }
+            Self::AccessorProperty(accessor) => {
+                accessor.modifiers.is_some_and(|modifiers| modifiers.r#abstract)
+            }
+            Self::PropertyDefinition(property) => {
+                property.modifiers.is_some_and(|modifiers| modifiers.r#abstract)
+            }
             Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
         }
     }

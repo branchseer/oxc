@@ -2353,6 +2353,15 @@ pub(crate) unsafe fn walk_formal_parameters<'a, Tr: Traverse<'a>>(
     traverser.exit_formal_parameters(&mut *node, ctx);
 }
 
+pub(crate) unsafe fn walk_formal_parameter_modifiers<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut FormalParameterModifiers,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_formal_parameter_modifiers(&mut *node, ctx);
+    traverser.exit_formal_parameter_modifiers(&mut *node, ctx);
+}
+
 pub(crate) unsafe fn walk_formal_parameter<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut FormalParameter<'a>,
@@ -2367,6 +2376,12 @@ pub(crate) unsafe fn walk_formal_parameter<'a, Tr: Traverse<'a>>(
         .iter_mut()
     {
         walk_decorator(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_MODIFIERS)
+        as *mut Option<FormalParameterModifiers>)
+    {
+        ctx.retag_stack(AncestorType::FormalParameterModifiers);
+        walk_formal_parameter_modifiers(traverser, field as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::FormalParameterPattern);
     walk_binding_pattern(
@@ -2491,12 +2506,12 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
-    ctx.retag_stack(AncestorType::ClassModifiers);
-    walk_class_modifiers(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_CLASS_MODIFIERS) as *mut ClassModifiers,
-        ctx,
-    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_MODIFIERS)
+        as *mut Option<ClassModifiers>)
+    {
+        ctx.retag_stack(AncestorType::ClassModifiers);
+        walk_class_modifiers(traverser, field as *mut _, ctx);
+    }
     if let Some(field) =
         &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_ID) as *mut Option<BindingIdentifier>)
     {
@@ -2604,13 +2619,12 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
-    ctx.retag_stack(AncestorType::MethodDefinitionModifiers);
-    walk_class_element_modifiers(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_MODIFIERS)
-            as *mut ClassElementModifiers,
-        ctx,
-    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_MODIFIERS)
+        as *mut Option<ClassElementModifiers>)
+    {
+        ctx.retag_stack(AncestorType::MethodDefinitionModifiers);
+        walk_class_element_modifiers(traverser, field as *mut _, ctx);
+    }
     ctx.retag_stack(AncestorType::MethodDefinitionKey);
     walk_property_key(
         traverser,
@@ -2620,8 +2634,7 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
     ctx.retag_stack(AncestorType::MethodDefinitionValue);
     walk_function(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_VALUE)
-            as *mut Box<Function>)) as *mut _,
+        (node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_VALUE) as *mut Function,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_OPTIONAL)
@@ -2658,13 +2671,13 @@ pub(crate) unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
-    ctx.retag_stack(AncestorType::PropertyDefinitionModifiers);
-    walk_class_element_modifiers(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_MODIFIERS)
-            as *mut ClassElementModifiers,
-        ctx,
-    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_PROPERTY_DEFINITION_MODIFIERS)
+        as *mut Option<ClassElementModifiers>)
+    {
+        ctx.retag_stack(AncestorType::PropertyDefinitionModifiers);
+        walk_class_element_modifiers(traverser, field as *mut _, ctx);
+    }
     ctx.retag_stack(AncestorType::PropertyDefinitionKey);
     walk_property_key(
         traverser,
@@ -2778,13 +2791,12 @@ pub(crate) unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
-    ctx.retag_stack(AncestorType::AccessorPropertyModifiers);
-    walk_class_element_modifiers(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_MODIFIERS)
-            as *mut ClassElementModifiers,
-        ctx,
-    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_MODIFIERS)
+        as *mut Option<ClassElementModifiers>)
+    {
+        ctx.retag_stack(AncestorType::AccessorPropertyModifiers);
+        walk_class_element_modifiers(traverser, field as *mut _, ctx);
+    }
     ctx.retag_stack(AncestorType::AccessorPropertyKey);
     walk_property_key(
         traverser,
@@ -4808,12 +4820,11 @@ pub(crate) unsafe fn walk_ts_index_signature<'a, Tr: Traverse<'a>>(
     let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureModifiers(
         ancestor::TSIndexSignatureWithoutModifiers(node, PhantomData),
     ));
-    walk_class_element_modifiers(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_MODIFIERS)
-            as *mut ClassElementModifiers,
-        ctx,
-    );
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_MODIFIERS)
+        as *mut Option<ClassElementModifiers>)
+    {
+        walk_class_element_modifiers(traverser, field as *mut _, ctx);
+    }
     ctx.retag_stack(AncestorType::TSIndexSignatureParameters);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
         as *mut Vec<TSIndexSignatureName>))

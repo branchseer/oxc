@@ -1986,7 +1986,7 @@ pub struct YieldExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
 /// Class Definitions
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]
@@ -2032,7 +2032,7 @@ pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// ```
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
 
-    pub modifiers: ClassModifiers,
+    pub modifiers: Option<ClassModifiers>,
     /// Class identifier, AKA the name
     pub id: Option<BindingIdentifier<'a>>,
 
@@ -2152,7 +2152,7 @@ pub struct MethodDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
-    pub modifiers: ClassElementModifiers,
+    pub modifiers: Option<ClassElementModifiers>,
     pub key: PropertyKey<'a, A>,
     #[visit(args(flags = match self.kind {
         MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
@@ -2160,7 +2160,7 @@ pub struct MethodDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
         MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
         MethodDefinitionKind::Method => ScopeFlags::Function,
     }))]
-    pub value: A::Box<'a, Function<'a, A>>, // FunctionExpression
+    pub value: Function<'a, A>, // FunctionExpression
     pub kind: MethodDefinitionKind,
     pub computed: bool,
     pub optional: Option<TSOptionalMark>,
@@ -2238,7 +2238,7 @@ pub struct PropertyDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// See [`Decorator`] for more information.
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
 
-    pub modifiers: ClassElementModifiers,
+    pub modifiers: Option<ClassElementModifiers>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a, A>,
 
@@ -2433,7 +2433,7 @@ pub struct AccessorProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// See [`Decorator`] for more information.
     pub decorators: A::Vec<'a, Decorator<'a, A>>,
 
-    pub modifiers: ClassElementModifiers,
+    pub modifiers: Option<ClassElementModifiers>,
 
     /// The expression used to declare the property.
     pub key: PropertyKey<'a, A>,

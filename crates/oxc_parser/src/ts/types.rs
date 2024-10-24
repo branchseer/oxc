@@ -1322,13 +1322,18 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         ))
     }
 
+    /// modifiers cases:
+    /// None => not parsed, will be parsed inside;
+    /// Some(None) => parsed but empty, skip parsing inside;
+    /// Some(Some(..)) => parsed non-empty modifers, skip parsing inside.
     pub(crate) fn parse_ts_index_signature_member(
         &mut self,
-        parsed_modifiers: Option<ClassElementModifiers>,
+        start_span: Option<Span>,
+        modifiers: Option<Option<ClassElementModifiers>>,
     ) -> Result<TSSignature<'a, A>> {
-        let span = self.start_span();
+        let span = start_span.unwrap_or_else(|| self.start_span());
 
-        let modifiers = parsed_modifiers.unwrap_or_else(|| {
+        let modifiers = modifiers.unwrap_or_else(|| {
             let modifiers = self.parse_class_element_modifiers(false);
             self.verify_modifiers(
                 &modifiers,
@@ -1336,14 +1341,13 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                 diagnostics::cannot_appear_on_an_index_signature,
             );
             let readonly = modifiers.contains(ModifierKind::Readonly);
-            let span = if span.start > self.prev_token_end {
-                // no token bumped
-                span
+            if modifiers.is_empty() {
+                None
             } else {
-                self.end_span(span)
-            };
-            self.ast
-                .class_element_modifiers(span, false, false, false, false, false, readonly, None)
+                Some(self.ast.class_element_modifiers(
+                    span, false, false, false, false, false, readonly, None,
+                ))
+            }
         });
 
         self.bump(Kind::LBrack);

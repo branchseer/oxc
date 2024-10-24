@@ -642,16 +642,16 @@ const _: () = {
     assert!(size_of::<ClassElement>() == 16usize);
     assert!(align_of::<ClassElement>() == 8usize);
 
-    assert!(size_of::<MethodDefinition>() == 96usize);
+    assert!(size_of::<MethodDefinition>() == 192usize);
     assert!(align_of::<MethodDefinition>() == 8usize);
     assert!(offset_of!(MethodDefinition, span) == 0usize);
     assert!(offset_of!(MethodDefinition, decorators) == 8usize);
     assert!(offset_of!(MethodDefinition, modifiers) == 40usize);
     assert!(offset_of!(MethodDefinition, key) == 56usize);
     assert!(offset_of!(MethodDefinition, value) == 72usize);
-    assert!(offset_of!(MethodDefinition, kind) == 80usize);
-    assert!(offset_of!(MethodDefinition, computed) == 81usize);
-    assert!(offset_of!(MethodDefinition, optional) == 84usize);
+    assert!(offset_of!(MethodDefinition, kind) == 176usize);
+    assert!(offset_of!(MethodDefinition, computed) == 177usize);
+    assert!(offset_of!(MethodDefinition, optional) == 180usize);
 
     assert!(size_of::<MethodDefinitionType>() == 1usize);
     assert!(align_of::<MethodDefinitionType>() == 1usize);
@@ -2231,16 +2231,16 @@ const _: () = {
     assert!(size_of::<ClassElement>() == 8usize);
     assert!(align_of::<ClassElement>() == 4usize);
 
-    assert!(size_of::<MethodDefinition>() == 68usize);
+    assert!(size_of::<MethodDefinition>() == 124usize);
     assert!(align_of::<MethodDefinition>() == 4usize);
     assert!(offset_of!(MethodDefinition, span) == 0usize);
     assert!(offset_of!(MethodDefinition, decorators) == 8usize);
     assert!(offset_of!(MethodDefinition, modifiers) == 24usize);
     assert!(offset_of!(MethodDefinition, key) == 40usize);
     assert!(offset_of!(MethodDefinition, value) == 48usize);
-    assert!(offset_of!(MethodDefinition, kind) == 52usize);
-    assert!(offset_of!(MethodDefinition, computed) == 53usize);
-    assert!(offset_of!(MethodDefinition, optional) == 56usize);
+    assert!(offset_of!(MethodDefinition, kind) == 108usize);
+    assert!(offset_of!(MethodDefinition, computed) == 109usize);
+    assert!(offset_of!(MethodDefinition, optional) == 112usize);
 
     assert!(size_of::<MethodDefinitionType>() == 1usize);
     assert!(align_of::<MethodDefinitionType>() == 1usize);

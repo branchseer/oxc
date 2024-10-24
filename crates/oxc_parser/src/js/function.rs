@@ -122,6 +122,20 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         func_kind: FunctionKind,
         modifiers: &Modifiers<'a>,
     ) -> Result<A::Box<'a, Function<'a, A>>> {
+        let func =
+            self.parse_function_unboxed(span, id, r#async, generator, func_kind, modifiers)?;
+        Ok(self.ast.alloc(func))
+    }
+
+    pub(crate) fn parse_function_unboxed(
+        &mut self,
+        span: Span,
+        id: Option<BindingIdentifier<'a>>,
+        r#async: bool,
+        generator: bool,
+        func_kind: FunctionKind,
+        modifiers: &Modifiers<'a>,
+    ) -> Result<Function<'a, A>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
 
@@ -173,7 +187,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        Ok(self.ast.alloc_function(
+        Ok(self.ast.function(
             scope_token,
             function_type,
             self.end_span(span),
@@ -275,9 +289,9 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         &mut self,
         r#async: bool,
         generator: bool,
-    ) -> Result<A::Box<'a, Function<'a, A>>> {
+    ) -> Result<Function<'a, A>> {
         let span = self.start_span();
-        self.parse_function(
+        self.parse_function_unboxed(
             span,
             None,
             r#async,

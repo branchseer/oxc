@@ -929,6 +929,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_formal_parameter_modifiers(
+        &mut self,
+        node: &mut FormalParameterModifiers,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_formal_parameter_modifiers(
+        &mut self,
+        node: &mut FormalParameterModifiers,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_formal_parameter(
         &mut self,
         node: &mut FormalParameter<'a>,

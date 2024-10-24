@@ -293,6 +293,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
 
+
         let scope_token = self.ast.enter_scope();
 
         let expression = !self.at(Kind::LCurly);

@@ -2438,7 +2438,9 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_index_signature<'a, V: Visit<'a>>(visitor: &mut V, it: &TSIndexSignature<'a>) {
         // NOTE: AstKind doesn't exists!
-        visitor.visit_class_element_modifiers(&it.modifiers);
+        if let Some(modifiers) = &it.modifiers {
+            visitor.visit_class_element_modifiers(modifiers);
+        }
         visitor.visit_ts_index_signature_names(&it.parameters);
         visitor.visit_ts_type_annotation(&it.type_annotation);
     }
@@ -3030,7 +3032,9 @@ pub mod walk {
         let kind = AstKind::Class(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_decorators(&it.decorators);
-        visitor.visit_class_modifiers(&it.modifiers);
+        if let Some(modifiers) = &it.modifiers {
+            visitor.visit_class_modifiers(modifiers);
+        }
         if let Some(id) = &it.id {
             visitor.visit_binding_identifier(id);
         }
@@ -3139,7 +3143,9 @@ pub mod walk {
         let kind = AstKind::MethodDefinition(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_decorators(&it.decorators);
-        visitor.visit_class_element_modifiers(&it.modifiers);
+        if let Some(modifiers) = &it.modifiers {
+            visitor.visit_class_element_modifiers(modifiers);
+        }
         visitor.visit_property_key(&it.key);
         {
             let flags = match it.kind {
@@ -3196,7 +3202,9 @@ pub mod walk {
         let kind = AstKind::PropertyDefinition(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_decorators(&it.decorators);
-        visitor.visit_class_element_modifiers(&it.modifiers);
+        if let Some(modifiers) = &it.modifiers {
+            visitor.visit_class_element_modifiers(modifiers);
+        }
         visitor.visit_property_key(&it.key);
         if let Some(optional) = &it.optional {
             visitor.visit_ts_optional_mark(optional);
@@ -3216,7 +3224,9 @@ pub mod walk {
     pub fn walk_accessor_property<'a, V: Visit<'a>>(visitor: &mut V, it: &AccessorProperty<'a>) {
         // NOTE: AstKind doesn't exists!
         visitor.visit_decorators(&it.decorators);
-        visitor.visit_class_element_modifiers(&it.modifiers);
+        if let Some(modifiers) = &it.modifiers {
+            visitor.visit_class_element_modifiers(modifiers);
+        }
         visitor.visit_property_key(&it.key);
         if let Some(value) = &it.value {
             visitor.visit_expression(value);

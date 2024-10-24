@@ -856,7 +856,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -4562,7 +4562,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -6525,7 +6525,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -6575,7 +6575,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -6673,20 +6673,17 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - computed
     /// - optional
     #[inline]
-    pub fn class_element_method_definition<T1>(
+    pub fn class_element_method_definition(
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
-        value: T1,
+        value: Function<'a, A>,
         kind: MethodDefinitionKind,
         computed: bool,
         optional: Option<TSOptionalMark>,
-    ) -> ClassElement<'a, A>
-    where
-        T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
-    {
+    ) -> ClassElement<'a, A> {
         let value = self
             .method_definition(span, decorators, modifiers, key, value, kind, computed, optional);
         let value = ClassElement::MethodDefinition(self.allocator.alloc(value));
@@ -6722,7 +6719,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
         definite: Option<TSDefiniteMark>,
@@ -6776,7 +6773,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
@@ -6823,7 +6820,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn class_element_ts_index_signature<T1>(
         self,
         span: Span,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
     ) -> ClassElement<'a, A>
@@ -6859,30 +6856,19 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - computed
     /// - optional
     #[inline]
-    pub fn method_definition<T1>(
+    pub fn method_definition(
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
-        value: T1,
+        value: Function<'a, A>,
         kind: MethodDefinitionKind,
         computed: bool,
         optional: Option<TSOptionalMark>,
-    ) -> MethodDefinition<'a, A>
-    where
-        T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
-    {
-        let value = MethodDefinition {
-            span,
-            decorators,
-            modifiers,
-            key,
-            value: value.into_in(self.allocator),
-            kind,
-            computed,
-            optional,
-        };
+    ) -> MethodDefinition<'a, A> {
+        let value =
+            MethodDefinition { span, decorators, modifiers, key, value, kind, computed, optional };
         value
     }
 
@@ -6900,20 +6886,17 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - computed
     /// - optional
     #[inline]
-    pub fn alloc_method_definition<T1>(
+    pub fn alloc_method_definition(
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
-        value: T1,
+        value: Function<'a, A>,
         kind: MethodDefinitionKind,
         computed: bool,
         optional: Option<TSOptionalMark>,
-    ) -> A::Box<'a, MethodDefinition<'a, A>>
-    where
-        T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
-    {
+    ) -> A::Box<'a, MethodDefinition<'a, A>> {
         self.allocator.alloc(
             self.method_definition(
                 span, decorators, modifiers, key, value, kind, computed, optional,
@@ -7015,7 +6998,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
         definite: Option<TSDefiniteMark>,
@@ -7059,7 +7042,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
         definite: Option<TSDefiniteMark>,
@@ -7390,7 +7373,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
@@ -7431,7 +7414,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
@@ -8190,7 +8173,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -11383,7 +11366,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_signature_index_signature<T1>(
         self,
         span: Span,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
     ) -> TSSignature<'a, A>
@@ -11602,7 +11585,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_index_signature<T1>(
         self,
         span: Span,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
     ) -> TSIndexSignature<'a, A>
@@ -11631,7 +11614,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_index_signature<T1>(
         self,
         span: Span,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
     ) -> A::Box<'a, TSIndexSignature<'a, A>>
@@ -15550,7 +15533,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -19476,7 +19459,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -21558,7 +21541,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -21611,7 +21594,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -21718,20 +21701,17 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - computed
     /// - optional
     #[inline]
-    pub fn class_element_method_definition<T1>(
+    pub fn class_element_method_definition(
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
-        value: T1,
+        value: Function<'a, A>,
         kind: MethodDefinitionKind,
         computed: bool,
         optional: Option<TSOptionalMark>,
-    ) -> ClassElement<'a, A>
-    where
-        T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
-    {
+    ) -> ClassElement<'a, A> {
         let value = self
             .method_definition(span, decorators, modifiers, key, value, kind, computed, optional);
         let value = ClassElement::MethodDefinition(self.allocator.alloc(value));
@@ -21769,7 +21749,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
         definite: Option<TSDefiniteMark>,
@@ -21825,7 +21805,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
@@ -21874,7 +21854,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn class_element_ts_index_signature<T1>(
         &mut self,
         span: Span,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
     ) -> ClassElement<'a, A>
@@ -21912,30 +21892,19 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - computed
     /// - optional
     #[inline]
-    pub fn method_definition<T1>(
+    pub fn method_definition(
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
-        value: T1,
+        value: Function<'a, A>,
         kind: MethodDefinitionKind,
         computed: bool,
         optional: Option<TSOptionalMark>,
-    ) -> MethodDefinition<'a, A>
-    where
-        T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
-    {
-        let value = MethodDefinition {
-            span,
-            decorators,
-            modifiers,
-            key,
-            value: value.into_in(self.allocator),
-            kind,
-            computed,
-            optional,
-        };
+    ) -> MethodDefinition<'a, A> {
+        let value =
+            MethodDefinition { span, decorators, modifiers, key, value, kind, computed, optional };
         self.handler.handle_method_definition(&value);
         value
     }
@@ -21954,20 +21923,17 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - computed
     /// - optional
     #[inline]
-    pub fn alloc_method_definition<T1>(
+    pub fn alloc_method_definition(
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
-        value: T1,
+        value: Function<'a, A>,
         kind: MethodDefinitionKind,
         computed: bool,
         optional: Option<TSOptionalMark>,
-    ) -> A::Box<'a, MethodDefinition<'a, A>>
-    where
-        T1: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
-    {
+    ) -> A::Box<'a, MethodDefinition<'a, A>> {
         self.allocator.alloc(
             self.method_definition(
                 span, decorators, modifiers, key, value, kind, computed, optional,
@@ -22070,7 +22036,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
         definite: Option<TSDefiniteMark>,
@@ -22115,7 +22081,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
         definite: Option<TSDefiniteMark>,
@@ -22470,7 +22436,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
@@ -22512,7 +22478,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
@@ -23303,7 +23269,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
-        modifiers: ClassModifiers,
+        modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
         super_class: Option<Expression<'a, A>>,
@@ -26730,7 +26696,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_signature_index_signature<T1>(
         &mut self,
         span: Span,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
     ) -> TSSignature<'a, A>
@@ -26970,7 +26936,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_index_signature<T1>(
         &mut self,
         span: Span,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
     ) -> TSIndexSignature<'a, A>
@@ -27000,7 +26966,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_index_signature<T1>(
         &mut self,
         span: Span,
-        modifiers: ClassElementModifiers,
+        modifiers: Option<ClassElementModifiers>,
         parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
         type_annotation: T1,
     ) -> A::Box<'a, TSIndexSignature<'a, A>>

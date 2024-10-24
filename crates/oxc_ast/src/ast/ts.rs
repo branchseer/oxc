@@ -1147,7 +1147,7 @@ pub enum TSSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSIndexSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub modifiers: ClassElementModifiers,
+    pub modifiers: Option<ClassElementModifiers>,
     pub parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
     pub type_annotation: A::Box<'a, TSTypeAnnotation<'a, A>>,
 }
