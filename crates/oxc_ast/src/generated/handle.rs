@@ -1,11 +1,11 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`
 
-use crate::ast::*;
+use crate::{ast::*, AstScopeNode};
 use oxc_span::ast_alloc::AstAllocator;
 pub trait Handler<'a, A: AstAllocator> {
     #[inline]
-    fn enter_scope(&mut self) {}
+    fn enter_scope<T: AstScopeNode>(&mut self) {}
     #[inline]
     fn leave_scope(&mut self) {}
 

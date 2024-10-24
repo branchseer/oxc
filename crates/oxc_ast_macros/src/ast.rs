@@ -3,10 +3,31 @@ use quote::quote;
 use syn::{punctuated::Punctuated, token::Comma, Attribute, Fields, Ident, Item, ItemEnum};
 
 pub fn ast(input: &Item) -> TokenStream {
-    let (head, tail) = match input {
-        Item::Enum(enum_) => (enum_repr(enum_), assert_generated_derives(&enum_.attrs)),
-        Item::Struct(struct_) => (quote!(#[repr(C)]), assert_generated_derives(&struct_.attrs)),
+    let (ident, generics, head, attrs) = match input {
+        Item::Enum(enum_) => (&enum_.ident, &enum_.generics, enum_repr(enum_), &enum_.attrs),
+        Item::Struct(struct_) => {
+            (&struct_.ident, &struct_.generics, quote!(#[repr(C)]), &struct_.attrs)
+        }
         _ => unreachable!(),
+    };
+    let tail = assert_generated_derives(&attrs);
+
+    let has_scope = attrs.iter().any(|attr| attr.path().is_ident("scope"));
+
+    let ast_scope_node_impl = if !has_scope {
+        quote!()
+    } else {
+        let (impl_generics, ident_generics) = match generics.params.len() {
+            0 => (quote!(), quote!()),
+            1 => (quote!(<'a>), quote!(<'a>)),
+            2 => (quote!(<'a, A: AstAllocator>), quote!(<'a, A>)),
+            _ => unreachable!(),
+        };
+        quote! {
+            impl #impl_generics crate::AstScopeNode for #ident #ident_generics {
+                const SCOPE_TYPE: crate::ScopeType = crate::ScopeType::#ident;
+            }
+        }
     };
 
     quote! {
@@ -14,6 +35,7 @@ pub fn ast(input: &Item) -> TokenStream {
         #head
         #input
         #tail
+        #ast_scope_node_impl
     }
 }
 

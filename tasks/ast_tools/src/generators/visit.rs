@@ -55,13 +55,13 @@ fn generate_handle(ctx: &LateCtx) -> TokenStream {
         #header
 
         use oxc_span::ast_alloc::AstAllocator;
-        use crate::ast::*;
+        use crate::{ast::*, AstScopeNode};
 
         pub trait Handler <'a, A: AstAllocator> {
 
             ///@@line_break
             #[inline]
-            fn enter_scope(&mut self) {}
+            fn enter_scope<T: AstScopeNode>(&mut self) {}
 
             #[inline]
             fn leave_scope(&mut self) {}

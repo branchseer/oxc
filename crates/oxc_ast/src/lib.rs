@@ -73,6 +73,33 @@ use oxc_span::ast_alloc::AstAllocator;
 
 impl<'a, A: AstAllocator> handle::Handler<'a, A> for () {}
 
+pub trait AstScopeNode {
+    const SCOPE_TYPE: ScopeType;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScopeType {
+    Program,
+    BlockStatement,
+    ForStatement,
+    ForInStatement,
+    ForOfStatement,
+    SwitchStatement,
+    CatchClause,
+    Function,
+    ArrowFunctionExpression,
+    Class,
+    StaticBlock,
+    TSEnumDeclaration,
+    TSConditionalType,
+    TSTypeAliasDeclaration,
+    TSInterfaceDeclaration,
+    TSMethodSignature,
+    TSConstructSignatureDeclaration,
+    TSModuleDeclaration,
+    TSMappedType,
+}
+
 // After experimenting with two types of boxed enum variants:
 //   1.
 //   ```

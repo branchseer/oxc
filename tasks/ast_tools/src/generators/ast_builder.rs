@@ -49,8 +49,9 @@ impl Generator for AstBuilderGenerator {
                 use oxc_syntax::scope::ScopeFlags;
                 use oxc_span::ast_alloc::AstAllocator;
                 use derive_where::derive_where;
+                use std::marker::PhantomData;
 
-                use crate::handle::Handler;
+                use crate::{handle::Handler, AstScopeNode};
 
                 ///@@line_break
                 #[allow(clippy::wildcard_imports)]
@@ -69,7 +70,7 @@ impl Generator for AstBuilderGenerator {
                 }
 
                 ///@line_break
-                pub struct ScopeToken(());
+                pub struct ScopeToken<T>(PhantomData<T>);
 
                 ///@@line_break
                 /// AST builder for creating AST nodes and calling handler
@@ -81,9 +82,9 @@ impl Generator for AstBuilderGenerator {
 
                 ///@@line_break
                 impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
-                    pub fn enter_scope(&mut self) -> ScopeToken {
-                        self.handler.enter_scope();
-                        ScopeToken(())
+                    pub fn enter_scope<T: AstScopeNode>(&mut self) -> ScopeToken<T> {
+                        self.handler.enter_scope::<T>();
+                        ScopeToken(PhantomData)
                     }
                     #(#fns_with_handle)*
                 }
@@ -202,7 +203,8 @@ fn generate_enum_variant_builder_fn(
     let mut fields = params.iter().map(|it| it.ident.clone()).collect_vec();
     let mut params_tokens = params.iter().map(ToTokens::to_token_stream).collect_vec();
     if with_handle && has_scope {
-        params_tokens.insert(0, quote!(scope_token: ScopeToken));
+        let ty = ty.to_type_with_generic_allocator();
+        params_tokens.insert(0, quote!(scope_token: ScopeToken<#ty>));
         fields.insert(0, format_ident!("scope_token"));
     }
 
@@ -372,7 +374,7 @@ fn generate_struct_builder_fn(ty: &StructDef, with_handle: bool, ctx: &LateCtx) 
 
         if ty.markers.scope.is_some() {
             args.insert(0, format_ident!("_scope_token"));
-            scope_token_param = quote!(_scope_token: ScopeToken,);
+            scope_token_param = quote!(_scope_token: ScopeToken<#as_type>,);
             handler_call = quote! {
                 self.handler.leave_scope();
                 #handler_call

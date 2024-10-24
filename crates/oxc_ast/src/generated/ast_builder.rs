@@ -7,11 +7,12 @@
     clippy::fn_params_excessive_bools
 )]
 
-use crate::handle::Handler;
+use crate::{handle::Handler, AstScopeNode};
 use derive_where::derive_where;
 use oxc_allocator::{Allocator, IntoIn};
 use oxc_span::ast_alloc::AstAllocator;
 use oxc_syntax::scope::ScopeFlags;
+use std::marker::PhantomData;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -14650,7 +14651,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     }
 }
 //line_break
-pub struct ScopeToken(());
+pub struct ScopeToken<T>(PhantomData<T>);
 
 /// AST builder for creating AST nodes and calling handler
 #[derive(Clone, Copy)]
@@ -14660,9 +14661,9 @@ pub struct AstBuilderWithHandler<'a, H, A> {
 }
 
 impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
-    pub fn enter_scope(&mut self) -> ScopeToken {
-        self.handler.enter_scope();
-        ScopeToken(())
+    pub fn enter_scope<T: AstScopeNode>(&mut self) -> ScopeToken<T> {
+        self.handler.enter_scope::<T>();
+        ScopeToken(PhantomData)
     }
 
     /// Builds a [`BooleanLiteral`]
@@ -14896,7 +14897,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn program<S>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<Program<'a, A>>,
         span: Span,
         source_type: SourceType,
         source_text: S,
@@ -14938,7 +14939,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_program<S>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<Program<'a, A>>,
         span: Span,
         source_type: SourceType,
         source_text: S,
@@ -15319,7 +15320,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_arrow_function<T1, T2, T3, T4>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<ArrowFunctionExpression<'a, A>>,
         span: Span,
         expression: bool,
         r#async: bool,
@@ -15545,7 +15546,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_class<T1, T2, T3>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
@@ -15644,7 +15645,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_function<T1, T2, T3, T4, T5>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<Function<'a, A>>,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
@@ -18656,7 +18657,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_block(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<BlockStatement<'a, A>>,
         span: Span,
         body: A::Vec<'a, Statement<'a, A>>,
     ) -> Statement<'a, A> {
@@ -18861,7 +18862,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_for_in(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<ForInStatement<'a, A>>,
         span: Span,
         left: ForStatementLeft<'a, A>,
         right: Expression<'a, A>,
@@ -18897,7 +18898,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_for_of(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<ForOfStatement<'a, A>>,
         span: Span,
         r#await: bool,
         left: ForStatementLeft<'a, A>,
@@ -18934,7 +18935,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_for(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<ForStatement<'a, A>>,
         span: Span,
         init: Option<ForStatementInit<'a, A>>,
         test: Option<Expression<'a, A>>,
@@ -19065,7 +19066,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_switch(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<SwitchStatement<'a, A>>,
         span: Span,
         discriminant: Expression<'a, A>,
         cases: A::Vec<'a, SwitchCase<'a, A>>,
@@ -19323,7 +19324,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn block_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<BlockStatement<'a, A>>,
         span: Span,
         body: A::Vec<'a, Statement<'a, A>>,
     ) -> BlockStatement<'a, A> {
@@ -19343,7 +19344,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_block_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<BlockStatement<'a, A>>,
         span: Span,
         body: A::Vec<'a, Statement<'a, A>>,
     ) -> A::Box<'a, BlockStatement<'a, A>> {
@@ -19403,7 +19404,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_function<T1, T2, T3, T4, T5>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<Function<'a, A>>,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
@@ -19471,7 +19472,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_class<T1, T2, T3>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
@@ -19530,7 +19531,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_ts_type_alias<T1>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSTypeAliasDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
@@ -19578,7 +19579,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_ts_interface<T1, T2>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSInterfaceDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
@@ -19628,7 +19629,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_ts_enum(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         members: A::Vec<'a, TSEnumMember<'a, A>>,
@@ -19665,7 +19666,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_ts_module(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSModuleDeclaration<'a, A>>,
         span: Span,
         id: TSModuleDeclarationName<'a>,
         body: Option<TSModuleDeclarationBody<'a, A>>,
@@ -20000,7 +20001,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn for_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<ForStatement<'a, A>>,
         span: Span,
         init: Option<ForStatementInit<'a, A>>,
         test: Option<Expression<'a, A>>,
@@ -20026,7 +20027,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_for_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<ForStatement<'a, A>>,
         span: Span,
         init: Option<ForStatementInit<'a, A>>,
         test: Option<Expression<'a, A>>,
@@ -20095,7 +20096,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn for_in_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<ForInStatement<'a, A>>,
         span: Span,
         left: ForStatementLeft<'a, A>,
         right: Expression<'a, A>,
@@ -20119,7 +20120,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_for_in_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<ForInStatement<'a, A>>,
         span: Span,
         left: ForStatementLeft<'a, A>,
         right: Expression<'a, A>,
@@ -20188,7 +20189,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn for_of_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<ForOfStatement<'a, A>>,
         span: Span,
         r#await: bool,
         left: ForStatementLeft<'a, A>,
@@ -20215,7 +20216,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_for_of_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<ForOfStatement<'a, A>>,
         span: Span,
         r#await: bool,
         left: ForStatementLeft<'a, A>,
@@ -20376,7 +20377,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn switch_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<SwitchStatement<'a, A>>,
         span: Span,
         discriminant: Expression<'a, A>,
         cases: A::Vec<'a, SwitchCase<'a, A>>,
@@ -20398,7 +20399,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_switch_statement(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<SwitchStatement<'a, A>>,
         span: Span,
         discriminant: Expression<'a, A>,
         cases: A::Vec<'a, SwitchCase<'a, A>>,
@@ -20584,7 +20585,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn catch_clause<T1>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<CatchClause<'a, A>>,
         span: Span,
         param: Option<CatchParameter<'a, A>>,
         body: T1,
@@ -20614,7 +20615,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_catch_clause<T1>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<CatchClause<'a, A>>,
         span: Span,
         param: Option<CatchParameter<'a, A>>,
         body: T1,
@@ -21103,7 +21104,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn function<T1, T2, T3, T4, T5>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<Function<'a, A>>,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
@@ -21161,7 +21162,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_function<T1, T2, T3, T4, T5>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<Function<'a, A>>,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
@@ -21387,7 +21388,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn arrow_function_expression<T1, T2, T3, T4>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<ArrowFunctionExpression<'a, A>>,
         span: Span,
         expression: bool,
         r#async: bool,
@@ -21432,7 +21433,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_arrow_function_expression<T1, T2, T3, T4>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<ArrowFunctionExpression<'a, A>>,
         span: Span,
         expression: bool,
         r#async: bool,
@@ -21553,7 +21554,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn class<T1, T2, T3>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
@@ -21606,7 +21607,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_class<T1, T2, T3>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
@@ -21682,7 +21683,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn class_element_static_block(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<StaticBlock<'a, A>>,
         span: Span,
         body: A::Vec<'a, Statement<'a, A>>,
     ) -> ClassElement<'a, A> {
@@ -22188,7 +22189,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn static_block(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<StaticBlock<'a, A>>,
         span: Span,
         body: A::Vec<'a, Statement<'a, A>>,
     ) -> StaticBlock<'a, A> {
@@ -22208,7 +22209,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_static_block(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<StaticBlock<'a, A>>,
         span: Span,
         body: A::Vec<'a, Statement<'a, A>>,
     ) -> A::Box<'a, StaticBlock<'a, A>> {
@@ -23226,7 +23227,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn export_default_declaration_kind_function<T1, T2, T3, T4, T5>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<Function<'a, A>>,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
@@ -23298,7 +23299,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn export_default_declaration_kind_class<T1, T2, T3>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
         decorators: A::Vec<'a, Decorator<'a, A>>,
@@ -23361,7 +23362,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn export_default_declaration_kind_ts_interface_declaration<T1, T2>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSInterfaceDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
@@ -23567,7 +23568,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_enum_declaration(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         members: A::Vec<'a, TSEnumMember<'a, A>>,
@@ -23594,7 +23595,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_ts_enum_declaration(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         members: A::Vec<'a, TSEnumMember<'a, A>>,
@@ -24490,7 +24491,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_conditional_type(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSConditionalType<'a, A>>,
         span: Span,
         check_type: TSType<'a, A>,
         extends_type: TSType<'a, A>,
@@ -24785,7 +24786,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_mapped_type<T1>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSMappedType<'a, A>>,
         span: Span,
         type_parameter: T1,
         name_type: Option<TSType<'a, A>>,
@@ -25305,7 +25306,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_conditional_type(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSConditionalType<'a, A>>,
         span: Span,
         check_type: TSType<'a, A>,
         extends_type: TSType<'a, A>,
@@ -25338,7 +25339,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_ts_conditional_type(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSConditionalType<'a, A>>,
         span: Span,
         check_type: TSType<'a, A>,
         extends_type: TSType<'a, A>,
@@ -26397,7 +26398,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_alias_declaration<T1>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSTypeAliasDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
@@ -26433,7 +26434,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_ts_type_alias_declaration<T1>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSTypeAliasDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: T1,
@@ -26549,7 +26550,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_interface_declaration<T1, T2>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSInterfaceDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
@@ -26589,7 +26590,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_ts_interface_declaration<T1, T2>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSInterfaceDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
         extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
@@ -26857,7 +26858,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_signature_construct_signature_declaration<T1, T2, T3>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSConstructSignatureDeclaration<'a, A>>,
         span: Span,
         type_parameters: T1,
         params: T2,
@@ -26911,7 +26912,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_signature_method_signature<T1, T2, T3, T4>(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSMethodSignature<'a, A>>,
         span: Span,
         key: PropertyKey<'a, A>,
         computed: bool,
@@ -27094,7 +27095,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_method_signature<T1, T2, T3, T4>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSMethodSignature<'a, A>>,
         span: Span,
         key: PropertyKey<'a, A>,
         computed: bool,
@@ -27145,7 +27146,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_ts_method_signature<T1, T2, T3, T4>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSMethodSignature<'a, A>>,
         span: Span,
         key: PropertyKey<'a, A>,
         computed: bool,
@@ -27188,7 +27189,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_construct_signature_declaration<T1, T2, T3>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSConstructSignatureDeclaration<'a, A>>,
         span: Span,
         type_parameters: T1,
         params: T2,
@@ -27223,7 +27224,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_ts_construct_signature_declaration<T1, T2, T3>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSConstructSignatureDeclaration<'a, A>>,
         span: Span,
         type_parameters: T1,
         params: T2,
@@ -27468,7 +27469,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_module_declaration(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSModuleDeclaration<'a, A>>,
         span: Span,
         id: TSModuleDeclarationName<'a>,
         body: Option<TSModuleDeclarationBody<'a, A>>,
@@ -27495,7 +27496,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_ts_module_declaration(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSModuleDeclaration<'a, A>>,
         span: Span,
         id: TSModuleDeclarationName<'a>,
         body: Option<TSModuleDeclarationBody<'a, A>>,
@@ -27591,7 +27592,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_module_declaration_body_module_declaration(
         &mut self,
-        scope_token: ScopeToken,
+        scope_token: ScopeToken<TSModuleDeclaration<'a, A>>,
         span: Span,
         id: TSModuleDeclarationName<'a>,
         body: Option<TSModuleDeclarationBody<'a, A>>,
@@ -28237,7 +28238,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_mapped_type<T1>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSMappedType<'a, A>>,
         span: Span,
         type_parameter: T1,
         name_type: Option<TSType<'a, A>>,
@@ -28276,7 +28277,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn alloc_ts_mapped_type<T1>(
         &mut self,
-        _scope_token: ScopeToken,
+        _scope_token: ScopeToken<TSMappedType<'a, A>>,
         span: Span,
         type_parameter: T1,
         name_type: Option<TSType<'a, A>>,

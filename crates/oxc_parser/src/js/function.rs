@@ -81,12 +81,12 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                 .union(ModifierFlags::OVERRIDE),
             diagnostics::cannot_appear_on_a_parameter,
         );
-        Some(FormalParameterModifiers {
-            span: self.end_span(start_span),
-            accessibility: modifiers.accessibility(),
-            readonly: modifiers.contains_readonly(),
-            r#override: modifiers.contains_override(),
-        })
+        Some(self.ast.formal_parameter_modifiers(
+            self.end_span(start_span),
+            modifiers.accessibility(),
+            modifiers.contains_readonly(),
+            modifiers.contains_override(),
+        ))
     }
 
     fn parse_formal_parameter(&mut self) -> Result<FormalParameter<'a, A>> {
