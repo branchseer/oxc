@@ -1,4 +1,5 @@
 use cfg_if::cfg_if;
+use oxc_ast::ast_builder::ScopeToken;
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::ast_alloc::{AstAllocator, Box};
@@ -283,6 +284,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     ///     `AssignmentExpression`[?In, ~Yield, ?Await]
     fn parse_arrow_function_body(
         &mut self,
+        scope_token: ScopeToken<ArrowFunctionExpression<'a, A>>,
         span: Span,
         type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
         params: A::Box<'a, FormalParameters<'a, A>>,
@@ -292,9 +294,6 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
-
-
-        let scope_token = self.ast.enter_scope();
 
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
@@ -337,11 +336,13 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         if self.state.not_parenthesized_arrow.contains(&pos) {
             return Ok(None);
         }
+
+        let scope_token = self.ast.enter_scope();
         if let Some((type_parameters, params, return_type, r#async, span)) =
             self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
         {
             return self
-                .parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
+                .parse_arrow_function_body(scope_token, span, type_parameters, params, return_type, r#async)
                 .map(Some);
         }
         self.state.not_parenthesized_arrow.insert(pos);
