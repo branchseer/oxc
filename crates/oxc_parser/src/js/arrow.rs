@@ -34,11 +34,12 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         if self.at(Kind::Async)
             && self.is_un_parenthesized_async_arrow_function_worker() == Tristate::True
         {
+            let scope_token = self.ast.enter_scope();
             let span = self.start_span();
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma)?;
             return self
-                .parse_simple_arrow_function_expression(span, expr, /* async */ true)
+                .parse_simple_arrow_function_expression(scope_token, span, expr, /* async */ true)
                 .map(Some);
         }
         Ok(None)
@@ -203,6 +204,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
 
     pub(crate) fn parse_simple_arrow_function_expression(
         &mut self,
+        scope_token: ScopeToken<ArrowFunctionExpression<'a, A>>,
         span: Span,
         ident: Expression<'a, A>,
         r#async: bool,
@@ -243,11 +245,13 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         self.expect(Kind::Arrow)?;
 
         self.parse_arrow_function_body(
+            scope_token,
             span, /* type_parameters */ None, params, /* return_type */ None, r#async,
         )
     }
 
-    fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a, A>> {
+    fn parse_parenthesized_arrow_function_head(&mut self) -> Result<(ArrowFunctionHead<'a, A>, ScopeToken<ArrowFunctionExpression<'a, A>>)> {
+        let scope_token = self.ast.enter_scope();
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
 
@@ -274,7 +278,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
 
         self.expect(Kind::Arrow)?;
 
-        Ok((type_parameters, params, return_type, r#async, span))
+        Ok(((type_parameters, params, return_type, r#async, span), scope_token))
     }
 
     /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
@@ -323,9 +327,9 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     /// `ArrowFunction`[In, Yield, Await] :
     ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] => `ConciseBody`[?In]
     fn parse_parenthesized_arrow_function(&mut self) -> Result<Option<Expression<'a, A>>> {
-        let (type_parameters, params, return_type, r#async, span) =
+        let ((type_parameters, params, return_type, r#async, span), scope_token) =
             self.parse_parenthesized_arrow_function_head()?;
-        self.parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
+        self.parse_arrow_function_body(scope_token, span, type_parameters, params, return_type, r#async)
             .map(Some)
     }
 
@@ -337,8 +341,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             return Ok(None);
         }
 
-        let scope_token = self.ast.enter_scope();
-        if let Some((type_parameters, params, return_type, r#async, span)) =
+        if let Some(((type_parameters, params, return_type, r#async, span), scope_token)) =
             self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
         {
             return self

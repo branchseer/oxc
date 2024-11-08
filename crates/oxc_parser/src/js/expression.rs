@@ -1085,12 +1085,18 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         }
 
         let span = self.start_span();
+        
+        if self.cur_kind().is_binding_identifier() && self.nth_at(2, Kind::Arrow) { 
+            // oxidase TODO: move parse_simple_arrow_function_expression here
+        }
+        
         let lhs = self.parse_binary_expression_or_higher(Precedence::Comma)?;
         let kind = self.cur_kind();
 
         // `x => {}`
         if lhs.is_identifier_reference() && kind == Kind::Arrow {
-            return self.parse_simple_arrow_function_expression(span, lhs, /* async */ false);
+            let todo_token = self.ast.enter_scope();
+            return self.parse_simple_arrow_function_expression(todo_token, span, lhs, /* async */ false);
         }
 
         if kind.is_assignment_operator() {
