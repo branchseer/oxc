@@ -1,7 +1,7 @@
 use crate::{diagnostics, lexer::Kind, Context, ParserImpl};
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::Box;
+use oxc_span::ast_alloc::traits::Box;
 use oxc_span::{GetSpan, GetSpanMut as _, Span};
 
 impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {

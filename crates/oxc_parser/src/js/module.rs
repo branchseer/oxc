@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{
-    ast_alloc::{Box as _, Vec as _},
+    ast_alloc::traits::{Box as _, Vec as _},
     GetSpan, Span,
 };
 use rustc_hash::FxHashMap;

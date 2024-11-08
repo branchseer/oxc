@@ -1,6 +1,6 @@
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::{ast_alloc::Vec as _, GetSpan, Span};
+use oxc_span::{ast_alloc::traits::{Vec as _}, GetSpan, Span};
 
 use super::{VariableDeclarationContext, VariableDeclarationParent};
 use crate::{

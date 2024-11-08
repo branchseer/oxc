@@ -7,7 +7,7 @@ use crate::{
 };
 use oxc_ast::ast::{Decorator, RegExpFlags, TSDefiniteMark, TSOptionalMark};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::Vec as _;
+use oxc_span::ast_alloc::traits::Vec as _;
 use oxc_span::{GetSpan, Span};
 use std::fmt::Debug;
 

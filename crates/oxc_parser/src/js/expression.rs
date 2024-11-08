@@ -3,8 +3,8 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::ast_alloc::Box;
-use oxc_span::{ast_alloc::Vec as _, cast, Atom, Span};
+use oxc_span::ast_alloc::traits::Box;
+use oxc_span::{ast_alloc::traits::Vec as _, cast, Atom, Span};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     operator::BinaryOperator,

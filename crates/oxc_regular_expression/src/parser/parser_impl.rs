@@ -1,5 +1,5 @@
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::{AstAllocator, Box, Vec as _};
+use oxc_span::ast_alloc::{AstAllocator, traits::{Box as _, Vec as _}};
 use oxc_span::{Atom as SpanAtom, GetSpan as _};
 
 use crate::ast::Character;

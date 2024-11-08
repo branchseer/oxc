@@ -11,7 +11,7 @@ use std::{
 
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::ast_alloc::Box;
+use oxc_span::ast_alloc::traits::Box;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
 use oxc_syntax::number::NumberBase;
 

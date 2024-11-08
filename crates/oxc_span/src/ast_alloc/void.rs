@@ -2,6 +2,7 @@ use derive_where::derive_where;
 use oxc_allocator::FromIn;
 use std::fmt::Debug;
 use std::marker::PhantomData;
+use super::traits::{Sealed, Box, Vec};
 
 use crate::{GetSpan, GetSpanMut, Span};
 
@@ -14,7 +15,7 @@ impl VoidAllocator {
     }
 }
 
-impl super::Sealed for VoidAllocator {}
+impl Sealed for VoidAllocator {}
 
 #[derive_where(Debug)]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize), serde(bound = ""))]
@@ -44,7 +45,7 @@ impl<'a, T: GetSpan> FromIn<'a, T, VoidAllocator> for VoidBox<'a, T> {
     }
 }
 
-impl<'a, T> super::Box<'a> for VoidBox<'a, T> {
+impl<'a, T> Box<'a> for VoidBox<'a, T> {
     type Target = T;
 
     #[inline]
@@ -92,7 +93,7 @@ impl<'a, T> TryFrom<VoidVec<'a, T>> for oxc_allocator::Vec<'a, T> {
     }
 }
 
-impl<'a, T> super::Vec<'a> for VoidVec<'a, T> {
+impl<'a, T> Vec<'a> for VoidVec<'a, T> {
     type Item = T;
     type Iterator = std::iter::Empty<Self::Item>;
 
@@ -131,7 +132,7 @@ impl<'a, T> super::Vec<'a> for VoidVec<'a, T> {
     }
 }
 
-impl super::AstAllocator for VoidAllocator {
+unsafe impl super::AstAllocator for VoidAllocator {
     const IS_VOID: bool = true;
     type Box<'a, T: Debug + GetSpan + GetSpanMut> = VoidBox<'a, T>;
     type Vec<'a, T: Debug> = VoidVec<'a, T>;

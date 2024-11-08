@@ -2,7 +2,7 @@ use cfg_if::cfg_if;
 use oxc_ast::ast_builder::ScopeToken;
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::{AstAllocator, Box};
+use oxc_span::ast_alloc::{AstAllocator, traits::Box};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 

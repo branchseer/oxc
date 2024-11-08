@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::Box;
+use oxc_span::ast_alloc::traits::Box;
 use oxc_span::{GetSpan as _, Span};
 
 use super::FunctionKind;

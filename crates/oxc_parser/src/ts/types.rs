@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::Box;
-use oxc_span::{ast_alloc::Vec as _, GetSpan};
+use oxc_span::ast_alloc::traits::Box;
+use oxc_span::{ast_alloc::traits::Vec as _, GetSpan};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
