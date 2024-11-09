@@ -3,7 +3,7 @@ use oxc_ast::{
         AccessorProperty, ClassBody, ClassElement, MethodDefinition, MethodDefinitionKind,
         PrivateIdentifier, PropertyDefinition,
     },
-    AstKind,
+    AstKind, ClassElementModifiersExt,
 };
 use oxc_span::GetSpan;
 use oxc_syntax::class::{ClassId, ElementKind};
@@ -66,7 +66,7 @@ impl ClassTableBuilder {
                     Element::new(
                         name.into(),
                         property.key.span(),
-                        property.r#static,
+                        property.modifiers.is_static(),
                         is_private,
                         ElementKind::Accessor,
                     ),
@@ -86,7 +86,7 @@ impl ClassTableBuilder {
                     Element::new(
                         name.into(),
                         property.key.span(),
-                        property.r#static,
+                        property.modifiers.is_static(),
                         is_private,
                         ElementKind::Property,
                     ),
@@ -134,7 +134,7 @@ impl ClassTableBuilder {
                     Element::new(
                         name.into(),
                         method.key.span(),
-                        method.r#static,
+                        method.modifiers.is_static(),
                         is_private,
                         match method.kind {
                             MethodDefinitionKind::Method => ElementKind::Method,

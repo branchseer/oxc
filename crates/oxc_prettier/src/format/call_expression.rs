@@ -41,7 +41,7 @@ impl<'a, 'b> CallExpressionLike<'a, 'b> {
 
     pub fn type_parameters(
         &self,
-    ) -> &Option<oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
+    ) -> &Option<oxc_span::ast_alloc::Box<'a, TSTypeParameterInstantiation<'a>>> {
         match self {
             CallExpressionLike::CallExpression(call) => &call.type_parameters,
             CallExpressionLike::NewExpression(new) => &new.type_parameters,

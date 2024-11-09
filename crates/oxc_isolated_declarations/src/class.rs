@@ -114,7 +114,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ClassElement<'a> {
         let function = &definition.value;
 
-        let value = self.ast.alloc_function(
+        let value = self.ast.function(
             FunctionType::TSEmptyBodyFunctionExpression,
             function.span,
             // SAFETY: `ast.copy` is unsound! We need to fix.
@@ -132,18 +132,15 @@ impl<'a> IsolatedDeclarations<'a> {
         );
 
         self.ast.class_element_method_definition(
-            definition.r#type,
             definition.span,
             self.ast.vec(),
+            definition.modifiers,
             // SAFETY: `ast.copy` is unsound! We need to fix.
             unsafe { self.ast.copy(&definition.key) },
             value,
             definition.kind,
             definition.computed,
-            definition.r#static,
-            definition.r#override,
             definition.optional,
-            self.transform_accessibility(definition.accessibility),
         )
     }
 

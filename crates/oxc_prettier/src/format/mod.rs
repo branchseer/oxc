@@ -2486,7 +2486,7 @@ impl<'a> Format<'a> for ClassElement<'a> {
     }
 }
 
-impl<'a> Format<'a> for TSClassImplements<'a> {
+impl<'a> Format<'a> for TSClassImplementsItem<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
 

@@ -1,6 +1,7 @@
 use std::ops::Add;
 
 use oxc_ast::ast::*;
+use oxc_ast::{ClassElementModifiersExt, ClassModifiersExt};
 use oxc_span::GetSpan;
 
 use super::assignment::AssignmentLikeNode;
@@ -21,7 +22,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     // If there is only on extends and there are not comments
     // ToDo: implement comment checks
     // @link <https://github.com/prettier/prettier/blob/aa3853b7765645b3f3d8a76e41cf6d70b93c01fd/src/language-js/print/class.js#L62>
-    let group_mode = class.implements.as_ref().is_some_and(|v| !v.is_empty());
+    let group_mode = class.implements.as_ref().is_some_and(|v| !v.items.is_empty());
 
     if let Some(super_class) = &class.super_class {
         let mut extend_parts = p.vec();
@@ -50,11 +51,11 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
         parts.extend(hardline!());
     }
 
-    if class.declare {
+    if class.modifiers.is_declare() {
         parts.push(ss!("declare "));
     }
 
-    if class.r#abstract {
+    if class.modifiers.is_abstract() {
         parts.push(ss!("abstract "));
     }
 
@@ -162,15 +163,19 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
 
     fn is_static(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.r#static,
-            ClassMemberish::AccessorProperty(accessor_property) => accessor_property.r#static,
+            ClassMemberish::PropertyDefinition(property_definition) => {
+                property_definition.modifiers.is_static()
+            }
+            ClassMemberish::AccessorProperty(accessor_property) => {
+                accessor_property.modifiers.is_static()
+            }
         }
     }
 
     fn is_override(&self) -> bool {
         match self {
             ClassMemberish::PropertyDefinition(property_definition) => {
-                property_definition.r#override
+                property_definition.modifiers.is_override()
             }
             ClassMemberish::AccessorProperty(accessor_property) => false,
         }
@@ -178,14 +183,18 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
 
     fn is_readonly(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.readonly,
+            ClassMemberish::PropertyDefinition(property_definition) => {
+                property_definition.modifiers.is_readonly()
+            }
             ClassMemberish::AccessorProperty(_) => true,
         }
     }
 
     fn is_declare(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.declare,
+            ClassMemberish::PropertyDefinition(property_definition) => {
+                property_definition.modifiers.is_declare()
+            }
             ClassMemberish::AccessorProperty(_) => false,
         }
     }
@@ -193,25 +202,31 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
     fn is_abstract(&self) -> bool {
         match self {
             ClassMemberish::PropertyDefinition(property_definition) => {
-                property_definition.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
+                property_definition.modifiers.is_abstract()
             }
             ClassMemberish::AccessorProperty(accessor_property) => {
-                accessor_property.r#type == AccessorPropertyType::TSAbstractAccessorProperty
+                accessor_property.modifiers.is_abstract()
             }
         }
     }
 
     fn is_optional(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.optional,
+            ClassMemberish::PropertyDefinition(property_definition) => {
+                property_definition.optional.is_some()
+            }
             ClassMemberish::AccessorProperty(_) => false,
         }
     }
 
     fn is_definite(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.definite,
-            ClassMemberish::AccessorProperty(accessor_property) => accessor_property.definite,
+            ClassMemberish::PropertyDefinition(property_definition) => {
+                property_definition.definite.is_some()
+            }
+            ClassMemberish::AccessorProperty(accessor_property) => {
+                accessor_property.definite.is_some()
+            }
         }
     }
 
@@ -226,8 +241,12 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
 
     fn format_accessibility(&self, p: &mut Prettier<'a>) -> Option<Doc<'a>> {
         match self {
-            ClassMemberish::AccessorProperty(def) => def.accessibility.map(|v| ss!(v.as_str())),
-            ClassMemberish::PropertyDefinition(def) => def.accessibility.map(|v| ss!(v.as_str())),
+            ClassMemberish::AccessorProperty(def) => {
+                def.modifiers.accessibility().map(|v| ss!(v.as_str()))
+            }
+            ClassMemberish::PropertyDefinition(def) => {
+                def.modifiers.accessibility().map(|v| ss!(v.as_str()))
+            }
         }
     }
 
@@ -384,7 +403,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     let implements = class.implements.as_ref().unwrap();
 
-    if implements.len() == 0 {
+    if implements.items.len() == 0 {
         return Doc::Array(parts);
     }
 
@@ -402,7 +421,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     parts.push(ss!("implements "));
 
-    let implements_docs = implements.iter().map(|v| v.format(p)).collect();
+    let implements_docs = implements.items.iter().map(|v| v.format(p)).collect();
 
     parts.push(indent!(
         p,
@@ -423,7 +442,7 @@ fn has_multiple_heritage(class: &Class) -> bool {
     let mut len = i32::from(class.super_class.is_some());
 
     if let Some(implements) = &class.implements {
-        len = len.add(i32::try_from(implements.len()).unwrap());
+        len = len.add(i32::try_from(implements.items.len()).unwrap());
     }
 
     len > 1

@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
-use oxc_ast::{ClassElementModifiersExt as _, ClassModifiersExt as _};
+use oxc_ast::{ClassElementModifiersExt as _, ClassModifiersExt as _, FormalParameterModifiersExt};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, PropName};
 use oxc_span::{Atom, GetSpan, Span};
@@ -174,9 +174,7 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
         }
 
         // function a(public x: number) { }
-        if !is_inside_constructor
-            && item.modifiers.and_then(|modifiers| modifiers.accessibility).is_some()
-        {
+        if !is_inside_constructor && item.modifiers.accessibility().is_some() {
             ctx.error(parameter_property_outside_constructor(item.span));
         }
     }
@@ -451,7 +449,7 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     // Illegal to have `constructor(public foo);`
     if method.kind.is_constructor() && is_empty_body {
         for param in &method.value.params.items {
-            if param.accessibility.is_some() {
+            if param.modifiers.accessibility().is_some() {
                 ctx.error(parameter_property_only_in_constructor_impl(param.span));
             }
         }
@@ -464,7 +462,7 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
 }
 
 pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &SemanticBuilder<'a>) {
-    if prop.r#type.is_abstract() && prop.value.is_some() {
+    if prop.modifiers.is_abstract() && prop.value.is_some() {
         let (prop_name, span) = prop.key.prop_name().unwrap_or_else(|| {
             let key_span = prop.key.span();
             (&ctx.source_text[key_span], key_span)
