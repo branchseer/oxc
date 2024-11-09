@@ -180,7 +180,7 @@ impl<'a, T> Vec<'a> for oxc_allocator::Vec<'a, T> {
 
 impl Sealed for oxc_allocator::Allocator {}
 
-// pub type Vec<'a, T, A: AstAllocator> = A::Vec<'a, T>;
+// pub type Vec<'a, T, A: AstAllocator> = Vec<'a, T, A>;
 
 unsafe impl AstAllocator for oxc_allocator::Allocator {
     const IS_VOID: bool = false;

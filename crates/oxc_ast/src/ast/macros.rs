@@ -23,8 +23,8 @@
 ///     #[ast]
 ///     enum Statement<'a, A: AstAllocator = oxc_allocator::Allocator> {
 ///         pub enum Statement<'a, A: AstAllocator = oxc_allocator::Allocator> {
-///             BlockStatement(A::Box<'a, BlockStatement<'a, A>>) = 0,
-///             BreakStatement(A::Box<'a, BreakStatement<'a>>) = 1,
+///             BlockStatement(Box<'a, BlockStatement<'a, A>, A>) = 0,
+///             BreakStatement(Box<'a, BreakStatement<'a>, A>) = 1,
 ///             @inherit Declaration
 ///             @inherit ModuleDeclaration
 ///         }
@@ -38,17 +38,17 @@
 /// #[ast]
 /// enum Statement<'a, A: AstAllocator = oxc_allocator::Allocator> {
 ///     pub enum Statement<'a, A: AstAllocator = oxc_allocator::Allocator> {
-///         BlockStatement(A::Box<'a, BlockStatement<'a, A>>) = 0,
-///         BreakStatement(A::Box<'a, BreakStatement<'a>>) = 1,
+///         BlockStatement(Box<'a, BlockStatement<'a, A>, A>) = 0,
+///         BreakStatement(Box<'a, BreakStatement<'a>, A>) = 1,
 ///
 ///         // Inherited from `Declaration`
-///         VariableDeclaration(A::Box<'a, VariableDeclaration<'a, A>>) = 32,
-///         FunctionDeclaration(A::Box<'a, Function<'a, A>>) = 33,
+///         VariableDeclaration(Box<'a, VariableDeclaration<'a, A>, A>) = 32,
+///         FunctionDeclaration(Box<'a, Function<'a, A>, A>) = 33,
 ///         // ...and many more
 ///
 ///         // Inherited from `ModuleDeclaration`
-///         ImportDeclaration(A::Box<'a, ImportDeclaration<'a, A>>) = 64,
-///         ExportAllDeclaration(A::Box<'a, ExportAllDeclaration<'a, A>>) = 65,
+///         ImportDeclaration(Box<'a, ImportDeclaration<'a, A>, A>) = 64,
+///         ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a, A>, A>) = 65,
 ///         // ...and many more
 ///     }
 /// }
@@ -89,88 +89,88 @@ macro_rules! inherit_variants {
                 // `Expression`'s own variants
 
                 /// Inherited from [`Expression`]
-                BooleanLiteral(A::Box<'a, BooleanLiteral>) = 0,
+                BooleanLiteral(Box<'a, BooleanLiteral, A>) = 0,
                 /// Inherited from [`Expression`]
-                NullLiteral(A::Box<'a, NullLiteral>) = 1,
+                NullLiteral(Box<'a, NullLiteral, A>) = 1,
                 /// Inherited from [`Expression`]
-                NumericLiteral(A::Box<'a, NumericLiteral<'a>>) = 2,
+                NumericLiteral(Box<'a, NumericLiteral<'a>, A>) = 2,
                 /// Inherited from [`Expression`]
-                BigIntLiteral(A::Box<'a, BigIntLiteral<'a>>) = 3,
+                BigIntLiteral(Box<'a, BigIntLiteral<'a>, A>) = 3,
                 /// Inherited from [`Expression`]
-                RegExpLiteral(A::Box<'a, RegExpLiteral<'a, A>>) = 4,
+                RegExpLiteral(Box<'a, RegExpLiteral<'a, A>, A>) = 4,
                 /// Inherited from [`Expression`]
-                StringLiteral(A::Box<'a, StringLiteral<'a>>) = 5,
+                StringLiteral(Box<'a, StringLiteral<'a>, A>) = 5,
                 /// Inherited from [`Expression`]
-                TemplateLiteral(A::Box<'a, TemplateLiteral<'a, A>>) = 6,
+                TemplateLiteral(Box<'a, TemplateLiteral<'a, A>, A>) = 6,
 
                 /// Inherited from [`Expression`]
-                Identifier(A::Box<'a, IdentifierReference<'a>>) = 7,
+                Identifier(Box<'a, IdentifierReference<'a>, A>) = 7,
 
                 /// Inherited from [`Expression`]
-                MetaProperty(A::Box<'a, MetaProperty<'a>>) = 8,
+                MetaProperty(Box<'a, MetaProperty<'a>, A>) = 8,
                 /// Inherited from [`Expression`]
-                Super(A::Box<'a, Super>) = 9,
+                Super(Box<'a, Super, A>) = 9,
 
                 /// Inherited from [`Expression`]
-                ArrayExpression(A::Box<'a, ArrayExpression<'a, A>>) = 10,
+                ArrayExpression(Box<'a, ArrayExpression<'a, A>, A>) = 10,
                 /// Inherited from [`Expression`]
-                ArrowFunctionExpression(A::Box<'a, ArrowFunctionExpression<'a, A>>) = 11,
+                ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a, A>, A>) = 11,
                 /// Inherited from [`Expression`]
-                AssignmentExpression(A::Box<'a, AssignmentExpression<'a, A>>) = 12,
+                AssignmentExpression(Box<'a, AssignmentExpression<'a, A>, A>) = 12,
                 /// Inherited from [`Expression`]
-                AwaitExpression(A::Box<'a, AwaitExpression<'a, A>>) = 13,
+                AwaitExpression(Box<'a, AwaitExpression<'a, A>, A>) = 13,
                 /// Inherited from [`Expression`]
-                BinaryExpression(A::Box<'a, BinaryExpression<'a, A>>) = 14,
+                BinaryExpression(Box<'a, BinaryExpression<'a, A>, A>) = 14,
                 /// Inherited from [`Expression`]
-                CallExpression(A::Box<'a, CallExpression<'a, A>>) = 15,
+                CallExpression(Box<'a, CallExpression<'a, A>, A>) = 15,
                 /// Inherited from [`Expression`]
-                ChainExpression(A::Box<'a, ChainExpression<'a, A>>) = 16,
+                ChainExpression(Box<'a, ChainExpression<'a, A>, A>) = 16,
                 /// Inherited from [`Expression`]
-                ClassExpression(A::Box<'a, Class<'a, A>>) = 17,
+                ClassExpression(Box<'a, Class<'a, A>, A>) = 17,
                 /// Inherited from [`Expression`]
-                ConditionalExpression(A::Box<'a, ConditionalExpression<'a, A>>) = 18,
+                ConditionalExpression(Box<'a, ConditionalExpression<'a, A>, A>) = 18,
                 /// Inherited from [`Expression`]
-                FunctionExpression(A::Box<'a, Function<'a, A>>) = 19,
+                FunctionExpression(Box<'a, Function<'a, A>, A>) = 19,
                 /// Inherited from [`Expression`]
-                ImportExpression(A::Box<'a, ImportExpression<'a, A>>) = 20,
+                ImportExpression(Box<'a, ImportExpression<'a, A>, A>) = 20,
                 /// Inherited from [`Expression`]
-                LogicalExpression(A::Box<'a, LogicalExpression<'a, A>>) = 21,
+                LogicalExpression(Box<'a, LogicalExpression<'a, A>, A>) = 21,
                 /// Inherited from [`Expression`]
-                NewExpression(A::Box<'a, NewExpression<'a, A>>) = 22,
+                NewExpression(Box<'a, NewExpression<'a, A>, A>) = 22,
                 /// Inherited from [`Expression`]
-                ObjectExpression(A::Box<'a, ObjectExpression<'a, A>>) = 23,
+                ObjectExpression(Box<'a, ObjectExpression<'a, A>, A>) = 23,
                 /// Inherited from [`Expression`]
-                ParenthesizedExpression(A::Box<'a, ParenthesizedExpression<'a, A>>) = 24,
+                ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a, A>, A>) = 24,
                 /// Inherited from [`Expression`]
-                SequenceExpression(A::Box<'a, SequenceExpression<'a, A>>) = 25,
+                SequenceExpression(Box<'a, SequenceExpression<'a, A>, A>) = 25,
                 /// Inherited from [`Expression`]
-                TaggedTemplateExpression(A::Box<'a, TaggedTemplateExpression<'a, A>>) = 26,
+                TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a, A>, A>) = 26,
                 /// Inherited from [`Expression`]
-                ThisExpression(A::Box<'a, ThisExpression>) = 27,
+                ThisExpression(Box<'a, ThisExpression, A>) = 27,
                 /// Inherited from [`Expression`]
-                UnaryExpression(A::Box<'a, UnaryExpression<'a, A>>) = 28,
+                UnaryExpression(Box<'a, UnaryExpression<'a, A>, A>) = 28,
                 /// Inherited from [`Expression`]
-                UpdateExpression(A::Box<'a, UpdateExpression<'a, A>>) = 29,
+                UpdateExpression(Box<'a, UpdateExpression<'a, A>, A>) = 29,
                 /// Inherited from [`Expression`]
-                YieldExpression(A::Box<'a, YieldExpression<'a, A>>) = 30,
+                YieldExpression(Box<'a, YieldExpression<'a, A>, A>) = 30,
                 /// Inherited from [`Expression`]
-                PrivateInExpression(A::Box<'a, PrivateInExpression<'a, A>>) = 31,
+                PrivateInExpression(Box<'a, PrivateInExpression<'a, A>, A>) = 31,
 
                 /// Inherited from [`Expression`]
-                JSXElement(A::Box<'a, JSXElement<'a, A>>) = 32,
+                JSXElement(Box<'a, JSXElement<'a, A>, A>) = 32,
                 /// Inherited from [`Expression`]
-                JSXFragment(A::Box<'a, JSXFragment<'a, A>>) = 33,
+                JSXFragment(Box<'a, JSXFragment<'a, A>, A>) = 33,
 
                 /// Inherited from [`Expression`]
-                TSAsExpression(A::Box<'a, TSAsExpression<'a, A>>) = 34,
+                TSAsExpression(Box<'a, TSAsExpression<'a, A>, A>) = 34,
                 /// Inherited from [`Expression`]
-                TSSatisfiesExpression(A::Box<'a, TSSatisfiesExpression<'a, A>>) = 35,
+                TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a, A>, A>) = 35,
                 /// Inherited from [`Expression`]
-                TSTypeAssertion(A::Box<'a, TSTypeAssertion<'a, A>>) = 36,
+                TSTypeAssertion(Box<'a, TSTypeAssertion<'a, A>, A>) = 36,
                 /// Inherited from [`Expression`]
-                TSNonNullExpression(A::Box<'a, TSNonNullExpression<'a, A>>) = 37,
+                TSNonNullExpression(Box<'a, TSNonNullExpression<'a, A>, A>) = 37,
                 /// Inherited from [`Expression`]
-                TSInstantiationExpression(A::Box<'a, TSInstantiationExpression<'a, A>>) = 38,
+                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a, A>, A>) = 38,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -252,15 +252,15 @@ macro_rules! inherit_variants {
                 /// Inherited from [`MemberExpression`].
                 ///
                 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
-                ComputedMemberExpression(A::Box<'a, ComputedMemberExpression<'a, A>>) = 48,
+                ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a, A>, A>) = 48,
                 /// Inherited from [`MemberExpression`].
                 ///
                 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
-                StaticMemberExpression(A::Box<'a, StaticMemberExpression<'a, A>>) = 49,
+                StaticMemberExpression(Box<'a, StaticMemberExpression<'a, A>, A>) = 49,
                 /// Inherited from [`MemberExpression`].
                 ///
                 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
-                PrivateFieldExpression(A::Box<'a, PrivateFieldExpression<'a, A>>) = 50,
+                PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a, A>, A>) = 50,
 
                 $($rest)*
             }
@@ -340,18 +340,18 @@ macro_rules! inherit_variants {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
                 /// Inherited from [`SimpleAssignmentTarget`]
-                AssignmentTargetIdentifier(A::Box<'a, IdentifierReference<'a>>) = 0,
+                AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>, A>) = 0,
 
                 /// Inherited from [`SimpleAssignmentTarget`]
-                TSAsExpression(A::Box<'a, TSAsExpression<'a, A>>) = 1,
+                TSAsExpression(Box<'a, TSAsExpression<'a, A>, A>) = 1,
                 /// Inherited from [`SimpleAssignmentTarget`]
-                TSSatisfiesExpression(A::Box<'a, TSSatisfiesExpression<'a, A>>) = 2,
+                TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a, A>, A>) = 2,
                 /// Inherited from [`SimpleAssignmentTarget`]
-                TSNonNullExpression(A::Box<'a, TSNonNullExpression<'a, A>>) = 3,
+                TSNonNullExpression(Box<'a, TSNonNullExpression<'a, A>, A>) = 3,
                 /// Inherited from [`SimpleAssignmentTarget`]
-                TSTypeAssertion(A::Box<'a, TSTypeAssertion<'a, A>>) = 4,
+                TSTypeAssertion(Box<'a, TSTypeAssertion<'a, A>, A>) = 4,
                 /// Inherited from [`SimpleAssignmentTarget`]
-                TSInstantiationExpression(A::Box<'a, TSInstantiationExpression<'a, A>>) = 5,
+                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a, A>, A>) = 5,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -398,9 +398,9 @@ macro_rules! inherit_variants {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
                 /// Inherited from [`AssignmentTargetPattern`]
-                ArrayAssignmentTarget(A::Box<'a, ArrayAssignmentTarget<'a, A>>) = 8,
+                ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a, A>, A>) = 8,
                 /// Inherited from [`AssignmentTargetPattern`]
-                ObjectAssignmentTarget(A::Box<'a, ObjectAssignmentTarget<'a, A>>) = 9,
+                ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a, A>, A>) = 9,
 
                 $($rest)*
             }
@@ -434,22 +434,22 @@ macro_rules! inherit_variants {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
                 /// Inherited from [`Declaration`]
-                VariableDeclaration(A::Box<'a, VariableDeclaration<'a, A>>) = 32,
+                VariableDeclaration(Box<'a, VariableDeclaration<'a, A>, A>) = 32,
                 /// Inherited from [`Declaration`]
-                FunctionDeclaration(A::Box<'a, Function<'a, A>>) = 33,
+                FunctionDeclaration(Box<'a, Function<'a, A>, A>) = 33,
                 /// Inherited from [`Declaration`]
-                ClassDeclaration(A::Box<'a, Class<'a, A>>) = 34,
+                ClassDeclaration(Box<'a, Class<'a, A>, A>) = 34,
 
                 /// Inherited from [`Declaration`]
-                TSTypeAliasDeclaration(A::Box<'a, TSTypeAliasDeclaration<'a, A>>) = 35,
+                TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a, A>, A>) = 35,
                 /// Inherited from [`Declaration`]
-                TSInterfaceDeclaration(A::Box<'a, TSInterfaceDeclaration<'a, A>>) = 36,
+                TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a, A>, A>) = 36,
                 /// Inherited from [`Declaration`]
-                TSEnumDeclaration(A::Box<'a, TSEnumDeclaration<'a, A>>) = 37,
+                TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a, A>, A>) = 37,
                 /// Inherited from [`Declaration`]
-                TSModuleDeclaration(A::Box<'a, TSModuleDeclaration<'a, A>>) = 38,
+                TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a, A>, A>) = 38,
                 /// Inherited from [`Declaration`]
-                TSImportEqualsDeclaration(A::Box<'a, TSImportEqualsDeclaration<'a, A>>) = 39,
+                TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a, A>, A>) = 39,
 
                 $($rest)*
             }
@@ -494,24 +494,24 @@ macro_rules! inherit_variants {
                 /// Inherited from [`ModuleDeclaration`].
                 /// `import hello from './world.js';`
                 /// `import * as t from './world.js';`
-                ImportDeclaration(A::Box<'a, ImportDeclaration<'a, A>>) = 64,
+                ImportDeclaration(Box<'a, ImportDeclaration<'a, A>, A>) = 64,
                 /// Inherited from [`ModuleDeclaration`].
                 /// `export * as numbers from '../numbers.js'`
-                ExportAllDeclaration(A::Box<'a, ExportAllDeclaration<'a, A>>) = 65,
+                ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a, A>, A>) = 65,
                 /// Inherited from [`ModuleDeclaration`].
                 /// `export default 5;`
-                ExportDefaultDeclaration(A::Box<'a, ExportDefaultDeclaration<'a, A>>) = 66,
+                ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a, A>, A>) = 66,
                 /// Inherited from [`ModuleDeclaration`].
                 /// `export {five} from './numbers.js';`
                 /// `export {six, seven};`
-                ExportNamedDeclaration(A::Box<'a, ExportNamedDeclaration<'a, A>>) = 67,
+                ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a, A>, A>) = 67,
 
                 /// Inherited from [`ModuleDeclaration`].
                 /// `export = 5;`
-                TSExportAssignment(A::Box<'a, TSExportAssignment<'a, A>>) = 68,
+                TSExportAssignment(Box<'a, TSExportAssignment<'a, A>, A>) = 68,
                 /// Inherited from [`ModuleDeclaration`].
                 /// `export as namespace React;`
-                TSNamespaceExportDeclaration(A::Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+                TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>, A>) = 69,
 
                 $($rest)*
             }
@@ -553,85 +553,85 @@ macro_rules! inherit_variants {
 
                 // Keyword
                 /// Inherited from [`TSType`]
-                TSAnyKeyword(A::Box<'a, TSAnyKeyword>) = 0,
+                TSAnyKeyword(Box<'a, TSAnyKeyword, A>) = 0,
                 /// Inherited from [`TSType`]
-                TSBigIntKeyword(A::Box<'a, TSBigIntKeyword>) = 1,
+                TSBigIntKeyword(Box<'a, TSBigIntKeyword, A>) = 1,
                 /// Inherited from [`TSType`]
-                TSBooleanKeyword(A::Box<'a, TSBooleanKeyword>) = 2,
+                TSBooleanKeyword(Box<'a, TSBooleanKeyword, A>) = 2,
                 /// Inherited from [`TSType`]
-                TSIntrinsicKeyword(A::Box<'a, TSIntrinsicKeyword>) = 3,
+                TSIntrinsicKeyword(Box<'a, TSIntrinsicKeyword, A>) = 3,
                 /// Inherited from [`TSType`]
-                TSNeverKeyword(A::Box<'a, TSNeverKeyword>) = 4,
+                TSNeverKeyword(Box<'a, TSNeverKeyword, A>) = 4,
                 /// Inherited from [`TSType`]
-                TSNullKeyword(A::Box<'a, TSNullKeyword>) = 5,
+                TSNullKeyword(Box<'a, TSNullKeyword, A>) = 5,
                 /// Inherited from [`TSType`]
-                TSNumberKeyword(A::Box<'a, TSNumberKeyword>) = 6,
+                TSNumberKeyword(Box<'a, TSNumberKeyword, A>) = 6,
                 /// Inherited from [`TSType`]
-                TSObjectKeyword(A::Box<'a, TSObjectKeyword>) = 7,
+                TSObjectKeyword(Box<'a, TSObjectKeyword, A>) = 7,
                 /// Inherited from [`TSType`]
-                TSStringKeyword(A::Box<'a, TSStringKeyword>) = 8,
+                TSStringKeyword(Box<'a, TSStringKeyword, A>) = 8,
                 /// Inherited from [`TSType`]
-                TSSymbolKeyword(A::Box<'a, TSSymbolKeyword>) = 9,
+                TSSymbolKeyword(Box<'a, TSSymbolKeyword, A>) = 9,
                 /// Inherited from [`TSType`]
-                TSThisType(A::Box<'a, TSThisType>) = 10,
+                TSThisType(Box<'a, TSThisType, A>) = 10,
                 /// Inherited from [`TSType`]
-                TSUndefinedKeyword(A::Box<'a, TSUndefinedKeyword>) = 11,
+                TSUndefinedKeyword(Box<'a, TSUndefinedKeyword, A>) = 11,
                 /// Inherited from [`TSType`]
-                TSUnknownKeyword(A::Box<'a, TSUnknownKeyword>) = 12,
+                TSUnknownKeyword(Box<'a, TSUnknownKeyword, A>) = 12,
                 /// Inherited from [`TSType`]
-                TSVoidKeyword(A::Box<'a, TSVoidKeyword>) = 13,
+                TSVoidKeyword(Box<'a, TSVoidKeyword, A>) = 13,
 
                 // Compound
                 /// Inherited from [`TSType`]
-                TSArrayType(A::Box<'a, TSArrayType<'a, A>>) = 14,
+                TSArrayType(Box<'a, TSArrayType<'a, A>, A>) = 14,
                 /// Inherited from [`TSType`]
-                TSConditionalType(A::Box<'a, TSConditionalType<'a, A>>) = 15,
+                TSConditionalType(Box<'a, TSConditionalType<'a, A>, A>) = 15,
                 /// Inherited from [`TSType`]
-                TSConstructorType(A::Box<'a, TSConstructorType<'a, A>>) = 16,
+                TSConstructorType(Box<'a, TSConstructorType<'a, A>, A>) = 16,
                 /// Inherited from [`TSType`]
-                TSFunctionType(A::Box<'a, TSFunctionType<'a, A>>) = 17,
+                TSFunctionType(Box<'a, TSFunctionType<'a, A>, A>) = 17,
                 /// Inherited from [`TSType`]
-                TSImportType(A::Box<'a, TSImportType<'a, A>>) = 18,
+                TSImportType(Box<'a, TSImportType<'a, A>, A>) = 18,
                 /// Inherited from [`TSType`]
-                TSIndexedAccessType(A::Box<'a, TSIndexedAccessType<'a, A>>) = 19,
+                TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a, A>, A>) = 19,
                 /// Inherited from [`TSType`]
-                TSInferType(A::Box<'a, TSInferType<'a, A>>) = 20,
+                TSInferType(Box<'a, TSInferType<'a, A>, A>) = 20,
                 /// Inherited from [`TSType`]
-                TSIntersectionType(A::Box<'a, TSIntersectionType<'a, A>>) = 21,
+                TSIntersectionType(Box<'a, TSIntersectionType<'a, A>, A>) = 21,
                 /// Inherited from [`TSType`]
-                TSLiteralType(A::Box<'a, TSLiteralType<'a, A>>) = 22,
+                TSLiteralType(Box<'a, TSLiteralType<'a, A>, A>) = 22,
                 /// Inherited from [`TSType`]
-                TSMappedType(A::Box<'a, TSMappedType<'a, A>>) = 23,
+                TSMappedType(Box<'a, TSMappedType<'a, A>, A>) = 23,
                 /// Inherited from [`TSType`]
-                TSNamedTupleMember(A::Box<'a, TSNamedTupleMember<'a, A>>) = 24,
+                TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a, A>, A>) = 24,
                 /// Inherited from [`TSType`]
-                TSQualifiedName(A::Box<'a, TSQualifiedName<'a, A>>) = 25,
+                TSQualifiedName(Box<'a, TSQualifiedName<'a, A>, A>) = 25,
                 /// Inherited from [`TSType`]
-                TSTemplateLiteralType(A::Box<'a, TSTemplateLiteralType<'a, A>>) = 26,
+                TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a, A>, A>) = 26,
                 /// Inherited from [`TSType`]
-                TSTupleType(A::Box<'a, TSTupleType<'a, A>>) = 27,
+                TSTupleType(Box<'a, TSTupleType<'a, A>, A>) = 27,
                 /// Inherited from [`TSType`]
-                TSTypeLiteral(A::Box<'a, TSTypeLiteral<'a, A>>) = 28,
+                TSTypeLiteral(Box<'a, TSTypeLiteral<'a, A>, A>) = 28,
                 /// Inherited from [`TSType`]
-                TSTypeOperatorType(A::Box<'a, TSTypeOperator<'a, A>>) = 29,
+                TSTypeOperatorType(Box<'a, TSTypeOperator<'a, A>, A>) = 29,
                 /// Inherited from [`TSType`]
-                TSTypePredicate(A::Box<'a, TSTypePredicate<'a, A>>) = 30,
+                TSTypePredicate(Box<'a, TSTypePredicate<'a, A>, A>) = 30,
                 /// Inherited from [`TSType`]
-                TSTypeQuery(A::Box<'a, TSTypeQuery<'a, A>>) = 31,
+                TSTypeQuery(Box<'a, TSTypeQuery<'a, A>, A>) = 31,
                 /// Inherited from [`TSType`]
-                TSTypeReference(A::Box<'a, TSTypeReference<'a, A>>) = 32,
+                TSTypeReference(Box<'a, TSTypeReference<'a, A>, A>) = 32,
                 /// Inherited from [`TSType`]
-                TSUnionType(A::Box<'a, TSUnionType<'a, A>>) = 33,
+                TSUnionType(Box<'a, TSUnionType<'a, A>, A>) = 33,
                 /// Inherited from [`TSType`]
-                TSParenthesizedType(A::Box<'a, TSParenthesizedType<'a, A>>) = 34,
+                TSParenthesizedType(Box<'a, TSParenthesizedType<'a, A>, A>) = 34,
 
                 // JSDoc
                 /// Inherited from [`TSType`]
-                JSDocNullableType(A::Box<'a, JSDocNullableType<'a, A>>) = 35,
+                JSDocNullableType(Box<'a, JSDocNullableType<'a, A>, A>) = 35,
                 /// Inherited from [`TSType`]
-                JSDocNonNullableType(A::Box<'a, JSDocNonNullableType<'a, A>>) = 36,
+                JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a, A>, A>) = 36,
                 /// Inherited from [`TSType`]
-                JSDocUnknownType(A::Box<'a, JSDocUnknownType>) = 37,
+                JSDocUnknownType(Box<'a, JSDocUnknownType, A>) = 37,
 
                 $($rest)*
             }
@@ -704,9 +704,9 @@ macro_rules! inherit_variants {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
                 /// Inherited from [`TSTypeName`]
-                IdentifierReference(A::Box<'a, IdentifierReference<'a>>) = 0,
+                IdentifierReference(Box<'a, IdentifierReference<'a>, A>) = 0,
                 /// Inherited from [`TSTypeName`]
-                QualifiedName(A::Box<'a, TSQualifiedName<'a, A>>) = 1,
+                QualifiedName(Box<'a, TSQualifiedName<'a, A>, A>) = 1,
 
                 $($rest)*
             }
@@ -735,7 +735,7 @@ pub(crate) use inherit_variants;
 /// e.g. `Statement` and `Declaration`.
 ///
 /// The discriminants and types of the shared variants must be identical between the 2 enums.
-/// All variants must have a `A::Box<_>` payload.
+/// All variants must have a `Box<_, A>` payload.
 /// Equality of types is guaranteed by `From` and `TryFrom` impls this macro creates.
 /// These will fail to compile if the types differ for any variant.
 /// Equality of discriminants is checked with a compile-time assertion.

@@ -1,5 +1,5 @@
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::{AstAllocator, traits::{Box as _, Vec as _}};
+use oxc_span::ast_alloc::{AstAllocator, Vec, traits::{Box as _, Vec as _}};
 use oxc_span::{Atom as SpanAtom, GetSpan as _};
 
 use crate::ast::Character;
@@ -766,7 +766,7 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
     // ```
     fn parse_class_contents(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a, A>, A>)>
     {
         // [empty]
         if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some()
@@ -798,7 +798,7 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
     // ```
     fn parse_nonempty_class_ranges(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a, A>, A>)>
     {
         let mut body = self.allocator.vec();
 
@@ -1057,7 +1057,7 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
     // ```
     fn parse_class_set_expression(
         &mut self,
-    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a, A>, A>)>
     {
         // ClassUnion :: ClassSetRange ClassUnion[opt]
         if let Some(class_set_range) = self.parse_class_set_range()? {
@@ -1096,7 +1096,7 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
     fn parse_class_set_union(
         &mut self,
         class_set_range_or_class_set_operand: ast::CharacterClassContents<'a, A>,
-    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a, A>, A>)>
     {
         let mut body = self.allocator.vec();
         body.push(class_set_range_or_class_set_operand);
@@ -1125,7 +1125,7 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
     fn parse_class_set_intersection(
         &mut self,
         class_set_operand: ast::CharacterClassContents<'a, A>,
-    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a, A>, A>)>
     {
         let mut body = self.allocator.vec();
         body.push(class_set_operand);
@@ -1167,7 +1167,7 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
     fn parse_class_set_subtraction(
         &mut self,
         class_set_operand: ast::CharacterClassContents<'a, A>,
-    ) -> Result<(ast::CharacterClassContentsKind, A::Vec<'a, ast::CharacterClassContents<'a, A>>)>
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a, A>, A>)>
     {
         let mut body = self.allocator.vec();
         body.push(class_set_operand);
@@ -1346,7 +1346,7 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
     // Returns: (ClassStringDisjunctionContents, contain_strings)
     fn parse_class_string_disjunction_contents(
         &mut self,
-    ) -> Result<(A::Vec<'a, ast::ClassString<'a, A>>, bool)> {
+    ) -> Result<(Vec<'a, ast::ClassString<'a, A>, A>, bool)> {
         let mut body = self.allocator.vec();
         let mut is_body_empty = true;
         let mut strings = false;
@@ -2277,7 +2277,7 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
 
     fn may_contain_strings_in_class_contents(
         kind: &ast::CharacterClassContentsKind,
-        body: &A::Vec<'a, ast::CharacterClassContents<'a, A>>,
+        body: &Vec<'a, ast::CharacterClassContents<'a, A>, A>,
     ) -> bool {
         let Ok(body) = body.specialize_ref() else {
             return false;

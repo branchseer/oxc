@@ -8,16 +8,17 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_ecmascript::PropName;
-use oxc_span::ast_alloc::{cast, cast_ref, AstAllocator, traits::{Box, Vec as _}};
+use oxc_span::ast_alloc::{cast, cast_ref, AstAllocator, Box, Vec, traits::{Box as _, Vec as _}};
 use oxc_span::{GetSpan, GetSpanMut, Span};
 
-type Extends<'a, A> = <A as AstAllocator>::Vec<
+type Extends<'a, A> = Vec<
     'a,
     (
         Expression<'a, A>,
         Option<<A as AstAllocator>::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
         Span,
     ),
+    A
 >;
 
 /// Section 15.7 Class Definitions
@@ -54,7 +55,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         &mut self,
         start_span: Span,
         modifiers: &Modifiers<'a>,
-    ) -> Result<A::Box<'a, Class<'a, A>>> {
+    ) -> Result<Box<'a, Class<'a, A>, A>> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::ABSTRACT,
@@ -85,7 +86,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         start_span: Span,
         r#type: ClassType,
         modifiers: Option<ClassModifiers>,
-    ) -> Result<A::Box<'a, Class<'a, A>>> {
+    ) -> Result<Box<'a, Class<'a, A>, A>> {
         self.bump_any(); // advance `class`
 
         let decorators = self.take_decorators();
@@ -205,7 +206,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         Ok(extends)
     }
 
-    fn parse_class_body(&mut self, declare: bool) -> Result<A::Box<'a, ClassBody<'a, A>>> {
+    fn parse_class_body(&mut self, declare: bool) -> Result<Box<'a, ClassBody<'a, A>, A>> {
         let span = self.start_span();
         let class_elements = if self.options.allow_skip_ambient && declare {
             self.skip_ambient_curly()?;

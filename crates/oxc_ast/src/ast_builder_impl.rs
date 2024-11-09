@@ -5,8 +5,8 @@
     clippy::unused_self,
 )]
 
-use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
-use oxc_span::ast_alloc::AstAllocator;
+use oxc_allocator::{Allocator, FromIn, String};
+use oxc_span::ast_alloc::{AstAllocator, Vec, Box};
 use oxc_span::{ast_alloc::traits::{Vec as _}, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
 use std::fmt::Debug;
@@ -35,27 +35,27 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn alloc<T>(self, value: T) -> Box<'a, T> {
-        Box::new_in(value, self.allocator)
+    pub fn alloc<T: Debug + GetSpan + GetSpanMut>(self, value: T) -> Box<'a, T> {
+        AstAllocator::alloc(self.allocator, value)
     }
 
     #[inline]
-    pub fn vec<T>(self) -> Vec<'a, T> {
-        Vec::new_in(self.allocator)
+    pub fn vec<T: Debug>(self) -> Vec<'a, T> {
+        AstAllocator::vec(self.allocator)
     }
 
     #[inline]
-    pub fn vec_with_capacity<T>(self, capacity: usize) -> Vec<'a, T> {
-        Vec::with_capacity_in(capacity, self.allocator)
+    pub fn vec_with_capacity<T: Debug>(self, capacity: usize) -> Vec<'a, T> {
+        AstAllocator::vec_with_capacity(self.allocator, capacity)
     }
 
     #[inline]
-    pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
-        Vec::from_iter_in(iter, self.allocator)
+    pub fn vec_from_iter<T: Debug, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
+        AstAllocator::vec_from_iter(self.allocator, iter)
     }
 
     #[inline]
-    pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
+    pub fn vec1<T: Debug>(self, value: T) -> Vec<'a, T> {
         let mut vec = self.vec_with_capacity(1);
         vec.push(value);
         vec
@@ -126,7 +126,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
+    pub fn move_vec<T: Debug>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
         mem::replace(vec, self.vec())
     }
 
@@ -222,22 +222,22 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         Self { allocator, handler }
     }
     #[inline]
-    pub fn alloc<T: Debug + GetSpan + GetSpanMut>(&self, value: T) -> A::Box<'a, T> {
+    pub fn alloc<T: Debug + GetSpan + GetSpanMut>(&self, value: T) -> Box<'a, T, A> {
         self.allocator.alloc(value)
     }
 
     #[inline]
-    pub fn vec<T: Debug>(&self) -> A::Vec<'a, T> {
+    pub fn vec<T: Debug>(&self) -> Vec<'a, T, A> {
         self.allocator.vec()
     }
 
     #[inline]
-    pub fn vec_with_capacity<T: Debug>(&self, capacity: usize) -> A::Vec<'a, T> {
+    pub fn vec_with_capacity<T: Debug>(&self, capacity: usize) -> Vec<'a, T, A> {
         self.allocator.vec_with_capacity(capacity)
     }
 
     #[inline]
-    pub fn vec1<T: Debug>(&self, value: T) -> A::Vec<'a, T> {
+    pub fn vec1<T: Debug>(&self, value: T) -> Vec<'a, T, A> {
         let mut vec = self.vec_with_capacity(1);
         vec.push(value);
         vec
@@ -249,7 +249,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     }
 
     #[inline]
-    pub fn vec_from_iter<T: Debug, I: IntoIterator<Item = T>>(&self, iter: I) -> A::Vec<'a, T> {
+    pub fn vec_from_iter<T: Debug, I: IntoIterator<Item = T>>(&self, iter: I) -> Vec<'a, T, A> {
         self.allocator.vec_from_iter(iter)
     }
 
@@ -262,7 +262,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn map_alloc<T: Debug + GetSpan + GetSpanMut>(
         &self,
         value: Option<T>,
-    ) -> Option<A::Box<'a, T>> {
+    ) -> Option<Box<'a, T, A>> {
         Some(self.alloc(value?))
     }
 }
@@ -296,9 +296,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         extends: A::Vec<
             'a,
-            (Expression<'a, A>, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, Span),
+            (Expression<'a, A>, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, Span),
         >,
-    ) -> A::Vec<'a, TSInterfaceHeritage<'a, A>> {
+    ) -> Vec<'a, TSInterfaceHeritage<'a, A>, A> {
         let Ok(extends) = extends.specialize() else {
             return self.vec();
         };

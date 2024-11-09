@@ -14,7 +14,7 @@ use derive_where::derive_where;
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::ast_alloc::AstAllocator;
+use oxc_span::ast_alloc::{AstAllocator, Vec, Box};
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
@@ -132,7 +132,7 @@ pub enum RegExpPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     Invalid(&'a str) = 1,
     /// A parsed pattern. Read [Pattern] for more details.
     /// Pattern was parsed and found to be valid.
-    Pattern(A::Box<'a, Pattern<'a, A>>) = 2,
+    Pattern(Box<'a, Pattern<'a, A>, A>) = 2,
 }
 
 #[ast]

@@ -8,7 +8,7 @@ use crate::{
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::traits::{Box, Vec};
+use oxc_span::ast_alloc::{traits::{Box as _, Vec as _}, Box, Vec};
 use oxc_span::{cast_ref, GetSpan, Span};
 
 impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
@@ -134,7 +134,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_type_annotation(
         &mut self,
-    ) -> Result<Option<A::Box<'a, TSTypeAnnotation<'a, A>>>> {
+    ) -> Result<Option<Box<'a, TSTypeAnnotation<'a, A>, A>>> {
         if !self.is_ts {
             return Ok(None);
         }
@@ -212,7 +212,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         ))
     }
 
-    fn parse_ts_interface_body(&mut self) -> Result<A::Box<'a, TSInterfaceBody<'a, A>>> {
+    fn parse_ts_interface_body(&mut self) -> Result<Box<'a, TSInterfaceBody<'a, A>, A>> {
         let span = self.start_span();
         let body_list = if self.options.allow_skip_ambient {
             self.skip_ambient_curly()?;
@@ -306,7 +306,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /** ----------------------- Namespace & Module ----------------------- */
 
-    fn parse_ts_module_block(&mut self, declare: bool) -> Result<A::Box<'a, TSModuleBlock<'a, A>>> {
+    fn parse_ts_module_block(&mut self, declare: bool) -> Result<Box<'a, TSModuleBlock<'a, A>, A>> {
         let span = self.start_span();
         if self.options.allow_skip_ambient && declare {
             self.skip_ambient_curly()?;
@@ -328,7 +328,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         span: Span,
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
-    ) -> Result<A::Box<'a, TSModuleDeclaration<'a, A>>> {
+    ) -> Result<Box<'a, TSModuleDeclaration<'a, A>, A>> {
         let declare = modifiers.contains_declare();
         self.verify_modifiers(
             modifiers,
@@ -453,7 +453,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         &mut self,
         start_span: Span,
         modifiers: &Modifiers<'a>,
-    ) -> Result<A::Box<'a, Function<'a, A>>> {
+    ) -> Result<Box<'a, Function<'a, A>, A>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;
         let func_kind = FunctionKind::TSDeclaration;

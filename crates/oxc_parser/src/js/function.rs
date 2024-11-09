@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::traits::Box;
+use oxc_span::ast_alloc::{traits::Box as _, Box};
 use oxc_span::{GetSpan as _, Span};
 
 use super::FunctionKind;
@@ -29,7 +29,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                 && !self.peek_token().is_on_new_line
     }
 
-    pub(crate) fn parse_function_body(&mut self) -> Result<A::Box<'a, FunctionBody<'a, A>>> {
+    pub(crate) fn parse_function_body(&mut self) -> Result<Box<'a, FunctionBody<'a, A>, A>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
 
@@ -44,7 +44,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     pub(crate) fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
-    ) -> Result<(Option<TSThisParameter<'a, A>>, A::Box<'a, FormalParameters<'a, A>>)> {
+    ) -> Result<(Option<TSThisParameter<'a, A>>, Box<'a, FormalParameters<'a, A>, A>)> {
         let span = self.start_span();
         self.expect(Kind::LParen)?;
         let this_param = if self.is_ts && self.at(Kind::This) {
@@ -121,7 +121,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         generator: bool,
         func_kind: FunctionKind,
         modifiers: &Modifiers<'a>,
-    ) -> Result<A::Box<'a, Function<'a, A>>> {
+    ) -> Result<Box<'a, Function<'a, A>, A>> {
         let func =
             self.parse_function_unboxed(span, id, r#async, generator, func_kind, modifiers)?;
         Ok(self.ast.alloc(func))
@@ -236,7 +236,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     pub(crate) fn parse_function_impl(
         &mut self,
         func_kind: FunctionKind,
-    ) -> Result<A::Box<'a, Function<'a, A>>> {
+    ) -> Result<Box<'a, Function<'a, A>, A>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
         self.expect(Kind::Function)?;
@@ -252,7 +252,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         start_span: Span,
         func_kind: FunctionKind,
         modifiers: &Modifiers<'a>,
-    ) -> Result<A::Box<'a, Function<'a, A>>> {
+    ) -> Result<Box<'a, Function<'a, A>, A>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;
         let generator = self.eat(Kind::Star);

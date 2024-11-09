@@ -5,8 +5,8 @@ use crate::{
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::traits::Box;
-use oxc_span::{ast_alloc::traits::Vec as _, cast_ref, Atom, GetSpan, Span};
+use oxc_span::ast_alloc::{traits::Box as _, Box};
+use oxc_span::{ast_alloc::{traits::Vec as _, Vec}, cast_ref, Atom, GetSpan, Span};
 
 impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     // Section 12
@@ -31,7 +31,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     pub(crate) fn parse_directives_and_statements(
         &mut self,
         is_top_level: bool,
-    ) -> Result<(A::Vec<'a, Directive<'a>>, A::Vec<'a, Statement<'a, A>>)> {
+    ) -> Result<(Vec<'a, Directive<'a>, A>, Vec<'a, Statement<'a, A>, A>)> {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
 
@@ -150,7 +150,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     }
 
     /// Section 14.2 Block Statement
-    pub(crate) fn parse_block(&mut self) -> Result<A::Box<'a, BlockStatement<'a, A>>> {
+    pub(crate) fn parse_block(&mut self) -> Result<Box<'a, BlockStatement<'a, A>, A>> {
         let span = self.start_span();
         let scope_token = self.ast.enter_scope();
         self.expect(Kind::LCurly)?;
@@ -523,7 +523,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         Ok(self.ast.statement_try(self.end_span(span), block, handler, finalizer))
     }
 
-    fn parse_catch_clause(&mut self) -> Result<A::Box<'a, CatchClause<'a, A>>> {
+    fn parse_catch_clause(&mut self) -> Result<Box<'a, CatchClause<'a, A>, A>> {
         let span = self.start_span();
         self.bump_any(); // advance `catch`
         let pattern = if self.eat(Kind::LParen) {

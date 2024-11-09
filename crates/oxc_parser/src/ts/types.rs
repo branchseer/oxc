@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::traits::Box;
-use oxc_span::{ast_alloc::traits::Vec as _, GetSpan};
+use oxc_span::ast_alloc::{traits::Box as _, Box};
+use oxc_span::{ast_alloc::{traits::Vec as _, Vec}, GetSpan};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
@@ -145,7 +145,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
-    ) -> Result<Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>> {
+    ) -> Result<Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>> {
         if !self.is_ts {
             return Ok(None);
         }
@@ -170,7 +170,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_implements_clause(
         &mut self,
-    ) -> Result<A::Vec<'a, TSClassImplementsItem<'a, A>>> {
+    ) -> Result<Vec<'a, TSClassImplementsItem<'a, A>, A>> {
         self.expect(Kind::Implements)?;
         let first = self.parse_ts_implement_name()?;
         let mut implements = self.ast.vec();
@@ -278,7 +278,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         Ok(self.ast.ts_type_infer_type(self.end_span(span), type_parameter))
     }
 
-    fn parse_type_parameter_of_infer_type(&mut self) -> Result<A::Box<'a, TSTypeParameter<'a, A>>> {
+    fn parse_type_parameter_of_infer_type(&mut self) -> Result<Box<'a, TSTypeParameter<'a, A>, A>> {
         let span = self.start_span();
         let name = self.parse_binding_identifier()?;
         let constraint = self.try_parse(Self::try_parse_constraint_of_infer_type).unwrap_or(None);
@@ -804,7 +804,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn try_parse_type_arguments(
         &mut self,
-    ) -> Result<Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>> {
+    ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>> {
         if self.at(Kind::LAngle) {
             let span = self.start_span();
             self.expect(Kind::LAngle)?;
@@ -824,7 +824,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     fn parse_type_arguments_of_type_reference(
         &mut self,
-    ) -> Result<Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>> {
+    ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>> {
         self.re_lex_l_angle();
         if !self.cur_token().is_on_new_line && self.re_lex_l_angle() == Kind::LAngle {
             let span = self.start_span();
@@ -852,7 +852,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
-    ) -> Result<Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>> {
+    ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>> {
         if !self.is_ts {
             return Ok(None);
         }
@@ -1094,7 +1094,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         &mut self,
         kind: Kind,
         is_type: bool,
-    ) -> Result<Option<A::Box<'a, TSTypeAnnotation<'a, A>>>> {
+    ) -> Result<Option<Box<'a, TSTypeAnnotation<'a, A>, A>>> {
         if !self.is_ts {
             return Ok(None);
         }

@@ -17,7 +17,7 @@ use tsify::Tsify;
 
 use super::{inherit_variants, js::*, literal::*, ts::*};
 use derive_where::derive_where;
-use oxc_span::ast_alloc::AstAllocator;
+use oxc_span::ast_alloc::{AstAllocator, Box, Vec};
 
 // 1.2 JSX Elements
 
@@ -47,11 +47,11 @@ pub struct JSXElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Opening tag of the element.
-    pub opening_element: A::Box<'a, JSXOpeningElement<'a, A>>,
+    pub opening_element: Box<'a, JSXOpeningElement<'a, A>, A>,
     /// Closing tag of the element. Will be [`None`] for self-closing tags.
-    pub closing_element: Option<A::Box<'a, JSXClosingElement<'a, A>>>,
+    pub closing_element: Option<Box<'a, JSXClosingElement<'a, A>, A>>,
     /// Children of the element. This can be text, other elements, or expressions.
-    pub children: A::Vec<'a, JSXChild<'a, A>>,
+    pub children: Vec<'a, JSXChild<'a, A>, A>,
 }
 
 /// JSX Opening Element
@@ -87,9 +87,9 @@ pub struct JSXOpeningElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub self_closing: bool,
     pub name: JSXElementName<'a, A>,
     /// List of JSX attributes. In React-like applications, these become props.
-    pub attributes: A::Vec<'a, JSXAttributeItem<'a, A>>,
+    pub attributes: Vec<'a, JSXAttributeItem<'a, A>, A>,
     /// Type parameters for generic JSX elements.
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
 }
 
 /// JSX Closing Element
@@ -135,7 +135,7 @@ pub struct JSXFragment<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `</>`
     pub closing_fragment: JSXClosingFragment,
     /// Elements inside the fragment.
-    pub children: A::Vec<'a, JSXChild<'a, A>>,
+    pub children: Vec<'a, JSXChild<'a, A>, A>,
 }
 
 /// JSX Opening Fragment (`<>`)
@@ -167,15 +167,15 @@ pub struct JSXClosingFragment {
 #[serde(untagged)]
 pub enum JSXElementName<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `<div />`
-    Identifier(A::Box<'a, JSXIdentifier<'a>>) = 0,
+    Identifier(Box<'a, JSXIdentifier<'a>, A>) = 0,
     /// `<Apple />`
-    IdentifierReference(A::Box<'a, IdentifierReference<'a>>) = 1,
+    IdentifierReference(Box<'a, IdentifierReference<'a>, A>) = 1,
     /// `<Apple:Orange />`
-    NamespacedName(A::Box<'a, JSXNamespacedName<'a>>) = 2,
+    NamespacedName(Box<'a, JSXNamespacedName<'a>, A>) = 2,
     /// `<Apple.Orange />`
-    MemberExpression(A::Box<'a, JSXMemberExpression<'a, A>>) = 3,
+    MemberExpression(Box<'a, JSXMemberExpression<'a, A>, A>) = 3,
     /// `<this />`
-    ThisExpression(A::Box<'a, ThisExpression>) = 4,
+    ThisExpression(Box<'a, ThisExpression, A>) = 4,
 }
 
 /// JSX Namespaced Name
@@ -233,9 +233,9 @@ pub struct JSXMemberExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[serde(untagged)]
 pub enum JSXMemberExpressionObject<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    IdentifierReference(A::Box<'a, IdentifierReference<'a>>) = 0,
-    MemberExpression(A::Box<'a, JSXMemberExpression<'a, A>>) = 1,
-    ThisExpression(A::Box<'a, ThisExpression>) = 2,
+    IdentifierReference(Box<'a, IdentifierReference<'a>, A>) = 0,
+    MemberExpression(Box<'a, JSXMemberExpression<'a, A>, A>) = 1,
+    ThisExpression(Box<'a, ThisExpression, A>) = 2,
 }
 
 /// JSX Expression Container
@@ -311,9 +311,9 @@ pub struct JSXEmptyExpression {
 #[serde(untagged)]
 pub enum JSXAttributeItem<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// A `key="value"` attribute
-    Attribute(A::Box<'a, JSXAttribute<'a, A>>) = 0,
+    Attribute(Box<'a, JSXAttribute<'a, A>, A>) = 0,
     /// a `{...spread}` attribute
-    SpreadAttribute(A::Box<'a, JSXSpreadAttribute<'a, A>>) = 1,
+    SpreadAttribute(Box<'a, JSXSpreadAttribute<'a, A>, A>) = 1,
 }
 
 /// JSX Attribute
@@ -383,9 +383,9 @@ pub struct JSXSpreadAttribute<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[serde(untagged)]
 pub enum JSXAttributeName<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// An attribute name without a namespace prefix, e.g. `foo` in `foo="bar"`.
-    Identifier(A::Box<'a, JSXIdentifier<'a>>) = 0,
+    Identifier(Box<'a, JSXIdentifier<'a>, A>) = 0,
     /// An attribute name with a namespace prefix, e.g. `foo:bar` in `foo:bar="baz"`.
-    NamespacedName(A::Box<'a, JSXNamespacedName<'a>>) = 1,
+    NamespacedName(Box<'a, JSXNamespacedName<'a>, A>) = 1,
 }
 
 /// JSX Attribute Value
@@ -412,10 +412,10 @@ pub enum JSXAttributeName<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum JSXAttributeValue<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    StringLiteral(A::Box<'a, StringLiteral<'a>>) = 0,
-    ExpressionContainer(A::Box<'a, JSXExpressionContainer<'a, A>>) = 1,
-    Element(A::Box<'a, JSXElement<'a, A>>) = 2,
-    Fragment(A::Box<'a, JSXFragment<'a, A>>) = 3,
+    StringLiteral(Box<'a, StringLiteral<'a>, A>) = 0,
+    ExpressionContainer(Box<'a, JSXExpressionContainer<'a, A>, A>) = 1,
+    Element(Box<'a, JSXElement<'a, A>, A>) = 2,
+    Fragment(Box<'a, JSXFragment<'a, A>, A>) = 3,
 }
 
 /// JSX Identifier
@@ -447,15 +447,15 @@ pub struct JSXIdentifier<'a> {
 #[serde(untagged)]
 pub enum JSXChild<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `<Foo>Some Text</Foo>`
-    Text(A::Box<'a, JSXText<'a>>) = 0,
+    Text(Box<'a, JSXText<'a>, A>) = 0,
     /// `<Foo><Child /></Foo>`
-    Element(A::Box<'a, JSXElement<'a, A>>) = 1,
+    Element(Box<'a, JSXElement<'a, A>, A>) = 1,
     /// `<Foo><></></Foo>`
-    Fragment(A::Box<'a, JSXFragment<'a, A>>) = 2,
+    Fragment(Box<'a, JSXFragment<'a, A>, A>) = 2,
     /// `<Foo>{expression}</Foo>`
-    ExpressionContainer(A::Box<'a, JSXExpressionContainer<'a, A>>) = 3,
+    ExpressionContainer(Box<'a, JSXExpressionContainer<'a, A>, A>) = 3,
     /// `<Foo>{...spread}</Foo>`
-    Spread(A::Box<'a, JSXSpreadChild<'a, A>>) = 4,
+    Spread(Box<'a, JSXSpreadChild<'a, A>, A>) = 4,
 }
 
 /// JSX Spread Child.

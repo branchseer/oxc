@@ -26,7 +26,7 @@ use tsify::Tsify;
 use derive_where::derive_where;
 
 use super::{macros::inherit_variants, *};
-use oxc_span::ast_alloc::AstAllocator;
+use oxc_span::ast_alloc::{AstAllocator, Box, Vec};
 
 /// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source, directives, top-level statements, and scope information.
 #[ast(visit)]
@@ -46,10 +46,10 @@ pub struct Program<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub source_text: &'a str,
     /// Sorted comments
     #[serde(skip)]
-    pub comments: A::Vec<'a, Comment>,
+    pub comments: Vec<'a, Comment, A>,
     pub hashbang: Option<Hashbang<'a>>,
-    pub directives: A::Vec<'a, Directive<'a>>,
-    pub body: A::Vec<'a, Statement<'a, A>>,
+    pub directives: Vec<'a, Directive<'a>, A>,
+    pub body: Vec<'a, Statement<'a, A>, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -68,89 +68,89 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum Expression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// See [`BooleanLiteral`] for AST node details.
-    BooleanLiteral(A::Box<'a, BooleanLiteral>) = 0,
+    BooleanLiteral(Box<'a, BooleanLiteral, A>) = 0,
     /// See [`NullLiteral`] for AST node details.
-    NullLiteral(A::Box<'a, NullLiteral>) = 1,
+    NullLiteral(Box<'a, NullLiteral, A>) = 1,
     /// See [`NumericLiteral`] for AST node details.
-    NumericLiteral(A::Box<'a, NumericLiteral<'a>>) = 2,
+    NumericLiteral(Box<'a, NumericLiteral<'a>, A>) = 2,
     /// See [`BigIntLiteral`] for AST node details.
-    BigIntLiteral(A::Box<'a, BigIntLiteral<'a>>) = 3,
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>, A>) = 3,
     /// See [`RegExpLiteral`] for AST node details.
-    RegExpLiteral(A::Box<'a, RegExpLiteral<'a, A>>) = 4,
+    RegExpLiteral(Box<'a, RegExpLiteral<'a, A>, A>) = 4,
     /// See [`StringLiteral`] for AST node details.
-    StringLiteral(A::Box<'a, StringLiteral<'a>>) = 5,
+    StringLiteral(Box<'a, StringLiteral<'a>, A>) = 5,
     /// See [`TemplateLiteral`] for AST node details.
-    TemplateLiteral(A::Box<'a, TemplateLiteral<'a, A>>) = 6,
+    TemplateLiteral(Box<'a, TemplateLiteral<'a, A>, A>) = 6,
 
     /// See [`IdentifierReference`] for AST node details.
-    Identifier(A::Box<'a, IdentifierReference<'a>>) = 7,
+    Identifier(Box<'a, IdentifierReference<'a>, A>) = 7,
 
     /// See [`MetaProperty`] for AST node details.
-    MetaProperty(A::Box<'a, MetaProperty<'a>>) = 8,
+    MetaProperty(Box<'a, MetaProperty<'a>, A>) = 8,
     /// See [`Super`] for AST node details.
-    Super(A::Box<'a, Super>) = 9,
+    Super(Box<'a, Super, A>) = 9,
 
     /// See [`ArrayExpression`] for AST node details.
-    ArrayExpression(A::Box<'a, ArrayExpression<'a, A>>) = 10,
+    ArrayExpression(Box<'a, ArrayExpression<'a, A>, A>) = 10,
     /// See [`ArrowFunctionExpression`] for AST node details.
-    ArrowFunctionExpression(A::Box<'a, ArrowFunctionExpression<'a, A>>) = 11,
+    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a, A>, A>) = 11,
     /// See [`AssignmentExpression`] for AST node details.
-    AssignmentExpression(A::Box<'a, AssignmentExpression<'a, A>>) = 12,
+    AssignmentExpression(Box<'a, AssignmentExpression<'a, A>, A>) = 12,
     /// See [`AwaitExpression`] for AST node details.
-    AwaitExpression(A::Box<'a, AwaitExpression<'a, A>>) = 13,
+    AwaitExpression(Box<'a, AwaitExpression<'a, A>, A>) = 13,
     /// See [`BinaryExpression`] for AST node details.
-    BinaryExpression(A::Box<'a, BinaryExpression<'a, A>>) = 14,
+    BinaryExpression(Box<'a, BinaryExpression<'a, A>, A>) = 14,
     /// See [`CallExpression`] for AST node details.
-    CallExpression(A::Box<'a, CallExpression<'a, A>>) = 15,
+    CallExpression(Box<'a, CallExpression<'a, A>, A>) = 15,
     /// See [`ChainExpression`] for AST node details.
-    ChainExpression(A::Box<'a, ChainExpression<'a, A>>) = 16,
+    ChainExpression(Box<'a, ChainExpression<'a, A>, A>) = 16,
     /// See [`Class`] for AST node details.
-    ClassExpression(A::Box<'a, Class<'a, A>>) = 17,
+    ClassExpression(Box<'a, Class<'a, A>, A>) = 17,
     /// See [`ConditionalExpression`] for AST node details.
-    ConditionalExpression(A::Box<'a, ConditionalExpression<'a, A>>) = 18,
+    ConditionalExpression(Box<'a, ConditionalExpression<'a, A>, A>) = 18,
     /// See [`Function`] for AST node details.
     #[visit(args(flags = ScopeFlags::Function))]
-    FunctionExpression(A::Box<'a, Function<'a, A>>) = 19,
+    FunctionExpression(Box<'a, Function<'a, A>, A>) = 19,
     /// See [`ImportExpression`] for AST node details.
-    ImportExpression(A::Box<'a, ImportExpression<'a, A>>) = 20,
+    ImportExpression(Box<'a, ImportExpression<'a, A>, A>) = 20,
     /// See [`LogicalExpression`] for AST node details.
-    LogicalExpression(A::Box<'a, LogicalExpression<'a, A>>) = 21,
+    LogicalExpression(Box<'a, LogicalExpression<'a, A>, A>) = 21,
     /// See [`NewExpression`] for AST node details.
-    NewExpression(A::Box<'a, NewExpression<'a, A>>) = 22,
+    NewExpression(Box<'a, NewExpression<'a, A>, A>) = 22,
     /// See [`ObjectExpression`] for AST node details.
-    ObjectExpression(A::Box<'a, ObjectExpression<'a, A>>) = 23,
+    ObjectExpression(Box<'a, ObjectExpression<'a, A>, A>) = 23,
     /// See [`ParenthesizedExpression`] for AST node details.
-    ParenthesizedExpression(A::Box<'a, ParenthesizedExpression<'a, A>>) = 24,
+    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a, A>, A>) = 24,
     /// See [`SequenceExpression`] for AST node details.
-    SequenceExpression(A::Box<'a, SequenceExpression<'a, A>>) = 25,
+    SequenceExpression(Box<'a, SequenceExpression<'a, A>, A>) = 25,
     /// See [`TaggedTemplateExpression`] for AST node details.
-    TaggedTemplateExpression(A::Box<'a, TaggedTemplateExpression<'a, A>>) = 26,
+    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a, A>, A>) = 26,
     /// See [`ThisExpression`] for AST node details.
-    ThisExpression(A::Box<'a, ThisExpression>) = 27,
+    ThisExpression(Box<'a, ThisExpression, A>) = 27,
     /// See [`UnaryExpression`] for AST node details.
-    UnaryExpression(A::Box<'a, UnaryExpression<'a, A>>) = 28,
+    UnaryExpression(Box<'a, UnaryExpression<'a, A>, A>) = 28,
     /// See [`UpdateExpression`] for AST node details.
-    UpdateExpression(A::Box<'a, UpdateExpression<'a, A>>) = 29,
+    UpdateExpression(Box<'a, UpdateExpression<'a, A>, A>) = 29,
     /// See [`YieldExpression`] for AST node details.
-    YieldExpression(A::Box<'a, YieldExpression<'a, A>>) = 30,
+    YieldExpression(Box<'a, YieldExpression<'a, A>, A>) = 30,
     /// See [`PrivateInExpression`] for AST node details.
-    PrivateInExpression(A::Box<'a, PrivateInExpression<'a, A>>) = 31,
+    PrivateInExpression(Box<'a, PrivateInExpression<'a, A>, A>) = 31,
 
     /// See [`JSXElement`] for AST node details.
-    JSXElement(A::Box<'a, JSXElement<'a, A>>) = 32,
+    JSXElement(Box<'a, JSXElement<'a, A>, A>) = 32,
     /// See [`JSXFragment`] for AST node details.
-    JSXFragment(A::Box<'a, JSXFragment<'a, A>>) = 33,
+    JSXFragment(Box<'a, JSXFragment<'a, A>, A>) = 33,
 
     /// See [`TSAsExpression`] for AST node details.
-    TSAsExpression(A::Box<'a, TSAsExpression<'a, A>>) = 34,
+    TSAsExpression(Box<'a, TSAsExpression<'a, A>, A>) = 34,
     /// See [`TSSatisfiesExpression`] for AST node details.
-    TSSatisfiesExpression(A::Box<'a, TSSatisfiesExpression<'a, A>>) = 35,
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a, A>, A>) = 35,
     /// See [`TSTypeAssertion`] for AST node details.
-    TSTypeAssertion(A::Box<'a, TSTypeAssertion<'a, A>>) = 36,
+    TSTypeAssertion(Box<'a, TSTypeAssertion<'a, A>, A>) = 36,
     /// See [`TSNonNullExpression`] for AST node details.
-    TSNonNullExpression(A::Box<'a, TSNonNullExpression<'a, A>>) = 37,
+    TSNonNullExpression(Box<'a, TSNonNullExpression<'a, A>, A>) = 37,
     /// See [`TSInstantiationExpression`] for AST node details.
-    TSInstantiationExpression(A::Box<'a, TSInstantiationExpression<'a, A>>) = 38,
+    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a, A>, A>) = 38,
 
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
@@ -314,7 +314,7 @@ pub struct ArrayExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<SpreadElement | Expression | null>")]
-    pub elements: A::Vec<'a, ArrayExpressionElement<'a, A>>,
+    pub elements: Vec<'a, ArrayExpressionElement<'a, A>, A>,
     /// Array trailing comma
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     #[serde(skip)]
@@ -334,7 +334,7 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum ArrayExpressionElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `...[3, 4]` in `const array = [1, 2, ...[3, 4], null];`
-    SpreadElement(A::Box<'a, SpreadElement<'a, A>>) = 64,
+    SpreadElement(Box<'a, SpreadElement<'a, A>, A>) = 64,
     /// `<empty>` in `const array = [1, , 2];`
     ///
     /// Array hole for sparse arrays
@@ -368,7 +368,7 @@ pub struct ObjectExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Properties declared in the object
-    pub properties: A::Vec<'a, ObjectPropertyKind<'a, A>>,
+    pub properties: Vec<'a, ObjectPropertyKind<'a, A>, A>,
     #[serde(skip)]
     pub trailing_comma: Option<Span>,
 }
@@ -381,9 +381,9 @@ pub struct ObjectExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[serde(untagged)]
 pub enum ObjectPropertyKind<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `a: 1` in `const obj = { a: 1 };`
-    ObjectProperty(A::Box<'a, ObjectProperty<'a, A>>) = 0,
+    ObjectProperty(Box<'a, ObjectProperty<'a, A>, A>) = 0,
     /// `...{ a: 1 }` in `const obj = { ...{ a: 1 } };`
-    SpreadProperty(A::Box<'a, SpreadElement<'a, A>>) = 1,
+    SpreadProperty(Box<'a, SpreadElement<'a, A>, A>) = 1,
 }
 
 /// `a: 1` in `const obj = { a: 1 };`
@@ -419,9 +419,9 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum PropertyKey<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `a` in `const obj = { a: 1 }; obj.a;`
-    StaticIdentifier(A::Box<'a, IdentifierName<'a>>) = 64,
+    StaticIdentifier(Box<'a, IdentifierName<'a>, A>) = 64,
     /// `#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
-    PrivateIdentifier(A::Box<'a, PrivateIdentifier<'a>>) = 65,
+    PrivateIdentifier(Box<'a, PrivateIdentifier<'a>, A>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
@@ -453,8 +453,8 @@ pub enum PropertyKind {
 pub struct TemplateLiteral<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub quasis: A::Vec<'a, TemplateElement<'a>>,
-    pub expressions: A::Vec<'a, Expression<'a, A>>,
+    pub quasis: Vec<'a, TemplateElement<'a>, A>,
+    pub expressions: Vec<'a, Expression<'a, A>, A>,
 }
 
 /// `` foo`Hello, ${name}` `` in `` const foo = foo`Hello, ${name}` ``
@@ -470,7 +470,7 @@ pub struct TaggedTemplateExpression<'a, A: AstAllocator = oxc_allocator::Allocat
     pub span: Span,
     pub tag: Expression<'a, A>,
     pub quasi: TemplateLiteral<'a, A>,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
 }
 
 /// `Hello, ` in `` `Hello, ${name}` ``
@@ -515,11 +515,11 @@ pub struct TemplateElementValue<'a> {
 #[serde(untagged)]
 pub enum MemberExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `ar[0]` in `const ar = [1, 2]; ar[0];`
-    ComputedMemberExpression(A::Box<'a, ComputedMemberExpression<'a, A>>) = 48,
+    ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a, A>, A>) = 48,
     /// `console.log` in `console.log('Hello, World!');`
-    StaticMemberExpression(A::Box<'a, StaticMemberExpression<'a, A>>) = 49,
+    StaticMemberExpression(Box<'a, StaticMemberExpression<'a, A>, A>) = 49,
     /// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
-    PrivateFieldExpression(A::Box<'a, PrivateFieldExpression<'a, A>>) = 50,
+    PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a, A>, A>) = 50,
 }
 
 /// Macro for matching `MemberExpression`'s variants.
@@ -606,8 +606,8 @@ pub struct CallExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub callee: Expression<'a, A>,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
-    pub arguments: A::Vec<'a, Argument<'a, A>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
+    pub arguments: Vec<'a, Argument<'a, A>, A>,
     pub optional: bool, // for optional chaining
 }
 
@@ -632,8 +632,8 @@ pub struct NewExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub callee: Expression<'a, A>,
-    pub arguments: A::Vec<'a, Argument<'a, A>>,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub arguments: Vec<'a, Argument<'a, A>, A>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
 }
 
 /// `import.meta` in `console.log(import.meta);`
@@ -679,7 +679,7 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum Argument<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `...[1, 2]` in `const arr = [...[1, 2]];`
-    SpreadElement(A::Box<'a, SpreadElement<'a, A>>) = 64,
+    SpreadElement(Box<'a, SpreadElement<'a, A>, A>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
@@ -828,12 +828,12 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
 pub enum SimpleAssignmentTarget<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    AssignmentTargetIdentifier(A::Box<'a, IdentifierReference<'a>>) = 0,
-    TSAsExpression(A::Box<'a, TSAsExpression<'a, A>>) = 1,
-    TSSatisfiesExpression(A::Box<'a, TSSatisfiesExpression<'a, A>>) = 2,
-    TSNonNullExpression(A::Box<'a, TSNonNullExpression<'a, A>>) = 3,
-    TSTypeAssertion(A::Box<'a, TSTypeAssertion<'a, A>>) = 4,
-    TSInstantiationExpression(A::Box<'a, TSInstantiationExpression<'a, A>>) = 5,
+    AssignmentTargetIdentifier(Box<'a, IdentifierReference<'a>, A>) = 0,
+    TSAsExpression(Box<'a, TSAsExpression<'a, A>, A>) = 1,
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a, A>, A>) = 2,
+    TSNonNullExpression(Box<'a, TSNonNullExpression<'a, A>, A>) = 3,
+    TSTypeAssertion(Box<'a, TSTypeAssertion<'a, A>, A>) = 4,
+    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a, A>, A>) = 5,
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
 }
@@ -883,8 +883,8 @@ pub use match_simple_assignment_target;
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum AssignmentTargetPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    ArrayAssignmentTarget(A::Box<'a, ArrayAssignmentTarget<'a, A>>) = 8,
-    ObjectAssignmentTarget(A::Box<'a, ObjectAssignmentTarget<'a, A>>) = 9,
+    ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a, A>, A>) = 8,
+    ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a, A>, A>) = 9,
 }
 
 /// Macro for matching `AssignmentTargetPattern`'s variants.
@@ -908,7 +908,7 @@ pub struct ArrayAssignmentTarget<'a, A: AstAllocator = oxc_allocator::Allocator>
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<AssignmentTargetMaybeDefault | AssignmentTargetRest | null>")]
-    pub elements: A::Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>>,
+    pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>, A>,
     #[serde(skip)]
     pub rest: Option<AssignmentTargetRest<'a, A>>,
     #[serde(skip)]
@@ -927,7 +927,7 @@ pub struct ObjectAssignmentTarget<'a, A: AstAllocator = oxc_allocator::Allocator
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<AssignmentTargetProperty | AssignmentTargetRest>")]
-    pub properties: A::Vec<'a, AssignmentTargetProperty<'a, A>>,
+    pub properties: Vec<'a, AssignmentTargetProperty<'a, A>, A>,
     #[serde(skip)]
     pub rest: Option<AssignmentTargetRest<'a, A>>,
 }
@@ -959,7 +959,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
 pub enum AssignmentTargetMaybeDefault<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    AssignmentTargetWithDefault(A::Box<'a, AssignmentTargetWithDefault<'a, A>>) = 16,
+    AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a, A>, A>) = 16,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
 }
@@ -983,8 +983,8 @@ pub struct AssignmentTargetWithDefault<'a, A: AstAllocator = oxc_allocator::Allo
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum AssignmentTargetProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    AssignmentTargetPropertyIdentifier(A::Box<'a, AssignmentTargetPropertyIdentifier<'a, A>>) = 0,
-    AssignmentTargetPropertyProperty(A::Box<'a, AssignmentTargetPropertyProperty<'a, A>>) = 1,
+    AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a, A>, A>) = 0,
+    AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a, A>, A>) = 1,
 }
 
 /// `foo` in `({ foo } = obj);`
@@ -1028,7 +1028,7 @@ pub struct AssignmentTargetPropertyProperty<'a, A: AstAllocator = oxc_allocator:
 pub struct SequenceExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub expressions: A::Vec<'a, Expression<'a, A>>,
+    pub expressions: Vec<'a, Expression<'a, A>, A>,
 }
 
 /// `super` in `class C extends B { constructor() { super(); } }`
@@ -1084,7 +1084,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
 pub enum ChainElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    CallExpression(A::Box<'a, CallExpression<'a, A>>) = 0,
+    CallExpression(Box<'a, CallExpression<'a, A>, A>) = 0,
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
 }
@@ -1118,24 +1118,24 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum Statement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // Statements
-    BlockStatement(A::Box<'a, BlockStatement<'a, A>>) = 0,
-    BreakStatement(A::Box<'a, BreakStatement<'a>>) = 1,
-    ContinueStatement(A::Box<'a, ContinueStatement<'a>>) = 2,
-    DebuggerStatement(A::Box<'a, DebuggerStatement>) = 3,
-    DoWhileStatement(A::Box<'a, DoWhileStatement<'a, A>>) = 4,
-    EmptyStatement(A::Box<'a, EmptyStatement>) = 5,
-    ExpressionStatement(A::Box<'a, ExpressionStatement<'a, A>>) = 6,
-    ForInStatement(A::Box<'a, ForInStatement<'a, A>>) = 7,
-    ForOfStatement(A::Box<'a, ForOfStatement<'a, A>>) = 8,
-    ForStatement(A::Box<'a, ForStatement<'a, A>>) = 9,
-    IfStatement(A::Box<'a, IfStatement<'a, A>>) = 10,
-    LabeledStatement(A::Box<'a, LabeledStatement<'a, A>>) = 11,
-    ReturnStatement(A::Box<'a, ReturnStatement<'a, A>>) = 12,
-    SwitchStatement(A::Box<'a, SwitchStatement<'a, A>>) = 13,
-    ThrowStatement(A::Box<'a, ThrowStatement<'a, A>>) = 14,
-    TryStatement(A::Box<'a, TryStatement<'a, A>>) = 15,
-    WhileStatement(A::Box<'a, WhileStatement<'a, A>>) = 16,
-    WithStatement(A::Box<'a, WithStatement<'a, A>>) = 17,
+    BlockStatement(Box<'a, BlockStatement<'a, A>, A>) = 0,
+    BreakStatement(Box<'a, BreakStatement<'a>, A>) = 1,
+    ContinueStatement(Box<'a, ContinueStatement<'a>, A>) = 2,
+    DebuggerStatement(Box<'a, DebuggerStatement, A>) = 3,
+    DoWhileStatement(Box<'a, DoWhileStatement<'a, A>, A>) = 4,
+    EmptyStatement(Box<'a, EmptyStatement, A>) = 5,
+    ExpressionStatement(Box<'a, ExpressionStatement<'a, A>, A>) = 6,
+    ForInStatement(Box<'a, ForInStatement<'a, A>, A>) = 7,
+    ForOfStatement(Box<'a, ForOfStatement<'a, A>, A>) = 8,
+    ForStatement(Box<'a, ForStatement<'a, A>, A>) = 9,
+    IfStatement(Box<'a, IfStatement<'a, A>, A>) = 10,
+    LabeledStatement(Box<'a, LabeledStatement<'a, A>, A>) = 11,
+    ReturnStatement(Box<'a, ReturnStatement<'a, A>, A>) = 12,
+    SwitchStatement(Box<'a, SwitchStatement<'a, A>, A>) = 13,
+    ThrowStatement(Box<'a, ThrowStatement<'a, A>, A>) = 14,
+    TryStatement(Box<'a, TryStatement<'a, A>, A>) = 15,
+    WhileStatement(Box<'a, WhileStatement<'a, A>, A>) = 16,
+    WithStatement(Box<'a, WithStatement<'a, A>, A>) = 17,
     // `Declaration` variants added here by `inherit_variants!` macro
     @inherit Declaration
     // `ModuleDeclaration` variants added here by `inherit_variants!` macro
@@ -1186,7 +1186,7 @@ pub struct Hashbang<'a> {
 pub struct BlockStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: A::Vec<'a, Statement<'a, A>>,
+    pub body: Vec<'a, Statement<'a, A>, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1199,16 +1199,16 @@ pub struct BlockStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum Declaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    VariableDeclaration(A::Box<'a, VariableDeclaration<'a, A>>) = 32,
+    VariableDeclaration(Box<'a, VariableDeclaration<'a, A>, A>) = 32,
     #[visit(args(flags = ScopeFlags::Function))]
-    FunctionDeclaration(A::Box<'a, Function<'a, A>>) = 33,
-    ClassDeclaration(A::Box<'a, Class<'a, A>>) = 34,
+    FunctionDeclaration(Box<'a, Function<'a, A>, A>) = 33,
+    ClassDeclaration(Box<'a, Class<'a, A>, A>) = 34,
 
-    TSTypeAliasDeclaration(A::Box<'a, TSTypeAliasDeclaration<'a, A>>) = 35,
-    TSInterfaceDeclaration(A::Box<'a, TSInterfaceDeclaration<'a, A>>) = 36,
-    TSEnumDeclaration(A::Box<'a, TSEnumDeclaration<'a, A>>) = 37,
-    TSModuleDeclaration(A::Box<'a, TSModuleDeclaration<'a, A>>) = 38,
-    TSImportEqualsDeclaration(A::Box<'a, TSImportEqualsDeclaration<'a, A>>) = 39,
+    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a, A>, A>) = 35,
+    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a, A>, A>) = 36,
+    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a, A>, A>) = 37,
+    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a, A>, A>) = 38,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a, A>, A>) = 39,
 }
 
 /// Macro for matching `Declaration`'s variants.
@@ -1239,7 +1239,7 @@ pub struct VariableDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub kind: VariableDeclarationKind,
-    pub declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+    pub declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
     pub declare: bool,
 }
 
@@ -1374,7 +1374,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
 pub enum ForStatementInit<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    VariableDeclaration(A::Box<'a, VariableDeclaration<'a, A>>) = 64,
+    VariableDeclaration(Box<'a, VariableDeclaration<'a, A>, A>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
@@ -1410,7 +1410,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
 pub enum ForStatementLeft<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    VariableDeclaration(A::Box<'a, VariableDeclaration<'a, A>>) = 16,
+    VariableDeclaration(Box<'a, VariableDeclaration<'a, A>, A>) = 16,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
 }
@@ -1495,7 +1495,7 @@ pub struct SwitchStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub span: Span,
     pub discriminant: Expression<'a, A>,
     #[scope(enter_before)]
-    pub cases: A::Vec<'a, SwitchCase<'a, A>>,
+    pub cases: Vec<'a, SwitchCase<'a, A>, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1510,7 +1510,7 @@ pub struct SwitchCase<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub test: Option<Expression<'a, A>>,
-    pub consequent: A::Vec<'a, Statement<'a, A>>,
+    pub consequent: Vec<'a, Statement<'a, A>, A>,
 }
 
 /// Labelled Statement
@@ -1569,12 +1569,12 @@ pub struct TryStatement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Statements in the `try` block
-    pub block: A::Box<'a, BlockStatement<'a, A>>,
+    pub block: Box<'a, BlockStatement<'a, A>, A>,
     /// The `catch` clause, including the parameter and the block statement
-    pub handler: Option<A::Box<'a, CatchClause<'a, A>>>,
+    pub handler: Option<Box<'a, CatchClause<'a, A>, A>>,
     /// The `finally` clause
     #[visit(as(FinallyClause))]
-    pub finalizer: Option<A::Box<'a, BlockStatement<'a, A>>>,
+    pub finalizer: Option<Box<'a, BlockStatement<'a, A>, A>>,
 }
 
 /// Catch Clause in a [`try/catch` statement](TryStatement).
@@ -1601,7 +1601,7 @@ pub struct CatchClause<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// The caught error parameter, e.g. `e` in `catch (e) {}`
     pub param: Option<CatchParameter<'a, A>>,
     /// The statements run when an error is caught
-    pub body: A::Box<'a, BlockStatement<'a, A>>,
+    pub body: Box<'a, BlockStatement<'a, A>, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1662,7 +1662,7 @@ pub struct BindingPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[tsify(type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)")]
     #[span]
     pub kind: BindingPatternKind<'a, A>,
-    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
     pub optional: Option<TSOptionalMark>,
 }
 
@@ -1673,16 +1673,16 @@ pub struct BindingPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[serde(untagged)]
 pub enum BindingPatternKind<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `const a = 1`
-    BindingIdentifier(A::Box<'a, BindingIdentifier<'a>>) = 0,
+    BindingIdentifier(Box<'a, BindingIdentifier<'a>, A>) = 0,
     /// `const {a} = 1`
-    ObjectPattern(A::Box<'a, ObjectPattern<'a, A>>) = 1,
+    ObjectPattern(Box<'a, ObjectPattern<'a, A>, A>) = 1,
     /// `const [a] = 1`
-    ArrayPattern(A::Box<'a, ArrayPattern<'a, A>>) = 2,
+    ArrayPattern(Box<'a, ArrayPattern<'a, A>, A>) = 2,
     /// A defaulted binding pattern, i.e.:
     /// `const {a = 1} = 1`
     /// the assignment pattern is `a = 1`
     /// it has an inner left that has a BindingIdentifier
-    AssignmentPattern(A::Box<'a, AssignmentPattern<'a, A>>) = 3,
+    AssignmentPattern(Box<'a, AssignmentPattern<'a, A>, A>) = 3,
 }
 
 #[ast(visit)]
@@ -1707,9 +1707,9 @@ pub struct ObjectPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<BindingProperty | BindingRestElement>")]
-    pub properties: A::Vec<'a, BindingProperty<'a, A>>,
+    pub properties: Vec<'a, BindingProperty<'a, A>, A>,
     #[serde(skip)]
-    pub rest: Option<A::Box<'a, BindingRestElement<'a, A>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a, A>, A>>,
 }
 
 #[ast(visit)]
@@ -1736,9 +1736,9 @@ pub struct ArrayPattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[tsify(type = "Array<BindingPattern | BindingRestElement | null>")]
-    pub elements: A::Vec<'a, Option<BindingPattern<'a, A>>>,
+    pub elements: Vec<'a, Option<BindingPattern<'a, A>>, A>,
     #[serde(skip)]
-    pub rest: Option<A::Box<'a, BindingRestElement<'a, A>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a, A>, A>>,
 }
 
 /// A `...rest` binding in an [array](ArrayPattern) or [object](ObjectPattern) destructure.
@@ -1821,7 +1821,7 @@ pub struct Function<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub generator: bool,
     pub r#async: bool,
     pub declare: bool,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
     ///
     /// The JavaScript specification states that you cannot have a parameter called `this`,
@@ -1838,13 +1838,13 @@ pub struct Function<'a, A: AstAllocator = oxc_allocator::Allocator> {
     ///     return this.admin;
     /// });
     /// ```
-    pub this_param: Option<A::Box<'a, TSThisParameter<'a, A>>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a, A>, A>>,
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
-    pub params: A::Box<'a, FormalParameters<'a, A>>,
+    pub params: Box<'a, FormalParameters<'a, A>, A>,
     /// The TypeScript return type annotation.
-    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
     /// The function body.
     ///
     /// [`None`] for function declarations, e.g.
@@ -1857,7 +1857,7 @@ pub struct Function<'a, A: AstAllocator = oxc_allocator::Allocator> {
     ///     return a;
     /// }
     /// ```
-    pub body: Option<A::Box<'a, FunctionBody<'a, A>>>,
+    pub body: Option<Box<'a, FunctionBody<'a, A>, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1887,9 +1887,9 @@ pub struct FormalParameters<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub span: Span,
     pub kind: FormalParameterKind,
     #[tsify(type = "Array<FormalParameter | FormalParameterRest>")]
-    pub items: A::Vec<'a, FormalParameter<'a, A>>,
+    pub items: Vec<'a, FormalParameter<'a, A>, A>,
     #[serde(skip)]
-    pub rest: Option<A::Box<'a, BindingRestElement<'a, A>>>,
+    pub rest: Option<Box<'a, BindingRestElement<'a, A>, A>>,
 }
 
 #[ast(visit)]
@@ -1911,7 +1911,7 @@ pub struct FormalParameterModifiers {
 pub struct FormalParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub decorators: Vec<'a, Decorator<'a, A>, A>,
     pub modifiers: Option<FormalParameterModifiers>,
     pub pattern: BindingPattern<'a, A>,
 }
@@ -1940,8 +1940,8 @@ pub enum FormalParameterKind {
 pub struct FunctionBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub directives: A::Vec<'a, Directive<'a>>,
-    pub statements: A::Vec<'a, Statement<'a, A>>,
+    pub directives: Vec<'a, Directive<'a>, A>,
+    pub statements: Vec<'a, Statement<'a, A>, A>,
 }
 
 /// Arrow Function Definitions
@@ -1960,11 +1960,11 @@ pub struct ArrowFunctionExpression<'a, A: AstAllocator = oxc_allocator::Allocato
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
     pub r#async: bool,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
-    pub params: A::Box<'a, FormalParameters<'a, A>>,
-    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
+    pub params: Box<'a, FormalParameters<'a, A>, A>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
     /// See `expression` for whether this arrow expression returns an expression.
-    pub body: A::Box<'a, FunctionBody<'a, A>>,
+    pub body: Box<'a, FunctionBody<'a, A>, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -2030,14 +2030,14 @@ pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// @Bar() // <-- Decorator
     /// class Foo {}
     /// ```
-    pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub decorators: Vec<'a, Decorator<'a, A>, A>,
 
     pub modifiers: Option<ClassModifiers>,
     /// Class identifier, AKA the name
     pub id: Option<BindingIdentifier<'a>>,
 
     #[scope(enter_before)]
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
     /// Super class. When present, this will usually be an [`IdentifierReference`].
     ///
     /// ## Example
@@ -2054,7 +2054,7 @@ pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// class Foo<T> extends Bar<T> {}
     /// //                       ^
     /// ```
-    pub super_type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
     /// Interface implementation clause for TypeScript classes.
     ///
     /// ## Example
@@ -2064,7 +2064,7 @@ pub struct Class<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// //                   ^^^
     /// ```
     pub implements: Option<TSClassImplements<'a, A>>,
-    pub body: A::Box<'a, ClassBody<'a, A>>,
+    pub body: Box<'a, ClassBody<'a, A>, A>,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
     #[serde(skip)]
@@ -2098,7 +2098,7 @@ pub enum ClassType {
 pub struct ClassBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: A::Vec<'a, ClassElement<'a, A>>,
+    pub body: Vec<'a, ClassElement<'a, A>, A>,
 }
 
 /// Class Body Element
@@ -2125,13 +2125,13 @@ pub struct ClassBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum ClassElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    StaticBlock(A::Box<'a, StaticBlock<'a, A>>) = 0,
+    StaticBlock(Box<'a, StaticBlock<'a, A>, A>) = 0,
     /// Class Methods
     ///
     /// Includes static and non-static methods, constructors, getters, and setters.
-    MethodDefinition(A::Box<'a, MethodDefinition<'a, A>>) = 1,
-    PropertyDefinition(A::Box<'a, PropertyDefinition<'a, A>>) = 2,
-    AccessorProperty(A::Box<'a, AccessorProperty<'a, A>>) = 3,
+    MethodDefinition(Box<'a, MethodDefinition<'a, A>, A>) = 1,
+    PropertyDefinition(Box<'a, PropertyDefinition<'a, A>, A>) = 2,
+    AccessorProperty(Box<'a, AccessorProperty<'a, A>, A>) = 3,
     /// Index Signature
     ///
     /// ## Example
@@ -2140,7 +2140,7 @@ pub enum ClassElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     ///   [keys: string]: string
     /// }
     /// ```
-    TSIndexSignature(A::Box<'a, TSIndexSignature<'a, A>>) = 4,
+    TSIndexSignature(Box<'a, TSIndexSignature<'a, A>, A>) = 4,
 }
 
 #[ast(visit)]
@@ -2151,7 +2151,7 @@ pub enum ClassElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct MethodDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub decorators: Vec<'a, Decorator<'a, A>, A>,
     pub modifiers: Option<ClassElementModifiers>,
     pub key: PropertyKey<'a, A>,
     #[visit(args(flags = match self.kind {
@@ -2236,7 +2236,7 @@ pub struct PropertyDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// Decorators applied to the property.
     ///
     /// See [`Decorator`] for more information.
-    pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub decorators: Vec<'a, Decorator<'a, A>, A>,
 
     pub modifiers: Option<ClassElementModifiers>,
     /// The expression used to declare the property.
@@ -2273,7 +2273,7 @@ pub struct PropertyDefinition<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// Type annotation on the property.
     ///
     /// Will only ever be [`Some`] for TypeScript files.
-    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
 }
 
 #[ast]
@@ -2337,7 +2337,7 @@ pub struct PrivateIdentifier<'a> {
 pub struct StaticBlock<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: A::Vec<'a, Statement<'a, A>>,
+    pub body: Vec<'a, Statement<'a, A>, A>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -2374,19 +2374,19 @@ pub struct StaticBlock<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub enum ModuleDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// `import hello from './world.js';`
     /// `import * as t from './world.js';`
-    ImportDeclaration(A::Box<'a, ImportDeclaration<'a, A>>) = 64,
+    ImportDeclaration(Box<'a, ImportDeclaration<'a, A>, A>) = 64,
     /// `export * as numbers from '../numbers.js'`
-    ExportAllDeclaration(A::Box<'a, ExportAllDeclaration<'a, A>>) = 65,
+    ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a, A>, A>) = 65,
     /// `export default 5;`
-    ExportDefaultDeclaration(A::Box<'a, ExportDefaultDeclaration<'a, A>>) = 66,
+    ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a, A>, A>) = 66,
     /// `export {five} from './numbers.js';`
     /// `export {six, seven};`
-    ExportNamedDeclaration(A::Box<'a, ExportNamedDeclaration<'a, A>>) = 67,
+    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a, A>, A>) = 67,
 
     /// `export = 5;`
-    TSExportAssignment(A::Box<'a, TSExportAssignment<'a, A>>) = 68,
+    TSExportAssignment(Box<'a, TSExportAssignment<'a, A>, A>) = 68,
     /// `export as namespace React;`
-    TSNamespaceExportDeclaration(A::Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>, A>) = 69,
 }
 
 /// Macro for matching `ModuleDeclaration`'s variants.
@@ -2431,7 +2431,7 @@ pub struct AccessorProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// Decorators applied to the accessor property.
     ///
     /// See [`Decorator`] for more information.
-    pub decorators: A::Vec<'a, Decorator<'a, A>>,
+    pub decorators: Vec<'a, Decorator<'a, A>, A>,
 
     pub modifiers: Option<ClassElementModifiers>,
 
@@ -2446,7 +2446,7 @@ pub struct AccessorProperty<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// Type annotation on the property.
     ///
     /// Will only ever be [`Some`] for TypeScript files.
-    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
 }
 
 #[ast(visit)]
@@ -2458,7 +2458,7 @@ pub struct ImportExpression<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub source: Expression<'a, A>,
-    pub arguments: A::Vec<'a, Expression<'a, A>>,
+    pub arguments: Vec<'a, Expression<'a, A>, A>,
 }
 
 #[ast(visit)]
@@ -2470,10 +2470,10 @@ pub struct ImportDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    pub specifiers: Option<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>>,
+    pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>>,
     pub source: StringLiteral<'a>,
     /// Some(vec![]) for empty assertion
-    pub with_clause: Option<A::Box<'a, WithClause<'a, A>>>,
+    pub with_clause: Option<Box<'a, WithClause<'a, A>, A>>,
     /// `import type { foo } from 'bar'`
     pub import_kind: ImportOrExportKind,
 }
@@ -2486,11 +2486,11 @@ pub struct ImportDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub enum ImportDeclarationSpecifier<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
-    ImportSpecifier(A::Box<'a, ImportSpecifier<'a>>) = 0,
+    ImportSpecifier(Box<'a, ImportSpecifier<'a>, A>) = 0,
     /// import local from "source"
-    ImportDefaultSpecifier(A::Box<'a, ImportDefaultSpecifier<'a>>) = 1,
+    ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>, A>) = 1,
     /// import * as local from "source"
-    ImportNamespaceSpecifier(A::Box<'a, ImportNamespaceSpecifier<'a>>) = 2,
+    ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>, A>) = 2,
 }
 
 // import {imported} from "source"
@@ -2564,7 +2564,7 @@ pub struct WithClause<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
-    pub with_entries: A::Vec<'a, ImportAttribute<'a>>,
+    pub with_entries: Vec<'a, ImportAttribute<'a>, A>,
 }
 
 #[ast(visit)]
@@ -2609,12 +2609,12 @@ pub struct ExportNamedDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator
     #[serde(flatten)]
     pub span: Span,
     pub declaration: Option<Declaration<'a, A>>,
-    pub specifiers: A::Vec<'a, ExportSpecifier<'a>>,
+    pub specifiers: Vec<'a, ExportSpecifier<'a>, A>,
     pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
-    pub with_clause: Option<A::Box<'a, WithClause<'a, A>>>,
+    pub with_clause: Option<Box<'a, WithClause<'a, A>, A>>,
 }
 
 /// Export Default Declaration
@@ -2659,7 +2659,7 @@ pub struct ExportAllDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> 
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
-    pub with_clause: Option<A::Box<'a, WithClause<'a, A>>>, // Some(vec![]) for empty assertion
+    pub with_clause: Option<Box<'a, WithClause<'a, A>, A>>, // Some(vec![]) for empty assertion
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 
@@ -2700,10 +2700,10 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum ExportDefaultDeclarationKind<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[visit(args(flags = ScopeFlags::Function))]
-    FunctionDeclaration(A::Box<'a, Function<'a, A>>) = 64,
-    ClassDeclaration(A::Box<'a, Class<'a, A>>) = 65,
+    FunctionDeclaration(Box<'a, Function<'a, A>, A>) = 64,
+    ClassDeclaration(Box<'a, Class<'a, A>, A>) = 65,
 
-    TSInterfaceDeclaration(A::Box<'a, TSInterfaceDeclaration<'a, A>>) = 66,
+    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a, A>, A>) = 66,
 
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression

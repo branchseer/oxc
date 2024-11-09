@@ -150,7 +150,7 @@ fn lifetime_variance() {
     // Variance infer doesn't work on concrete GAT types.
     // The struct below doesn't pass the variance test but the type alias above does.
     // Could be a rust compiler limitation.
-    // struct Node<'a, A: AstAllocator = oxc_allocator::Allocator>(A::Vec<'a, u8>);
+    // struct Node<'a, A: AstAllocator = oxc_allocator::Allocator>(Vec<'a, u8, A>);
 
     fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: Node<'a>) -> Node<'b> {
         program

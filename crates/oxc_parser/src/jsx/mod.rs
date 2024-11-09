@@ -6,8 +6,8 @@ use crate::{diagnostics, lexer::Kind, Context, ParserImpl};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::traits::Box;
-use oxc_span::{ast_alloc::traits::Vec as _, cast_ref, Atom, GetSpan, Span};
+use oxc_span::ast_alloc::{traits::Box as _, Box};
+use oxc_span::{ast_alloc::{traits::Vec as _, Vec}, cast_ref, Atom, GetSpan, Span};
 
 impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Result<Expression<'a, A>> {
@@ -20,7 +20,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `JSXFragment` :
     ///   < > `JSXChildren_opt` < / >
-    fn parse_jsx_fragment(&mut self, in_jsx_child: bool) -> Result<A::Box<'a, JSXFragment<'a, A>>> {
+    fn parse_jsx_fragment(&mut self, in_jsx_child: bool) -> Result<Box<'a, JSXFragment<'a, A>, A>> {
         let span = self.start_span();
         let opening_fragment = self.parse_jsx_opening_fragment(span)?;
         let children = self.parse_jsx_children()?;
@@ -59,7 +59,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     /// `in_jsx_child`:
     ///     used for telling `JSXClosingElement` to parse the next jsx child or not
     ///     true when inside jsx element, false when at top level expression
-    fn parse_jsx_element(&mut self, in_jsx_child: bool) -> Result<A::Box<'a, JSXElement<'a, A>>> {
+    fn parse_jsx_element(&mut self, in_jsx_child: bool) -> Result<Box<'a, JSXElement<'a, A>, A>> {
         let span = self.start_span();
         let opening_element = self.parse_jsx_opening_element(span, in_jsx_child)?;
         let children =
@@ -121,7 +121,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     fn parse_jsx_closing_element(
         &mut self,
         in_jsx_child: bool,
-    ) -> Result<A::Box<'a, JSXClosingElement<'a, A>>> {
+    ) -> Result<Box<'a, JSXClosingElement<'a, A>, A>> {
         let span = self.start_span();
         self.expect(Kind::LAngle)?;
         self.expect(Kind::Slash)?;
@@ -191,7 +191,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         &mut self,
         span: Span,
         object: JSXIdentifier<'a>,
-    ) -> Result<A::Box<'a, JSXMemberExpression<'a, A>>> {
+    ) -> Result<Box<'a, JSXMemberExpression<'a, A>, A>> {
         let mut object = if object.name == "this" {
             let object = self.ast.this_expression(object.span);
             JSXMemberExpressionObject::ThisExpression(self.ast.alloc(object))
@@ -229,7 +229,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `JSXChildren` :
     ///   `JSXChild` `JSXChildren_opt`
-    fn parse_jsx_children(&mut self) -> Result<A::Vec<'a, JSXChild<'a, A>>> {
+    fn parse_jsx_children(&mut self) -> Result<Vec<'a, JSXChild<'a, A>, A>> {
         let mut children = self.ast.vec();
         while !self.at(Kind::Eof) {
             if let Some(child) = self.parse_jsx_child()? {
@@ -278,7 +278,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     fn parse_jsx_expression_container(
         &mut self,
         in_jsx_child: bool,
-    ) -> Result<A::Box<'a, JSXExpressionContainer<'a, A>>> {
+    ) -> Result<Box<'a, JSXExpressionContainer<'a, A>, A>> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
 
@@ -320,7 +320,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `JSXChildExpression` :
     ///   { ... `AssignmentExpression` }
-    fn parse_jsx_spread_child(&mut self) -> Result<A::Box<'a, JSXSpreadChild<'a, A>>> {
+    fn parse_jsx_spread_child(&mut self) -> Result<Box<'a, JSXSpreadChild<'a, A>, A>> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
         self.expect(Kind::Dot3)?;
@@ -332,7 +332,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     /// `JSXAttributes` :
     ///   `JSXSpreadAttribute` `JSXAttributes_opt`
     ///   `JSXAttribute` `JSXAttributes_opt`
-    fn parse_jsx_attributes(&mut self) -> Result<A::Vec<'a, JSXAttributeItem<'a, A>>> {
+    fn parse_jsx_attributes(&mut self) -> Result<Vec<'a, JSXAttributeItem<'a, A>, A>> {
         let mut attributes = self.ast.vec();
         while !matches!(self.cur_kind(), Kind::Eof | Kind::LAngle | Kind::RAngle | Kind::Slash) {
             let attribute = match self.cur_kind() {
@@ -348,7 +348,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `JSXAttribute` :
     ///   `JSXAttributeName` `JSXAttributeInitializer_opt`
-    fn parse_jsx_attribute(&mut self) -> Result<A::Box<'a, JSXAttribute<'a, A>>> {
+    fn parse_jsx_attribute(&mut self) -> Result<Box<'a, JSXAttribute<'a, A>, A>> {
         let span = self.start_span();
         let name = self.parse_jsx_attribute_name()?;
         let value = if self.at(Kind::Eq) {
@@ -362,7 +362,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `JSXSpreadAttribute` :
     ///   { ... `AssignmentExpression` }
-    fn parse_jsx_spread_attribute(&mut self) -> Result<A::Box<'a, JSXSpreadAttribute<'a, A>>> {
+    fn parse_jsx_spread_attribute(&mut self) -> Result<Box<'a, JSXSpreadAttribute<'a, A>, A>> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
         self.expect(Kind::Dot3)?;
@@ -427,7 +427,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         Ok(self.ast.jsx_identifier(span, name))
     }
 
-    fn parse_jsx_text(&mut self) -> A::Box<'a, JSXText<'a>> {
+    fn parse_jsx_text(&mut self) -> Box<'a, JSXText<'a>, A> {
         let span = self.start_span();
         let value = Atom::from(self.cur_string());
         self.bump_any();

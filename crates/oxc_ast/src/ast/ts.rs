@@ -23,7 +23,7 @@ use tsify::Tsify;
 
 use super::{inherit_variants, js::*, jsx::*, literal::*};
 use derive_where::derive_where;
-use oxc_span::ast_alloc::AstAllocator;
+use oxc_span::ast_alloc::{AstAllocator, Vec, Box};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -55,7 +55,7 @@ pub struct TSThisParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub span: Span,
     pub this_span: Span,
     /// Type type the `this` keyword will have in the function
-    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
 }
 
 /// Enum Declaration
@@ -89,7 +89,7 @@ pub struct TSEnumDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
-    pub members: A::Vec<'a, TSEnumMember<'a, A>>,
+    pub members: Vec<'a, TSEnumMember<'a, A>, A>,
     /// `true` for const enums
     pub r#const: bool,
     pub declare: bool,
@@ -140,11 +140,11 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
 pub enum TSEnumMemberName<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    StaticIdentifier(A::Box<'a, IdentifierName<'a>>) = 64,
-    StaticStringLiteral(A::Box<'a, StringLiteral<'a>>) = 65,
-    StaticTemplateLiteral(A::Box<'a, TemplateLiteral<'a, A>>) = 66,
+    StaticIdentifier(Box<'a, IdentifierName<'a>, A>) = 64,
+    StaticStringLiteral(Box<'a, StringLiteral<'a>, A>) = 65,
+    StaticTemplateLiteral(Box<'a, TemplateLiteral<'a, A>, A>) = 66,
     // Invalid Grammar `enum E { 1 }`
-    StaticNumericLiteral(A::Box<'a, NumericLiteral<'a>>) = 67,
+    StaticNumericLiteral(Box<'a, NumericLiteral<'a>, A>) = 67,
     // Invalid Grammar `enum E { [computed] }`
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
@@ -208,14 +208,14 @@ pub struct TSLiteralType<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSLiteral<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    BooleanLiteral(A::Box<'a, BooleanLiteral>) = 0,
-    NullLiteral(A::Box<'a, NullLiteral>) = 1,
-    NumericLiteral(A::Box<'a, NumericLiteral<'a>>) = 2,
-    BigIntLiteral(A::Box<'a, BigIntLiteral<'a>>) = 3,
-    RegExpLiteral(A::Box<'a, RegExpLiteral<'a, A>>) = 4,
-    StringLiteral(A::Box<'a, StringLiteral<'a>>) = 5,
-    TemplateLiteral(A::Box<'a, TemplateLiteral<'a, A>>) = 6,
-    UnaryExpression(A::Box<'a, UnaryExpression<'a, A>>) = 7,
+    BooleanLiteral(Box<'a, BooleanLiteral, A>) = 0,
+    NullLiteral(Box<'a, NullLiteral, A>) = 1,
+    NumericLiteral(Box<'a, NumericLiteral<'a>, A>) = 2,
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>, A>) = 3,
+    RegExpLiteral(Box<'a, RegExpLiteral<'a, A>, A>) = 4,
+    StringLiteral(Box<'a, StringLiteral<'a>, A>) = 5,
+    TemplateLiteral(Box<'a, TemplateLiteral<'a, A>, A>) = 6,
+    UnaryExpression(Box<'a, UnaryExpression<'a, A>, A>) = 7,
 }
 
 /// TypeScript Type
@@ -236,46 +236,46 @@ pub enum TSLiteral<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // Keyword
-    TSAnyKeyword(A::Box<'a, TSAnyKeyword>) = 0,
-    TSBigIntKeyword(A::Box<'a, TSBigIntKeyword>) = 1,
-    TSBooleanKeyword(A::Box<'a, TSBooleanKeyword>) = 2,
-    TSIntrinsicKeyword(A::Box<'a, TSIntrinsicKeyword>) = 3,
-    TSNeverKeyword(A::Box<'a, TSNeverKeyword>) = 4,
-    TSNullKeyword(A::Box<'a, TSNullKeyword>) = 5,
-    TSNumberKeyword(A::Box<'a, TSNumberKeyword>) = 6,
-    TSObjectKeyword(A::Box<'a, TSObjectKeyword>) = 7,
-    TSStringKeyword(A::Box<'a, TSStringKeyword>) = 8,
-    TSSymbolKeyword(A::Box<'a, TSSymbolKeyword>) = 9,
-    TSUndefinedKeyword(A::Box<'a, TSUndefinedKeyword>) = 11,
-    TSUnknownKeyword(A::Box<'a, TSUnknownKeyword>) = 12,
-    TSVoidKeyword(A::Box<'a, TSVoidKeyword>) = 13,
+    TSAnyKeyword(Box<'a, TSAnyKeyword, A>) = 0,
+    TSBigIntKeyword(Box<'a, TSBigIntKeyword, A>) = 1,
+    TSBooleanKeyword(Box<'a, TSBooleanKeyword, A>) = 2,
+    TSIntrinsicKeyword(Box<'a, TSIntrinsicKeyword, A>) = 3,
+    TSNeverKeyword(Box<'a, TSNeverKeyword, A>) = 4,
+    TSNullKeyword(Box<'a, TSNullKeyword, A>) = 5,
+    TSNumberKeyword(Box<'a, TSNumberKeyword, A>) = 6,
+    TSObjectKeyword(Box<'a, TSObjectKeyword, A>) = 7,
+    TSStringKeyword(Box<'a, TSStringKeyword, A>) = 8,
+    TSSymbolKeyword(Box<'a, TSSymbolKeyword, A>) = 9,
+    TSUndefinedKeyword(Box<'a, TSUndefinedKeyword, A>) = 11,
+    TSUnknownKeyword(Box<'a, TSUnknownKeyword, A>) = 12,
+    TSVoidKeyword(Box<'a, TSVoidKeyword, A>) = 13,
     // Compound
-    TSArrayType(A::Box<'a, TSArrayType<'a, A>>) = 14,
-    TSConditionalType(A::Box<'a, TSConditionalType<'a, A>>) = 15,
-    TSConstructorType(A::Box<'a, TSConstructorType<'a, A>>) = 16,
-    TSFunctionType(A::Box<'a, TSFunctionType<'a, A>>) = 17,
-    TSImportType(A::Box<'a, TSImportType<'a, A>>) = 18,
-    TSIndexedAccessType(A::Box<'a, TSIndexedAccessType<'a, A>>) = 19,
-    TSInferType(A::Box<'a, TSInferType<'a, A>>) = 20,
-    TSIntersectionType(A::Box<'a, TSIntersectionType<'a, A>>) = 21,
-    TSLiteralType(A::Box<'a, TSLiteralType<'a, A>>) = 22,
-    TSMappedType(A::Box<'a, TSMappedType<'a, A>>) = 23,
-    TSNamedTupleMember(A::Box<'a, TSNamedTupleMember<'a, A>>) = 24,
-    TSQualifiedName(A::Box<'a, TSQualifiedName<'a, A>>) = 25,
-    TSTemplateLiteralType(A::Box<'a, TSTemplateLiteralType<'a, A>>) = 26,
-    TSThisType(A::Box<'a, TSThisType>) = 10,
-    TSTupleType(A::Box<'a, TSTupleType<'a, A>>) = 27,
-    TSTypeLiteral(A::Box<'a, TSTypeLiteral<'a, A>>) = 28,
-    TSTypeOperatorType(A::Box<'a, TSTypeOperator<'a, A>>) = 29,
-    TSTypePredicate(A::Box<'a, TSTypePredicate<'a, A>>) = 30,
-    TSTypeQuery(A::Box<'a, TSTypeQuery<'a, A>>) = 31,
-    TSTypeReference(A::Box<'a, TSTypeReference<'a, A>>) = 32,
-    TSUnionType(A::Box<'a, TSUnionType<'a, A>>) = 33,
-    TSParenthesizedType(A::Box<'a, TSParenthesizedType<'a, A>>) = 34,
+    TSArrayType(Box<'a, TSArrayType<'a, A>, A>) = 14,
+    TSConditionalType(Box<'a, TSConditionalType<'a, A>, A>) = 15,
+    TSConstructorType(Box<'a, TSConstructorType<'a, A>, A>) = 16,
+    TSFunctionType(Box<'a, TSFunctionType<'a, A>, A>) = 17,
+    TSImportType(Box<'a, TSImportType<'a, A>, A>) = 18,
+    TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a, A>, A>) = 19,
+    TSInferType(Box<'a, TSInferType<'a, A>, A>) = 20,
+    TSIntersectionType(Box<'a, TSIntersectionType<'a, A>, A>) = 21,
+    TSLiteralType(Box<'a, TSLiteralType<'a, A>, A>) = 22,
+    TSMappedType(Box<'a, TSMappedType<'a, A>, A>) = 23,
+    TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a, A>, A>) = 24,
+    TSQualifiedName(Box<'a, TSQualifiedName<'a, A>, A>) = 25,
+    TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a, A>, A>) = 26,
+    TSThisType(Box<'a, TSThisType, A>) = 10,
+    TSTupleType(Box<'a, TSTupleType<'a, A>, A>) = 27,
+    TSTypeLiteral(Box<'a, TSTypeLiteral<'a, A>, A>) = 28,
+    TSTypeOperatorType(Box<'a, TSTypeOperator<'a, A>, A>) = 29,
+    TSTypePredicate(Box<'a, TSTypePredicate<'a, A>, A>) = 30,
+    TSTypeQuery(Box<'a, TSTypeQuery<'a, A>, A>) = 31,
+    TSTypeReference(Box<'a, TSTypeReference<'a, A>, A>) = 32,
+    TSUnionType(Box<'a, TSUnionType<'a, A>, A>) = 33,
+    TSParenthesizedType(Box<'a, TSParenthesizedType<'a, A>, A>) = 34,
     // JSDoc
-    JSDocNullableType(A::Box<'a, JSDocNullableType<'a, A>>) = 35,
-    JSDocNonNullableType(A::Box<'a, JSDocNonNullableType<'a, A>>) = 36,
-    JSDocUnknownType(A::Box<'a, JSDocUnknownType>) = 37,
+    JSDocNullableType(Box<'a, JSDocNullableType<'a, A>, A>) = 35,
+    JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a, A>, A>) = 36,
+    JSDocUnknownType(Box<'a, JSDocUnknownType, A>) = 37,
 }
 
 /// Macro for matching `TSType`'s variants.
@@ -379,7 +379,7 @@ pub struct TSUnionType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The types in the union.
-    pub types: A::Vec<'a, TSType<'a, A>>,
+    pub types: Vec<'a, TSType<'a, A>, A>,
 }
 
 /// TypeScript Intersection Type
@@ -403,7 +403,7 @@ pub struct TSUnionType<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSIntersectionType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub types: A::Vec<'a, TSType<'a, A>>,
+    pub types: Vec<'a, TSType<'a, A>, A>,
 }
 
 /// Parenthesized Type
@@ -522,7 +522,7 @@ pub struct TSIndexedAccessType<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSTupleType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub element_types: A::Vec<'a, TSTupleElement<'a, A>>,
+    pub element_types: Vec<'a, TSTupleElement<'a, A>, A>,
 }
 
 /// TypeScript Named Tuple Member
@@ -603,8 +603,8 @@ inherit_variants! {
 pub enum TSTupleElement<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // Discriminants start at 64, so that `TSTupleElement::is_ts_type` is a single
     // bitwise AND operation on the discriminant (`discriminant & 63 != 0`).
-    TSOptionalType(A::Box<'a, TSOptionalType<'a, A>>) = 64,
-    TSRestType(A::Box<'a, TSRestType<'a, A>>) = 65,
+    TSOptionalType(Box<'a, TSOptionalType<'a, A>, A>) = 64,
+    TSRestType(Box<'a, TSRestType<'a, A>, A>) = 65,
     // `TSType` variants added here by `inherit_variants!` macro
     @inherit TSType
 }
@@ -856,7 +856,7 @@ pub struct TSTypeReference<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub type_name: TSTypeName<'a, A>,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
 }
 
 /// TypeName:
@@ -868,8 +868,8 @@ pub struct TSTypeReference<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum TSTypeName<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    IdentifierReference(A::Box<'a, IdentifierReference<'a>>) = 0,
-    QualifiedName(A::Box<'a, TSQualifiedName<'a, A>>) = 1,
+    IdentifierReference(Box<'a, IdentifierReference<'a>, A>) = 0,
+    QualifiedName(Box<'a, TSQualifiedName<'a, A>, A>) = 1,
 }
 
 /// Macro for matching `TSTypeName`'s variants.
@@ -909,7 +909,7 @@ pub struct TSQualifiedName<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSTypeParameterInstantiation<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub params: A::Vec<'a, TSType<'a, A>>,
+    pub params: Vec<'a, TSType<'a, A>, A>,
 }
 
 /// TypeScript Type Parameter
@@ -919,7 +919,7 @@ pub struct TSTypeParameterInstantiation<'a, A: AstAllocator = oxc_allocator::All
 /// ## Example
 /// ```ts
 /// //                 ______ constraint
-/// type A::Box<T extends string = 'foo'> = { value: T };
+/// type Box<T extends string = 'foo', A> = { value: T };
 /// // name  ^                  ^^^^^ default
 ///
 /// function add<in T>(a: T, b: T): T { return a + b; }
@@ -959,7 +959,7 @@ pub struct TSTypeParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSTypeParameterDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub params: A::Vec<'a, TSTypeParameter<'a, A>>,
+    pub params: Vec<'a, TSTypeParameter<'a, A>, A>,
 }
 
 /// TypeScript Type Alias Declaration Statement
@@ -982,7 +982,7 @@ pub struct TSTypeAliasDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator
     /// Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
     pub type_annotation: TSType<'a, A>,
     pub declare: bool,
     #[serde(skip)]
@@ -1020,7 +1020,7 @@ pub struct TSClassImplementsItem<'a, A: AstAllocator = oxc_allocator::Allocator>
     #[serde(flatten)]
     pub span: Span,
     pub expression: TSTypeName<'a, A>,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
 }
 
 #[ast(visit)]
@@ -1031,7 +1031,7 @@ pub struct TSClassImplementsItem<'a, A: AstAllocator = oxc_allocator::Allocator>
 pub struct TSClassImplements<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
+    pub items: Vec<'a, TSClassImplementsItem<'a, A>, A>,
 }
 
 /// TypeScriptInterface Declaration
@@ -1062,10 +1062,10 @@ pub struct TSInterfaceDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator
     pub id: BindingIdentifier<'a>,
     /// Other interfaces/types this interface extends.
     #[scope(enter_before)]
-    pub extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+    pub extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
     /// Type parameters that get bound to the interface.
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
-    pub body: A::Box<'a, TSInterfaceBody<'a, A>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
+    pub body: Box<'a, TSInterfaceBody<'a, A>, A>,
     /// `true` for `declare interface Foo {}`
     pub declare: bool,
     #[serde(skip)]
@@ -1082,7 +1082,7 @@ pub struct TSInterfaceDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator
 pub struct TSInterfaceBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: A::Vec<'a, TSSignature<'a, A>>,
+    pub body: Vec<'a, TSSignature<'a, A>, A>,
 }
 
 /// TypeScript Property Signature
@@ -1112,7 +1112,7 @@ pub struct TSPropertySignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub optional: bool,
     pub readonly: bool,
     pub key: PropertyKey<'a, A>,
-    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
 }
 
 #[ast(visit)]
@@ -1121,11 +1121,11 @@ pub struct TSPropertySignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    TSIndexSignature(A::Box<'a, TSIndexSignature<'a, A>>) = 0,
-    TSPropertySignature(A::Box<'a, TSPropertySignature<'a, A>>) = 1,
-    TSCallSignatureDeclaration(A::Box<'a, TSCallSignatureDeclaration<'a, A>>) = 2,
-    TSConstructSignatureDeclaration(A::Box<'a, TSConstructSignatureDeclaration<'a, A>>) = 3,
-    TSMethodSignature(A::Box<'a, TSMethodSignature<'a, A>>) = 4,
+    TSIndexSignature(Box<'a, TSIndexSignature<'a, A>, A>) = 0,
+    TSPropertySignature(Box<'a, TSPropertySignature<'a, A>, A>) = 1,
+    TSCallSignatureDeclaration(Box<'a, TSCallSignatureDeclaration<'a, A>, A>) = 2,
+    TSConstructSignatureDeclaration(Box<'a, TSConstructSignatureDeclaration<'a, A>, A>) = 3,
+    TSMethodSignature(Box<'a, TSMethodSignature<'a, A>, A>) = 4,
 }
 
 /// An index signature within a class, type alias, etc.
@@ -1148,8 +1148,8 @@ pub struct TSIndexSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub modifiers: Option<ClassElementModifiers>,
-    pub parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
-    pub type_annotation: A::Box<'a, TSTypeAnnotation<'a, A>>,
+    pub parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
+    pub type_annotation: Box<'a, TSTypeAnnotation<'a, A>, A>,
 }
 
 #[ast(visit)]
@@ -1160,10 +1160,10 @@ pub struct TSIndexSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSCallSignatureDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
     pub this_param: Option<TSThisParameter<'a, A>>,
-    pub params: A::Box<'a, FormalParameters<'a, A>>,
-    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub params: Box<'a, FormalParameters<'a, A>, A>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
 }
 
 #[ast]
@@ -1201,10 +1201,10 @@ pub struct TSMethodSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub computed: bool,
     pub optional: bool,
     pub kind: TSMethodSignatureKind,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
-    pub this_param: Option<A::Box<'a, TSThisParameter<'a, A>>>,
-    pub params: A::Box<'a, FormalParameters<'a, A>>,
-    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a, A>, A>>,
+    pub params: Box<'a, FormalParameters<'a, A>, A>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1220,9 +1220,9 @@ pub struct TSMethodSignature<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSConstructSignatureDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
-    pub params: A::Box<'a, FormalParameters<'a, A>>,
-    pub return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
+    pub params: Box<'a, FormalParameters<'a, A>, A>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1237,7 +1237,7 @@ pub struct TSIndexSignatureName<'a, A: AstAllocator = oxc_allocator::Allocator> 
     #[serde(flatten)]
     pub span: Span,
     pub name: Atom<'a>,
-    pub type_annotation: A::Box<'a, TSTypeAnnotation<'a, A>>,
+    pub type_annotation: Box<'a, TSTypeAnnotation<'a, A>, A>,
 }
 
 #[ast(visit)]
@@ -1249,7 +1249,7 @@ pub struct TSInterfaceHeritage<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub expression: Expression<'a, A>,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
 }
 
 /// TypeScript Type Predicate
@@ -1289,7 +1289,7 @@ pub struct TSTypePredicate<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// declare function isString(x: any): asserts x is string; // true
     /// ```
     pub asserts: bool,
-    pub type_annotation: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
 }
 
 #[ast(visit)]
@@ -1298,7 +1298,7 @@ pub struct TSTypePredicate<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSTypePredicateName<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    Identifier(A::Box<'a, IdentifierName<'a>>) = 0,
+    Identifier(Box<'a, IdentifierName<'a>, A>) = 0,
     This(TSThisType) = 1,
 }
 
@@ -1416,8 +1416,8 @@ pub enum TSModuleDeclarationName<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(untagged)]
 pub enum TSModuleDeclarationBody<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    TSModuleDeclaration(A::Box<'a, TSModuleDeclaration<'a, A>>) = 0,
-    TSModuleBlock(A::Box<'a, TSModuleBlock<'a, A>>) = 1,
+    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a, A>, A>) = 0,
+    TSModuleBlock(Box<'a, TSModuleBlock<'a, A>, A>) = 1,
 }
 
 // See serializer in serialize.rs
@@ -1430,8 +1430,8 @@ pub struct TSModuleBlock<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     #[serde(skip)]
-    pub directives: A::Vec<'a, Directive<'a>>,
-    pub body: A::Vec<'a, Statement<'a, A>>,
+    pub directives: Vec<'a, Directive<'a>, A>,
+    pub body: Vec<'a, Statement<'a, A>, A>,
 }
 
 #[ast(visit)]
@@ -1442,7 +1442,7 @@ pub struct TSModuleBlock<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSTypeLiteral<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub members: A::Vec<'a, TSSignature<'a, A>>,
+    pub members: Vec<'a, TSSignature<'a, A>, A>,
 }
 
 /// TypeScript `infer` type
@@ -1467,7 +1467,7 @@ pub struct TSInferType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// The type bound when the
-    pub type_parameter: A::Box<'a, TSTypeParameter<'a, A>>,
+    pub type_parameter: Box<'a, TSTypeParameter<'a, A>, A>,
 }
 
 /// Type Query
@@ -1488,7 +1488,7 @@ pub struct TSTypeQuery<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub expr_name: TSTypeQueryExprName<'a, A>,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
 }
 
 inherit_variants! {
@@ -1503,7 +1503,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
 pub enum TSTypeQueryExprName<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    TSImportType(A::Box<'a, TSImportType<'a, A>>) = 2,
+    TSImportType(Box<'a, TSImportType<'a, A>, A>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
@@ -1521,8 +1521,8 @@ pub struct TSImportType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub is_type_of: bool,
     pub parameter: TSType<'a, A>,
     pub qualifier: Option<TSTypeName<'a, A>>,
-    pub attributes: Option<A::Box<'a, TSImportAttributes<'a, A>>>,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+    pub attributes: Option<Box<'a, TSImportAttributes<'a, A>, A>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
 }
 
 #[ast(visit)]
@@ -1534,7 +1534,7 @@ pub struct TSImportAttributes<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
-    pub elements: A::Vec<'a, TSImportAttribute<'a, A>>,
+    pub elements: Vec<'a, TSImportAttribute<'a, A>, A>,
 }
 
 #[ast(visit)]
@@ -1581,22 +1581,22 @@ pub struct TSFunctionType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// type T = <U>(x: U) => U;
     /// //        ^
     /// ```
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
     /// `this` parameter
     ///
     /// ```ts
     /// type T = (this: string, a: number) => void;
     /// //        ^^^^^^^^^^^^
     /// ```
-    pub this_param: Option<A::Box<'a, TSThisParameter<'a, A>>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a, A>, A>>,
     /// Function parameters. Akin to [`Function::params`].
-    pub params: A::Box<'a, FormalParameters<'a, A>>,
+    pub params: Box<'a, FormalParameters<'a, A>, A>,
     /// Return type of the function.
     /// ```ts
     /// type T = () => void;
     /// //             ^^^^
     /// ```
-    pub return_type: A::Box<'a, TSTypeAnnotation<'a, A>>,
+    pub return_type: Box<'a, TSTypeAnnotation<'a, A>, A>,
 }
 
 #[ast(visit)]
@@ -1608,9 +1608,9 @@ pub struct TSConstructorType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     pub r#abstract: bool,
-    pub type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
-    pub params: A::Box<'a, FormalParameters<'a, A>>,
-    pub return_type: A::Box<'a, TSTypeAnnotation<'a, A>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
+    pub params: Box<'a, FormalParameters<'a, A>, A>,
+    pub return_type: Box<'a, TSTypeAnnotation<'a, A>, A>,
 }
 
 /// TypeScript Mapped Type
@@ -1644,7 +1644,7 @@ pub struct TSMappedType<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
-    pub type_parameter: A::Box<'a, TSTypeParameter<'a, A>>,
+    pub type_parameter: Box<'a, TSTypeParameter<'a, A>, A>,
     pub name_type: Option<TSType<'a, A>>,
     pub type_annotation: Option<TSType<'a, A>>,
     /// Optional modifier on type annotation
@@ -1714,9 +1714,9 @@ pub struct TSTemplateLiteralType<'a, A: AstAllocator = oxc_allocator::Allocator>
     #[serde(flatten)]
     pub span: Span,
     /// The string parts of the template literal.
-    pub quasis: A::Vec<'a, TemplateElement<'a>>,
+    pub quasis: Vec<'a, TemplateElement<'a>, A>,
     /// The interpolated expressions in the template literal.
-    pub types: A::Vec<'a, TSType<'a, A>>,
+    pub types: Vec<'a, TSType<'a, A>, A>,
 }
 
 #[ast(visit)]
@@ -1805,7 +1805,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSModuleReference<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    ExternalModuleReference(A::Box<'a, TSExternalModuleReference<'a>>) = 2,
+    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>, A>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
@@ -1906,7 +1906,7 @@ pub struct TSInstantiationExpression<'a, A: AstAllocator = oxc_allocator::Alloca
     #[serde(flatten)]
     pub span: Span,
     pub expression: Expression<'a, A>,
-    pub type_parameters: A::Box<'a, TSTypeParameterInstantiation<'a, A>>,
+    pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a, A>, A>,
 }
 
 /// See [TypeScript - Type-Only Imports and Exports](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html)

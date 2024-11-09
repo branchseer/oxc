@@ -65,7 +65,7 @@ fn test_cast() {
     use crate::Span;
     use oxc_allocator::Allocator;
 
-    struct MyAstNode<'a, A: AstAllocator>(A::Box<'a, Span>);
+    struct MyAstNode<'a, A: AstAllocator>(Box<'a, Span, A>);
     impl<'a, A: AstAllocator> MyAstNode<'a, A> {
         fn new(allocator: &'a A) -> Self {
             Self(allocator.alloc(Span::new(0, 0)))

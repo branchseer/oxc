@@ -7,7 +7,7 @@ use crate::{
 };
 use oxc_ast::ast::{Decorator, RegExpFlags, TSDefiniteMark, TSOptionalMark};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::traits::Vec as _;
+use oxc_span::ast_alloc::{Vec, traits::Vec as _};
 use oxc_span::{GetSpan, Span};
 use std::fmt::Debug;
 
@@ -351,7 +351,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         result
     }
 
-    pub(crate) fn consume_decorators(&mut self) -> A::Vec<'a, Decorator<'a, A>> {
+    pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a, A>, A> {
         let decorators = self.take_decorators();
         self.ast.vec_from_iter(decorators)
     }
@@ -365,7 +365,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         open: Kind,
         close: Kind,
         f: F,
-    ) -> Result<A::Vec<'a, T>>
+    ) -> Result<Vec<'a, T, A>>
     where
         F: Fn(&mut Self) -> Result<Option<T>>,
     {
@@ -392,7 +392,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         separator: Kind,
         trailing_separator: bool,
         f: F,
-    ) -> Result<A::Vec<'a, T>>
+    ) -> Result<Vec<'a, T, A>>
     where
         F: Fn(&mut Self) -> Result<T>,
     {
@@ -424,7 +424,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         close: Kind,
         parse_element: E,
         parse_rest: R,
-    ) -> Result<(A::Vec<'a, X>, Option<Y>)>
+    ) -> Result<(Vec<'a, X, A>, Option<Y>)>
     where
         E: Fn(&mut Self) -> Result<X>,
         R: Fn(&mut Self) -> Result<Y>,

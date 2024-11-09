@@ -1,6 +1,6 @@
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::{ast_alloc::traits::{Vec as _}, GetSpan, Span};
+use oxc_span::{ast_alloc::{traits::{Vec as _}, Vec, Box}, GetSpan, Span};
 
 use super::{VariableDeclarationContext, VariableDeclarationParent};
 use crate::{
@@ -47,7 +47,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         start_span: Span,
         decl_ctx: VariableDeclarationContext,
         modifiers: &Modifiers<'a>,
-    ) -> Result<A::Box<'a, VariableDeclaration<'a, A>>> {
+    ) -> Result<Box<'a, VariableDeclaration<'a, A>, A>> {
         let kind = match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
             Kind::Const => VariableDeclarationKind::Const,
@@ -161,7 +161,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations: A::Vec<'_, VariableDeclarator<'_, A>> = self.ast.vec();
+        let mut declarations: Vec<'_, VariableDeclarator<'_, A>, A> = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(
                 VariableDeclarationContext::new(VariableDeclarationParent::Statement),

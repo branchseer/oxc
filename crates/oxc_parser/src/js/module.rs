@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{
-    ast_alloc::traits::{Box as _, Vec as _},
+    ast_alloc::{traits::{Box as _, Vec as _}, Vec, Box},
     GetSpan, Span,
 };
 use rustc_hash::FxHashMap;
@@ -75,7 +75,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
     fn parse_import_declaration_specifiers(
         &mut self,
-    ) -> Result<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>> {
+    ) -> Result<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>> {
         let mut specifiers = self.ast.vec();
         // import defaultExport from "module-name";
         if self.cur_kind().is_binding_identifier() {
@@ -124,7 +124,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     }
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
-    fn parse_import_specifiers(&mut self) -> Result<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>> {
+    fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>> {
         self.expect(Kind::LCurly)?;
         let list = self.context(Context::empty(), self.ctx, |p| {
             p.parse_delimited_list(
@@ -185,7 +185,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     pub(crate) fn parse_ts_export_assignment_declaration(
         &mut self,
         start_span: Span,
-    ) -> Result<A::Box<'a, TSExportAssignment<'a, A>>> {
+    ) -> Result<Box<'a, TSExportAssignment<'a, A>, A>> {
         self.expect(Kind::Eq)?;
         let expression = self.parse_assignment_expression_or_higher()?;
         self.asi()?;
@@ -195,7 +195,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_export_namespace(
         &mut self,
-    ) -> Result<A::Box<'a, TSNamespaceExportDeclaration<'a>>> {
+    ) -> Result<Box<'a, TSNamespaceExportDeclaration<'a>, A>> {
         let span = self.start_span();
         self.expect(Kind::As)?;
         self.expect(Kind::Namespace)?;
@@ -252,7 +252,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     fn parse_export_named_specifiers(
         &mut self,
         span: Span,
-    ) -> Result<A::Box<'a, ExportNamedDeclaration<'a, A>>> {
+    ) -> Result<Box<'a, ExportNamedDeclaration<'a, A>, A>> {
         let export_kind = self.parse_import_or_export_kind();
         self.expect(Kind::LCurly)?;
         let mut specifiers = self.context(Context::empty(), self.ctx, |p| {
@@ -325,7 +325,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     fn parse_export_named_declaration(
         &mut self,
         span: Span,
-    ) -> Result<A::Box<'a, ExportNamedDeclaration<'a, A>>> {
+    ) -> Result<Box<'a, ExportNamedDeclaration<'a, A>, A>> {
         let decl_span = self.start_span();
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
@@ -351,7 +351,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     fn parse_export_default_declaration(
         &mut self,
         span: Span,
-    ) -> Result<A::Box<'a, ExportDefaultDeclaration<'a, A>>> {
+    ) -> Result<Box<'a, ExportDefaultDeclaration<'a, A>, A>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
         let decl_span = self.start_span();
         // For tc39/proposal-decorators
@@ -401,7 +401,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     fn parse_export_all_declaration(
         &mut self,
         span: Span,
-    ) -> Result<A::Box<'a, ExportAllDeclaration<'a, A>>> {
+    ) -> Result<Box<'a, ExportAllDeclaration<'a, A>, A>> {
         let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name()).transpose()?;

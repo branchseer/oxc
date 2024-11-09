@@ -5,7 +5,7 @@ use derive_where::derive_where;
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_span::{
-    ast_alloc::AstAllocator, cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span,
+    ast_alloc::{AstAllocator, Vec, Box}, cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span,
 };
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -31,7 +31,7 @@ pub struct Pattern<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct Disjunction<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: A::Vec<'a, Alternative<'a, A>>,
+    pub body: Vec<'a, Alternative<'a, A>, A>,
 }
 
 /// Single unit of `|` separated alternatives.
@@ -42,7 +42,7 @@ pub struct Disjunction<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct Alternative<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub body: A::Vec<'a, Term<'a, A>>,
+    pub body: Vec<'a, Term<'a, A>, A>,
 }
 
 /// Single unit of [`Alternative`], containing various kinds.
@@ -52,20 +52,20 @@ pub struct Alternative<'a, A: AstAllocator = oxc_allocator::Allocator> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum Term<'a, A: AstAllocator = oxc_allocator::Allocator> {
     // Assertion, QuantifiableAssertion
-    BoundaryAssertion(A::Box<'a, BoundaryAssertion>) = 0,
-    LookAroundAssertion(A::Box<'a, LookAroundAssertion<'a, A>>) = 1,
+    BoundaryAssertion(Box<'a, BoundaryAssertion, A>) = 0,
+    LookAroundAssertion(Box<'a, LookAroundAssertion<'a, A>, A>) = 1,
     // Quantifier
-    Quantifier(A::Box<'a, Quantifier<'a, A>>) = 2,
+    Quantifier(Box<'a, Quantifier<'a, A>, A>) = 2,
     // Atom, ExtendedAtom
-    Character(A::Box<'a, Character>) = 3,
+    Character(Box<'a, Character, A>) = 3,
     Dot(Dot) = 4,
-    CharacterClassEscape(A::Box<'a, CharacterClassEscape>) = 5,
-    UnicodePropertyEscape(A::Box<'a, UnicodePropertyEscape<'a>>) = 6,
-    CharacterClass(A::Box<'a, CharacterClass<'a, A>>) = 7,
-    CapturingGroup(A::Box<'a, CapturingGroup<'a, A>>) = 8,
-    IgnoreGroup(A::Box<'a, IgnoreGroup<'a, A>>) = 9,
-    IndexedReference(A::Box<'a, IndexedReference>) = 10,
-    NamedReference(A::Box<'a, NamedReference<'a>>) = 11,
+    CharacterClassEscape(Box<'a, CharacterClassEscape, A>) = 5,
+    UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>, A>) = 6,
+    CharacterClass(Box<'a, CharacterClass<'a, A>, A>) = 7,
+    CapturingGroup(Box<'a, CapturingGroup<'a, A>, A>) = 8,
+    IgnoreGroup(Box<'a, IgnoreGroup<'a, A>, A>) = 9,
+    IndexedReference(Box<'a, IndexedReference, A>) = 10,
+    NamedReference(Box<'a, NamedReference<'a>, A>) = 11,
 }
 
 /// Simple form of assertion.
@@ -228,7 +228,7 @@ pub struct CharacterClass<'a, A: AstAllocator = oxc_allocator::Allocator> {
     /// - and matches each logic depends on `kind`
     pub strings: bool,
     pub kind: CharacterClassContentsKind,
-    pub body: A::Vec<'a, CharacterClassContents<'a, A>>,
+    pub body: Vec<'a, CharacterClassContents<'a, A>, A>,
 }
 
 #[ast]
@@ -248,14 +248,14 @@ pub enum CharacterClassContentsKind {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 pub enum CharacterClassContents<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    CharacterClassRange(A::Box<'a, CharacterClassRange>) = 0,
-    CharacterClassEscape(A::Box<'a, CharacterClassEscape>) = 1,
-    UnicodePropertyEscape(A::Box<'a, UnicodePropertyEscape<'a>>) = 2,
-    Character(A::Box<'a, Character>) = 3,
+    CharacterClassRange(Box<'a, CharacterClassRange, A>) = 0,
+    CharacterClassEscape(Box<'a, CharacterClassEscape, A>) = 1,
+    UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>, A>) = 2,
+    Character(Box<'a, Character, A>) = 3,
     /// `UnicodeSetsMode` only
-    NestedCharacterClass(A::Box<'a, CharacterClass<'a, A>>) = 4,
+    NestedCharacterClass(Box<'a, CharacterClass<'a, A>, A>) = 4,
     /// `UnicodeSetsMode` only
-    ClassStringDisjunction(A::Box<'a, ClassStringDisjunction<'a, A>>) = 5,
+    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a, A>, A>) = 5,
 }
 
 /// `-` separated range of characters.
@@ -281,7 +281,7 @@ pub struct ClassStringDisjunction<'a, A: AstAllocator = oxc_allocator::Allocator
     pub span: Span,
     /// `true` if body is empty or contains [`ClassString`] which `strings` is `true`.
     pub strings: bool,
-    pub body: A::Vec<'a, ClassString<'a, A>>,
+    pub body: Vec<'a, ClassString<'a, A>, A>,
 }
 
 /// Single unit of [`ClassStringDisjunction`].
@@ -294,7 +294,7 @@ pub struct ClassString<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub span: Span,
     /// `true` if body is empty or contain 2 more characters.
     pub strings: bool,
-    pub body: A::Vec<'a, Character>,
+    pub body: Vec<'a, Character, A>,
 }
 
 /// Named or unnamed capturing group.

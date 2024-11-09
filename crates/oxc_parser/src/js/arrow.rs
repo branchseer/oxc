@@ -2,7 +2,7 @@ use cfg_if::cfg_if;
 use oxc_ast::ast_builder::ScopeToken;
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::{AstAllocator, traits::Box};
+use oxc_span::ast_alloc::{AstAllocator, {traits::Box as _, Box}};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
@@ -10,9 +10,9 @@ use super::Tristate;
 use crate::{diagnostics, lexer::Kind, ParserImpl};
 
 type ArrowFunctionHead<'a, A: AstAllocator> = (
-    Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
-    A::Box<'a, FormalParameters<'a, A>>,
-    Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
+    Box<'a, FormalParameters<'a, A>, A>,
+    Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
     bool,
     Span,
 );
@@ -290,9 +290,9 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         &mut self,
         scope_token: ScopeToken<ArrowFunctionExpression<'a, A>>,
         span: Span,
-        type_parameters: Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>,
-        params: A::Box<'a, FormalParameters<'a, A>>,
-        return_type: Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>,
+        params: Box<'a, FormalParameters<'a, A>, A>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
         r#async: bool,
     ) -> Result<Expression<'a, A>> {
         let has_await = self.ctx.has_await();

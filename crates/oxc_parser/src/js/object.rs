@@ -1,7 +1,8 @@
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{Span, ast_alloc::{Box, Vec}};
 use oxc_syntax::operator::AssignmentOperator;
+
 
 use crate::{diagnostics, lexer::Kind, modifiers::Modifier, Context, ParserImpl};
 
@@ -45,7 +46,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     /// `PropertyDefinition`[Yield, Await]
     pub(crate) fn parse_property_definition(
         &mut self,
-    ) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
+    ) -> Result<Box<'a, ObjectProperty<'a, A>, A>> {
         let peek_kind = self.peek_kind();
         let class_element_name = peek_kind.is_class_element_name_start();
         match self.cur_kind() {
@@ -123,7 +124,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   ... `AssignmentExpression`[+In, ?Yield, ?Await]
-    pub(crate) fn parse_spread_element(&mut self) -> Result<A::Box<'a, SpreadElement<'a, A>>> {
+    pub(crate) fn parse_spread_element(&mut self) -> Result<Box<'a, SpreadElement<'a, A>, A>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher()?;
@@ -133,7 +134,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     /// `PropertyDefinition`[Yield, Await] :
     ///   `IdentifierReference`[?Yield, ?Await]
     ///   `CoverInitializedName`[?Yield, ?Await]
-    fn parse_property_definition_shorthand(&mut self) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
+    fn parse_property_definition_shorthand(&mut self) -> Result<Box<'a, ObjectProperty<'a, A>, A>> {
         let span = self.start_span();
         let identifier = self.parse_identifier_reference()?;
         let key = self.ast.alloc_identifier_name(identifier.span, identifier.name.clone());
@@ -172,7 +173,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         span: Span,
         key: PropertyKey<'a, A>,
         computed: bool,
-    ) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
+    ) -> Result<Box<'a, ObjectProperty<'a, A>, A>> {
         self.bump_any(); // bump `:`
         let value = self.parse_assignment_expression_or_higher()?;
         Ok(self.ast.alloc_object_property(
@@ -231,7 +232,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   `MethodDefinition`[?Yield, ?Await]
-    fn parse_property_definition_method(&mut self) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
+    fn parse_property_definition_method(&mut self) -> Result<Box<'a, ObjectProperty<'a, A>, A>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
         let generator = self.eat(Kind::Star);
@@ -252,7 +253,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `MethodDefinition`[Yield, Await] :
     ///   get `ClassElementName`[?Yield, ?Await] ( ) { `FunctionBody`[~Yield, ~Await] }
-    fn parse_method_getter(&mut self) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
+    fn parse_method_getter(&mut self) -> Result<Box<'a, ObjectProperty<'a, A>, A>> {
         let span = self.start_span();
         self.expect(Kind::Get)?;
         let (key, computed) = self.parse_property_name()?;
@@ -272,7 +273,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// `MethodDefinition`[Yield, Await] :
     /// set `ClassElementName`[?Yield, ?Await] ( `PropertySetParameterList` ) { `FunctionBody`[~Yield, ~Await] }
-    fn parse_method_setter(&mut self) -> Result<A::Box<'a, ObjectProperty<'a, A>>> {
+    fn parse_method_setter(&mut self) -> Result<Box<'a, ObjectProperty<'a, A>, A>> {
         let span = self.start_span();
         self.expect(Kind::Set)?;
         let (key, computed) = self.parse_property_name()?;

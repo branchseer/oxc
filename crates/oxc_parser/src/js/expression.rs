@@ -3,8 +3,8 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::ast_alloc::traits::Box;
-use oxc_span::{ast_alloc::traits::Vec as _, cast, Atom, Span};
+use oxc_span::ast_alloc::{traits::Box as _, Box};
+use oxc_span::{ast_alloc::{traits::Vec as _, Vec}, cast, Atom, Span};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     operator::BinaryOperator,
@@ -375,7 +375,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         span_offset: u32,
         pattern: &'a str,
         flags: &'a str,
-    ) -> Option<A::Box<'a, Pattern<'a, A>>> {
+    ) -> Option<Box<'a, Pattern<'a, A>, A>> {
         use oxc_regular_expression::{Parser, ParserOptions};
         let options = ParserOptions::default().with_span_offset(span_offset).with_flags(flags);
         match Parser::new(self.ast.allocator, pattern, options).parse() {
@@ -496,7 +496,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         span: Span,
         lhs: Expression<'a, A>,
         in_optional_chain: bool,
-        type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+        type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
     ) -> Result<Expression<'a, A>> {
         let quasi = self.parse_template_literal(true)?;
         let span = self.end_span(span);
@@ -847,7 +847,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         lhs_span: Span,
         lhs: Expression<'a, A>,
         optional: bool,
-        type_parameters: Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+        type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
     ) -> Result<Expression<'a, A>> {
         // ArgumentList[Yield, Await] :
         //   AssignmentExpression[+In, ?Yield, ?Await]

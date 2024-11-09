@@ -123,7 +123,7 @@ impl<'a, A: AstAllocator> Serialize for ObjectPattern<'a, A> {
 struct SerObjectPattern<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
-    properties: ElementsAndRest<'b, BindingProperty<'a, A>, A::Box<'a, BindingRestElement<'a, A>>>,
+    properties: ElementsAndRest<'b, BindingProperty<'a, A>, Box<'a, BindingRestElement<'a, A>>, A>,
 }
 
 impl<'a, A: AstAllocator> Serialize for ArrayPattern<'a, A> {
@@ -142,7 +142,7 @@ struct SerArrayPattern<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
     elements:
-        ElementsAndRest<'b, Option<BindingPattern<'a, A>>, A::Box<'a, BindingRestElement<'a, A>>>,
+        ElementsAndRest<'b, Option<BindingPattern<'a, A>>, Box<'a, BindingRestElement<'a, A>>, A>,
 }
 
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined
@@ -183,7 +183,7 @@ struct SerFormalParameterRest<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
     argument: &'b BindingPatternKind<'a, A>,
-    type_annotation: &'b Option<A::Box<'a, TSTypeAnnotation<'a, A>>>,
+    type_annotation: &'b Option<Box<'a, TSTypeAnnotation<'a, A>>, A>,
     optional: bool,
 }
 
