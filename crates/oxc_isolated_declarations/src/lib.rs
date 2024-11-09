@@ -134,7 +134,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_program(
         &mut self,
         program: &Program<'a>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+    ) -> oxc_span::ast_alloc::Vec<'a, Statement<'a>> {
         let has_import_or_export = program.body.iter().any(|stmt| {
             matches!(
                 stmt,
@@ -154,8 +154,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn transform_program_without_module_declaration(
         &mut self,
-        stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        stmts: &oxc_span::ast_alloc::Vec<'a, Statement<'a>>,
+    ) -> oxc_span::ast_alloc::Vec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
         let mut stmts =
@@ -177,8 +177,8 @@ impl<'a> IsolatedDeclarations<'a> {
     #[allow(clippy::missing_panics_doc)]
     pub fn transform_statements_on_demand(
         &mut self,
-        stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        stmts: &oxc_span::ast_alloc::Vec<'a, Statement<'a>>,
+    ) -> oxc_span::ast_alloc::Vec<'a, Statement<'a>> {
         self.report_error_for_expando_function(stmts);
 
         let mut stmts = self.ast.vec_from_iter(stmts.iter().filter(|stmt| {
@@ -422,7 +422,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub fn remove_function_overloads_implementation(
-        stmts: &mut oxc_allocator::Vec<'a, &Statement<'a>>,
+        stmts: &mut oxc_span::ast_alloc::Vec<'a, &Statement<'a>>,
     ) {
         let mut last_function_name: Option<Atom<'a>> = None;
         let mut is_export_default_function_overloads = false;
@@ -491,7 +491,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     fn get_assignable_properties_for_namespaces(
-        stmts: &'a oxc_allocator::Vec<'a, Statement<'a>>,
+        stmts: &'a oxc_span::ast_alloc::Vec<'a, Statement<'a>>,
     ) -> FxHashMap<&'a str, FxHashSet<Atom>> {
         let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
         for stmt in stmts {
@@ -556,7 +556,7 @@ impl<'a> IsolatedDeclarations<'a> {
         assignable_properties_for_namespace
     }
 
-    pub fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    pub fn report_error_for_expando_function(&self, stmts: &oxc_span::ast_alloc::Vec<'a, Statement<'a>>) {
         let assignable_properties_for_namespace =
             IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 

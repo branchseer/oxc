@@ -249,7 +249,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         function: &Function<'a>,
         params: &FormalParameters<'a>,
-    ) -> oxc_allocator::Vec<'a, ClassElement<'a>> {
+    ) -> oxc_span::ast_alloc::Vec<'a, ClassElement<'a>> {
         let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
             if param.accessibility.is_some() || param.readonly {

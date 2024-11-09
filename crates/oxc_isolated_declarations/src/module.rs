@@ -1,5 +1,5 @@
-use oxc_allocator::Box;
-use oxc_allocator::Vec;
+use oxc_span::ast_alloc::Box;
+use oxc_span::ast_alloc::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -65,9 +65,9 @@ impl<'a> IsolatedDeclarations<'a> {
                         self.error(default_export_inferred(expr.span()));
                     }
 
-                    let id = self.ast.binding_pattern(id, type_annotation, false);
+                    let id = self.ast.binding_pattern(id, type_annotation, None);
                     let declarations =
-                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, false));
+                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, None));
 
                     Some((
                         Some(self.ast.variable_declaration(

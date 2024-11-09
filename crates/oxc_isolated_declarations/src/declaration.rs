@@ -1,8 +1,8 @@
 use std::cell::Cell;
 
-use oxc_allocator::Box;
+use oxc_span::ast_alloc::Box;
 use oxc_allocator::CloneIn;
-use oxc_allocator::Vec;
+use oxc_span::ast_alloc::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::visit::walk_mut::walk_ts_signatures;
@@ -40,7 +40,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_variable_declaration_with_new_declarations(
         &self,
         decl: &VariableDeclaration<'a>,
-        declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
+        declarations: oxc_span::ast_alloc::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
         self.ast.alloc_variable_declaration(
             decl.span,
@@ -132,7 +132,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_using_declaration_with_new_declarations(
         &self,
         decl: &VariableDeclaration<'a>,
-        declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
+        declarations: oxc_span::ast_alloc::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
         self.ast.alloc_variable_declaration(
             decl.span,

@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_span::ast_alloc::Box;
 use oxc_ast::ast::{StringLiteral, TemplateLiteral};
 
 use crate::IsolatedDeclarations;
