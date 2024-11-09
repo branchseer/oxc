@@ -27,17 +27,19 @@ pub unsafe trait AstAllocator: Sized + 'static + Sealed {
     where
         Self: 'a;
 
-    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T>;
+    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> super::Box<'a, T, Self>;
     fn alloc_str<'a>(&'a self, src: &str) -> &'a str;
 
-    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(span: Span) -> Option<Self::Box<'a, T>>;
+    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(
+        span: Span,
+    ) -> Option<super::Box<'a, T, Self>>;
 
-    fn vec<'a, T: Debug>(&'a self) -> Self::Vec<'a, T>;
-    fn vec_with_capacity<'a, T: Debug>(&'a self, capacity: usize) -> Self::Vec<'a, T>;
+    fn vec<'a, T: Debug>(&'a self) -> super::Vec<'a, T, Self>;
+    fn vec_with_capacity<'a, T: Debug>(&'a self, capacity: usize) -> super::Vec<'a, T, Self>;
     fn vec_from_iter<'a, T: Debug, I: IntoIterator<Item = T>>(
         &'a self,
         iter: I,
-    ) -> Self::Vec<'a, T>;
+    ) -> super::Vec<'a, T, Self>;
 }
 
 pub trait Box<'a>: Sized {
@@ -184,8 +186,8 @@ unsafe impl AstAllocator for oxc_allocator::Allocator {
     type Vec<'a, T: Debug> = oxc_allocator::Vec<'a, T>;
 
     #[inline]
-    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T> {
-        oxc_allocator::Box::new_in(value, self)
+    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> super::Box<'a, T, Self> {
+        super::Box::from_alloc_box(oxc_allocator::Box::new_in(value, self))
     }
 
     #[inline]
@@ -194,25 +196,27 @@ unsafe impl AstAllocator for oxc_allocator::Allocator {
     }
 
     #[inline]
-    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(_span: Span) -> Option<Self::Box<'a, T>> {
+    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(
+        _span: Span,
+    ) -> Option<super::Box<'a, T, Self>> {
         None
     }
 
     #[inline]
-    fn vec<'a, T: Debug>(&'a self) -> Self::Vec<'a, T> {
-        oxc_allocator::Vec::new_in(self)
+    fn vec<'a, T: Debug>(&'a self) -> super::Vec<'a, T, Self> {
+        super::Vec::from_alloc_vec(oxc_allocator::Vec::new_in(self))
     }
 
     #[inline]
-    fn vec_with_capacity<'a, T: Debug>(&'a self, capacity: usize) -> Self::Vec<'a, T> {
-        oxc_allocator::Vec::with_capacity_in(capacity, self)
+    fn vec_with_capacity<'a, T: Debug>(&'a self, capacity: usize) -> super::Vec<'a, T, Self> {
+        super::Vec::from_alloc_vec(oxc_allocator::Vec::with_capacity_in(capacity, self))
     }
 
     #[inline]
     fn vec_from_iter<'a, T: Debug, I: IntoIterator<Item = T>>(
         &'a self,
         iter: I,
-    ) -> Self::Vec<'a, T> {
-        oxc_allocator::Vec::from_iter_in(iter, self)
+    ) -> super::Vec<'a, T, Self> {
+        super::Vec::from_alloc_vec(oxc_allocator::Vec::from_iter_in(iter, self))
     }
 }

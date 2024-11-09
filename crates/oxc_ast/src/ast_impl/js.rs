@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cell::Cell, fmt};
 
-use oxc_allocator::{Box, FromIn, Vec};
-use oxc_span::ast_alloc::AstAllocator;
+use oxc_allocator::FromIn;
+use oxc_span::ast_alloc::{AstAllocator, Box, Vec};
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     operator::UnaryOperator,

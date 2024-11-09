@@ -3,9 +3,189 @@ mod default;
 pub mod traits;
 mod void;
 
+use crate::cmp::ContentEq;
+use crate::hash::ContentHash;
+use crate::{GetSpan, GetSpanMut, Span};
 pub use cast::*;
+use derive_where::derive_where;
+use oxc_allocator::{Allocator, CloneIn, FromIn};
+use std::fmt::Debug;
+use std::hash::Hasher;
+use std::marker::PhantomData;
+use std::mem::transmute;
+use std::ops::{Deref, DerefMut};
 pub use traits::AstAllocator;
 pub use void::VoidAllocator;
+use traits::{Box as _, Vec as _};
+use void::VoidVec;
 
-pub type Vec<'a, T, A: AstAllocator = oxc_allocator::Allocator> = A::Vec<'a, T>;
-pub type Box<'a, T, A: AstAllocator = oxc_allocator::Allocator> = A::Box<'a, T>;
+#[derive_where(Debug)]
+pub struct Vec<'a, T: Debug, A: AstAllocator = Allocator>(A::Vec<'static, T>, PhantomData<&'a ()>);
+
+
+impl<'a, T: Debug, A: AstAllocator> Vec<'a, T, A> {
+    #[inline]
+    pub const fn from_alloc_vec(value: A::Vec<'a, T>) -> Self {
+        Self(unsafe { transmute(value) }, PhantomData)
+    }
+    #[inline]
+    pub fn into_alloc_vec(self) -> A::Vec<'a, T> {
+        unsafe { transmute(self.0) }
+    }
+    
+    #[inline]
+    pub fn specialize(self) -> Result<oxc_allocator::Vec<'a, T>, VoidVec<'a, T>> {
+        self.0.specialize()
+    }
+}
+
+
+
+impl<'a, T: Debug, A: AstAllocator> Deref for Vec<'a, T, A> {
+    type Target = A::Vec<'a, T>;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        unsafe { transmute(&self.0) }
+    }
+}
+impl<'a, T: Debug, A: AstAllocator> DerefMut for Vec<'a, T, A> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { transmute(&mut self.0) }
+    }
+}
+
+impl<'alloc, T: Debug> IntoIterator for &'alloc Vec<'alloc, T> {
+    type IntoIter = std::slice::Iter<'alloc, T>;
+    type Item = &'alloc T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl<'a, T: Debug> IntoIterator for Vec<'a, T> {
+    type Item = T;
+    type IntoIter = <oxc_allocator::Vec<'a, T> as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_alloc_vec().into_iter()
+    }
+}
+
+impl<'old_alloc, T: Debug + CloneIn> CloneIn for Vec<'old_alloc, T>
+where
+        for<'a> <T as CloneIn>::Cloned<'a>: Debug,
+{
+    type Cloned<'a> = Vec<'a, T::Cloned<'a>>;
+
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        Vec::from_alloc_vec(self.0.clone_in(allocator))
+    }
+}
+
+impl<'a, T: Debug + ContentEq> ContentEq for Vec<'a, T> {
+    fn content_eq(&self, other: &Self) -> bool {
+        self.0.content_eq(&other.0)
+    }
+}
+impl<'a, T: Debug + ContentHash> ContentHash for Vec<'a, T> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        self.0.content_hash(state)
+    }
+}
+
+#[derive_where(Debug)]
+pub struct Box<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator = Allocator>(
+    A::Box<'static, T>,
+    PhantomData<&'a ()>,
+);
+
+impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> Deref for Box<'a, T, A> {
+    type Target = A::Box<'a, T>;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        unsafe { transmute(&self.0) }
+    }
+}
+impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> DerefMut for Box<'a, T, A> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { transmute(&mut self.0) }
+    }
+}
+
+impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> Box<'a, T, A> {
+    #[inline]
+    pub const fn from_alloc_box(value: A::Box<'a, T>) -> Self {
+        Self(unsafe { transmute(value) }, PhantomData)
+    }
+    #[inline]
+    pub fn into_alloc_box(self) -> A::Box<'a, T> {
+        unsafe { transmute(self.0) }
+    }
+    
+    #[inline]
+    pub fn try_unbox(self) -> Result<T, Self> {
+        match self.into_alloc_box().try_unbox() {
+            Ok(value) => Ok(value),
+            Err(alloc_box) => Err(Self::from_alloc_box(alloc_box)),
+        }
+    }
+}
+impl<'a, T: Debug + GetSpan + GetSpanMut> Box<'a, T> {
+    #[inline]
+    pub const unsafe fn dangling() -> Self {
+        Self::from_alloc_box(oxc_allocator::Box::dangling())
+    }
+    #[inline]
+    pub fn unbox(self) -> T {
+        self.0.unbox()
+    }
+}
+
+impl<'old_alloc, T: Debug + GetSpan + GetSpanMut + CloneIn> CloneIn for Box<'old_alloc, T>
+where
+    for<'a> <T as CloneIn>::Cloned<'a>: Debug + GetSpan + GetSpanMut,
+{
+    type Cloned<'a> = Box<'a, T::Cloned<'a>>;
+
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        Box::from_alloc_box(self.0.clone_in(allocator))
+    }
+}
+
+impl<'a, T: Debug + GetSpan + GetSpanMut + ContentEq> ContentEq for Box<'a, T> {
+    fn content_eq(&self, other: &Self) -> bool {
+        self.0.content_eq(&other.0)
+    }
+}
+impl<'a, T: Debug + GetSpan + GetSpanMut + ContentHash> ContentHash for Box<'a, T> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        self.0.content_hash(state)
+    }
+}
+
+impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> GetSpan for Box<'a, T, A> {
+    fn span(&self) -> Span {
+        self.0.span()
+    }
+}
+impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> GetSpanMut for Box<'a, T, A> {
+    fn span_mut(&mut self) -> &mut Span {
+        self.0.span_mut()
+    }
+}
+
+impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> FromIn<'a, T, A> for Box<'a, T, A> {
+    fn from_in(value: T, allocator: &'a A) -> Self {
+        Self::from_alloc_box(A::Box::from_in(value, allocator))
+    }
+}
+
+fn _assert_box_variant_lifetime<'a: 'b, 'b, T: Debug + GetSpan + GetSpanMut>(val: Box<'a, T>) -> Box<'b, T> {
+    val
+}
+
+fn _assert_vec_variant_lifetime<'a: 'b, 'b, T: Debug>(val: Vec<'a, T>) -> Vec<'b, T> {
+    val
+}

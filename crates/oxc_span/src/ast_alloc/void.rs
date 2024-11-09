@@ -137,8 +137,8 @@ unsafe impl super::AstAllocator for VoidAllocator {
     type Box<'a, T: Debug + GetSpan + GetSpanMut> = VoidBox<'a, T>;
     type Vec<'a, T: Debug> = VoidVec<'a, T>;
 
-    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> Self::Box<'a, T> {
-        VoidBox::from_in(value, self)
+    fn alloc<'a, T: Debug + GetSpan + GetSpanMut>(&'a self, value: T) -> super::Box<'a, T, Self> {
+        super::Box::from_alloc_box(VoidBox::from_in(value, self))
     }
 
     fn alloc_str<'a>(&'a self, src: &str) -> &'a str {
@@ -146,22 +146,27 @@ unsafe impl super::AstAllocator for VoidAllocator {
     }
 
     #[inline]
-    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(span: Span) -> Option<Self::Box<'a, T>> {
-        Some(VoidBox { span, _phantom: PhantomData })
+    fn box_from_span<'a, T: Debug + GetSpan + GetSpanMut>(
+        span: Span,
+    ) -> Option<super::Box<'a, T, Self>> {
+        Some(super::Box::from_alloc_box(VoidBox { span, _phantom: PhantomData }))
     }
 
-    fn vec<'a, T: Debug>(&'a self) -> Self::Vec<'a, T> {
-        VoidVec(PhantomData)
+    #[inline]
+    fn vec<'a, T: Debug>(&'a self) -> super::Vec<'a, T, Self> {
+        super::Vec::from_alloc_vec(VoidVec(PhantomData))
     }
 
-    fn vec_with_capacity<'a, T: Debug>(&'a self, capacity: usize) -> Self::Vec<'a, T> {
-        VoidVec(PhantomData)
+    #[inline]
+    fn vec_with_capacity<'a, T: Debug>(&'a self, _capacity: usize) -> super::Vec<'a, T, Self> {
+        super::Vec::from_alloc_vec(VoidVec(PhantomData))
     }
 
+    #[inline]
     fn vec_from_iter<'a, T: Debug, I: IntoIterator<Item = T>>(
         &'a self,
-        iter: I,
-    ) -> Self::Vec<'a, T> {
-        VoidVec(PhantomData)
+        _iter: I,
+    ) -> super::Vec<'a, T, Self> {
+        super::Vec::from_alloc_vec(VoidVec(PhantomData))
     }
 }

@@ -294,9 +294,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_interface_heritages(
         &mut self,
-        extends: A::Vec<
+        extends: Vec<
             'a,
             (Expression<'a, A>, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, Span),
+            A
         >,
     ) -> Vec<'a, TSInterfaceHeritage<'a, A>, A> {
         let Ok(extends) = extends.specialize() else {

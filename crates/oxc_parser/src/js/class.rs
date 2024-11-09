@@ -19,7 +19,7 @@ type Extends<'a, A> = Vec<
     'a,
     (
         Expression<'a, A>,
-        Option<<A as AstAllocator>::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
+        Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
         Span,
     ),
     A,
@@ -108,7 +108,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         let mut super_type_parameters = None;
 
         if let Some(extends) = extends {
-            if let Ok(mut extends) = extends.try_into() {
+            if let Ok(mut extends) = extends.specialize() {
                 if !extends.is_empty() {
                     let first_extends = extends.remove(0);
                     super_class = Some(first_extends.0);

@@ -5,8 +5,8 @@
 
 use std::{cell::Cell, fmt};
 
-use oxc_allocator::{CloneIn, Vec};
-use oxc_span::{ast_alloc::AstAllocator, Atom, GetSpan, GetSpanMut, Span};
+use oxc_allocator::{CloneIn};
+use oxc_span::{ast_alloc::{AstAllocator, Vec}, Atom, GetSpan, GetSpanMut, Span};
 
 use crate::ast::*;
 

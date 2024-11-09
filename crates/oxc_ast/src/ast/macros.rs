@@ -969,7 +969,7 @@ macro_rules! discriminant {
         #[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
         unsafe {
             let t = std::mem::ManuallyDrop::new($ty::<'_, oxc_allocator::Allocator>::$variant(
-                oxc_allocator::Box::dangling(),
+                ::oxc_span::ast_alloc::Box::dangling(),
             ));
             *(std::ptr::addr_of!(t).cast::<u8>())
         }
