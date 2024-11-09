@@ -122,7 +122,7 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
         use std::cell::Cell;
 
         ///@@line_break
-        use oxc_allocator::Vec;
+        use oxc_span::ast_alloc::Vec;
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
         ///@@line_break

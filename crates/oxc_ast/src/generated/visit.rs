@@ -18,7 +18,7 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::Vec;
+use oxc_span::ast_alloc::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 #[allow(clippy::wildcard_imports)]
