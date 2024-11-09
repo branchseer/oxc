@@ -1,5 +1,5 @@
 use oxc_span::{
-    ast_alloc::{AstAllocator, Vec},
+    ast_alloc::{AstAllocator},
     cast_ref, Atom, GetSpan, Span,
 };
 use serde::{
@@ -14,8 +14,8 @@ use crate::ast::{
     JSXIdentifier, JSXMemberExpressionObject, ObjectAssignmentTarget, ObjectPattern, Program,
     RegExpFlags, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
 };
-use oxc_allocator::{Allocator, Box};
-use oxc_span::ast_alloc::{Box as _, Vec as _};
+use oxc_allocator::{Allocator};
+use oxc_span::ast_alloc::{traits::{Box as _, Vec as _}, Box, Vec};
 
 pub struct EcmaFormatter;
 
@@ -123,7 +123,7 @@ impl<'a, A: AstAllocator> Serialize for ObjectPattern<'a, A> {
 struct SerObjectPattern<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
-    properties: ElementsAndRest<'b, BindingProperty<'a, A>, Box<'a, BindingRestElement<'a, A>>, A>,
+    properties: ElementsAndRest<'b, BindingProperty<'a, A>, Box<'a, BindingRestElement<'a, A>, A>>,
 }
 
 impl<'a, A: AstAllocator> Serialize for ArrayPattern<'a, A> {
@@ -142,7 +142,7 @@ struct SerArrayPattern<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
     elements:
-        ElementsAndRest<'b, Option<BindingPattern<'a, A>>, Box<'a, BindingRestElement<'a, A>>, A>,
+        ElementsAndRest<'b, Option<BindingPattern<'a, A>>, Box<'a, BindingRestElement<'a, A>, A>>,
 }
 
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined
@@ -156,7 +156,7 @@ impl<'a, A: AstAllocator> Serialize for FormalParameters<'a, A> {
                 span: rest.span,
                 argument: &rest.argument.kind,
                 type_annotation: &rest.argument.type_annotation,
-                optional: rest.argument.optional,
+                optional: rest.argument.optional.is_some(),
             })
         });
         let converted = SerFormalParameters {
@@ -183,7 +183,7 @@ struct SerFormalParameterRest<'a, 'b, A: AstAllocator> {
     #[serde(flatten)]
     span: Span,
     argument: &'b BindingPatternKind<'a, A>,
-    type_annotation: &'b Option<Box<'a, TSTypeAnnotation<'a, A>>, A>,
+    type_annotation: &'b Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
     optional: bool,
 }
 

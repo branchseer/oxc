@@ -4,7 +4,7 @@ use std::ops::{Deref as _, DerefMut as _};
 use crate::{GetSpan, GetSpanMut, Span};
 use oxc_allocator::{CloneIn, FromIn};
 
-use super::void::VoidVec;
+use super::void::{VoidBox, VoidVec};
 // pub use crate::ast_alloc::cast::*;
 // pub use crate::ast_alloc::void::VoidAllocator;
 
@@ -64,6 +64,11 @@ pub trait Box<'a>: Sized {
     fn try_unbox(self) -> Result<Self::Target, Self>
     where
         Self::Target: Sized;
+
+
+    fn specialize_ref(
+        &self,
+    ) -> Result<&oxc_allocator::Box<'a, Self::Target>, &VoidBox<'a, Self::Target>>;
 }
 
 impl<'a, T> Box<'a> for oxc_allocator::Box<'a, T> {
@@ -95,11 +100,17 @@ impl<'a, T> Box<'a> for oxc_allocator::Box<'a, T> {
         Some(self.deref())
     }
 
+    #[inline]
     fn try_unbox(self) -> Result<Self::Target, Self>
     where
         Self::Target: Sized,
     {
         Ok(self.unbox())
+    }
+
+    #[inline]
+    fn specialize_ref(&self) -> Result<&oxc_allocator::Box<'a, Self::Target>, &VoidBox<'a, Self::Target>> {
+        Ok(&self)
     }
 }
 

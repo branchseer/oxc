@@ -14,6 +14,7 @@ use std::hash::Hasher;
 use std::marker::PhantomData;
 use std::mem::{transmute};
 use std::ops::{Deref, DerefMut};
+use serde::Serializer;
 pub use traits::AstAllocator;
 pub use void::VoidAllocator;
 use traits::{Box as _, Vec as _};
@@ -88,6 +89,19 @@ impl<'a, T: Debug + ContentEq> ContentEq for Vec<'a, T> {
 impl<'a, T: Debug + ContentHash> ContentHash for Vec<'a, T> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         self.deref().content_hash(state)
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl<'a, T: Debug + serde::Serialize, A: AstAllocator> serde::Serialize for Vec<'a, T, A> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer
+    {
+        match self.specialize_ref() {
+            Ok(val) => val.serialize(serializer),
+            Err(val) => val.serialize(serializer),
+        }
     }
 }
 
@@ -189,6 +203,20 @@ impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> GetSpanMut for Box<'a
 impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> FromIn<'a, T, A> for Box<'a, T, A> {
     fn from_in(value: T, allocator: &'a A) -> Self {
         Self::from_alloc_box(A::Box::from_in(value, allocator))
+    }
+}
+
+
+#[cfg(feature = "serialize")]
+impl<'a, T: Debug + serde::Serialize + GetSpan + GetSpanMut, A: AstAllocator> serde::Serialize for Box<'a, T, A> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer
+    {
+        match self.specialize_ref() {
+            Ok(val) => val.serialize(serializer),
+            Err(val) => val.serialize(serializer),
+        }
     }
 }
 

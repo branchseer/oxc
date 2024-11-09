@@ -19,7 +19,7 @@ impl Sealed for VoidAllocator {}
 
 #[derive_where(Debug)]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize), serde(bound = ""))]
-pub struct VoidBox<'a, T> {
+pub struct VoidBox<'a, T: ?Sized> {
     span: Span,
     _phantom: PhantomData<(&'a (), T)>,
 }
@@ -78,6 +78,10 @@ impl<'a, T> Box<'a> for VoidBox<'a, T> {
         Self::Target: Sized,
     {
         Err(self)
+    }
+
+    fn specialize_ref(&self) -> Result<&oxc_allocator::Box<'a, Self::Target>, &VoidBox<'a, Self::Target>> {
+        Err(&self)
     }
 }
 
