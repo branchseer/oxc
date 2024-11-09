@@ -14,7 +14,7 @@ use std::hash::Hasher;
 use std::marker::PhantomData;
 use std::mem::{transmute};
 use std::ops::{Deref, DerefMut};
-use serde::Serializer;
+
 pub use traits::AstAllocator;
 pub use void::VoidAllocator;
 use traits::{Box as _, Vec as _};
@@ -96,7 +96,7 @@ impl<'a, T: Debug + ContentHash> ContentHash for Vec<'a, T> {
 impl<'a, T: Debug + serde::Serialize, A: AstAllocator> serde::Serialize for Vec<'a, T, A> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: serde::Serializer
     {
         match self.specialize_ref() {
             Ok(val) => val.serialize(serializer),
@@ -211,7 +211,7 @@ impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> FromIn<'a, T, A> for 
 impl<'a, T: Debug + serde::Serialize + GetSpan + GetSpanMut, A: AstAllocator> serde::Serialize for Box<'a, T, A> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: serde::Serializer
     {
         match self.specialize_ref() {
             Ok(val) => val.serialize(serializer),
