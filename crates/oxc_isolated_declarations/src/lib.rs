@@ -556,7 +556,10 @@ impl<'a> IsolatedDeclarations<'a> {
         assignable_properties_for_namespace
     }
 
-    pub fn report_error_for_expando_function(&self, stmts: &oxc_span::ast_alloc::Vec<'a, Statement<'a>>) {
+    pub fn report_error_for_expando_function(
+        &self,
+        stmts: &oxc_span::ast_alloc::Vec<'a, Statement<'a>>,
+    ) {
         let assignable_properties_for_namespace =
             IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 

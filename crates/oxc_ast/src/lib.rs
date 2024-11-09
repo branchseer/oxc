@@ -67,10 +67,10 @@ pub use crate::{
     trivia::{comments_range, has_comments_between, CommentsRange},
     visit::{Visit, VisitMut},
 };
+pub use ast_impl::modifiers::*;
 pub use generated::{ast_builder, ast_kind};
 pub use num_bigint::BigUint;
 use oxc_span::ast_alloc::AstAllocator;
-use crate::ast::Program;
 
 impl<'a, A: AstAllocator> handle::Handler<'a, A> for () {}
 
@@ -144,8 +144,6 @@ fn size_asserts() {
     assert!(size_of::<ast::TSType>() == 16);
 }
 
-use oxc_span::ast_alloc::{Vec, Box};
-
-fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: Program<'a>) -> Program<'b> {
+fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: ast::Program<'a>) -> ast::Program<'b> {
     program
 }

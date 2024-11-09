@@ -1,6 +1,6 @@
-use oxc_span::ast_alloc::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, NONE};
+use oxc_span::ast_alloc::Box;
 use oxc_span::{Span, SPAN};
 
 use crate::{

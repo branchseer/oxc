@@ -2,6 +2,7 @@
 
 use std::{borrow::Cow, ptr};
 
+use oxc_ast::ClassModifiersExt as _;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
@@ -102,7 +103,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
 impl<'a> Binder<'a> for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        if !self.declare {
+        if !self.modifiers.is_declare() {
             let Some(ident) = &self.id else { return };
             let symbol_id = builder.declare_symbol(
                 ident.span,

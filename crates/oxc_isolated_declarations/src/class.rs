@@ -1,11 +1,5 @@
 use std::borrow::Cow;
 
-use oxc_allocator::{Box, CloneIn};
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, NONE};
-use oxc_span::{GetSpan, SPAN};
-use rustc_hash::FxHashMap;
-
 use crate::{
     diagnostics::{
         accessor_must_have_explicit_return_type, computed_property_name, extends_clause_expression,
@@ -13,6 +7,13 @@ use crate::{
     },
     IsolatedDeclarations,
 };
+use oxc_allocator::CloneIn;
+use oxc_ast::ClassElementModifiersExt as _;
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::{ast::*, NONE};
+use oxc_span::ast_alloc::Box;
+use oxc_span::{GetSpan, SPAN};
+use rustc_hash::FxHashMap;
 
 impl<'a> IsolatedDeclarations<'a> {
     pub fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
@@ -59,12 +60,12 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut type_annotations = None;
         let mut value = None;
 
-        if property.accessibility.map_or(true, |a| !a.is_private()) {
+        if !property.modifiers.is_private() {
             if property.type_annotation.is_some() {
                 // SAFETY: `ast.copy` is unsound! We need to fix.
                 type_annotations = unsafe { self.ast.copy(&property.type_annotation) };
             } else if let Some(expr) = property.value.as_ref() {
-                let ts_type = if property.readonly {
+                let ts_type = if property.modifiers.is_readonly() {
                     // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
                     if Self::is_need_to_infer_type_from_expression(expr) {
                         self.transform_expression_to_ts_type(expr)
@@ -92,21 +93,16 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         self.ast.class_element_property_definition(
-            property.r#type,
             property.span,
             self.ast.vec(),
+            property.modifiers,
             // SAFETY: `ast.copy` is unsound! We need to fix.
             unsafe { self.ast.copy(&property.key) },
-            value,
-            property.computed,
-            property.r#static,
-            false,
-            property.r#override,
             property.optional,
             property.definite,
-            property.readonly,
+            value,
+            property.computed,
             type_annotations,
-            self.transform_accessibility(property.accessibility),
         )
     }
 

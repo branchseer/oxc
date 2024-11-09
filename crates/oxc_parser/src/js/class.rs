@@ -15,15 +15,8 @@ use oxc_span::ast_alloc::{
 };
 use oxc_span::{GetSpan, GetSpanMut, Span};
 
-type Extends<'a, A> = Vec<
-    'a,
-    (
-        Expression<'a, A>,
-        Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>,
-        Span,
-    ),
-    A,
->;
+type Extends<'a, A> =
+    Vec<'a, (Expression<'a, A>, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, Span), A>;
 
 /// Section 15.7 Class Definitions
 impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {

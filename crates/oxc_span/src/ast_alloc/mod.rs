@@ -12,16 +12,19 @@ use oxc_allocator::{Allocator, CloneIn, FromIn};
 use std::fmt::Debug;
 use std::hash::Hasher;
 use std::marker::PhantomData;
-use std::mem::{transmute};
+use std::mem::transmute;
 use std::ops::{Deref, DerefMut};
 
 pub use traits::AstAllocator;
-pub use void::VoidAllocator;
 use traits::{Box as _, Vec as _};
+pub use void::VoidAllocator;
 use void::VoidVec;
 
 #[derive_where(Debug)]
-pub struct Vec<'a, T: Debug, A: AstAllocator = Allocator>(A::Vec<'static, ()>, PhantomData<(&'a (), T)>);
+pub struct Vec<'a, T: Debug, A: AstAllocator = Allocator>(
+    A::Vec<'static, ()>,
+    PhantomData<(&'a (), T)>,
+);
 
 impl<'a, T: Debug, A: AstAllocator> Vec<'a, T, A> {
     #[inline]
@@ -32,7 +35,7 @@ impl<'a, T: Debug, A: AstAllocator> Vec<'a, T, A> {
     pub fn into_alloc_vec(self) -> A::Vec<'a, T> {
         unsafe { A::transmute_vec(self.0) }
     }
-    
+
     #[inline]
     pub fn specialize(self) -> Result<oxc_allocator::Vec<'a, T>, VoidVec<'a, T>> {
         self.into_alloc_vec().specialize()
@@ -72,7 +75,7 @@ impl<'a, T: Debug> IntoIterator for Vec<'a, T> {
 
 impl<'old_alloc, T: Debug + CloneIn> CloneIn for Vec<'old_alloc, T>
 where
-        for<'a> <T as CloneIn>::Cloned<'a>: Debug,
+    for<'a> <T as CloneIn>::Cloned<'a>: Debug,
 {
     type Cloned<'a> = Vec<'a, T::Cloned<'a>>;
 
@@ -96,7 +99,7 @@ impl<'a, T: Debug + ContentHash> ContentHash for Vec<'a, T> {
 impl<'a, T: Debug + serde::Serialize, A: AstAllocator> serde::Serialize for Vec<'a, T, A> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer
+        S: serde::Serializer,
     {
         match self.specialize_ref() {
             Ok(val) => val.serialize(serializer),
@@ -147,7 +150,7 @@ impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> Box<'a, T, A> {
     pub fn into_alloc_box(self) -> A::Box<'a, T> {
         unsafe { A::transmute_box(self.0) }
     }
-    
+
     #[inline]
     pub fn try_unbox(self) -> Result<T, Self> {
         match self.into_alloc_box().try_unbox() {
@@ -206,12 +209,13 @@ impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> FromIn<'a, T, A> for 
     }
 }
 
-
 #[cfg(feature = "serialize")]
-impl<'a, T: Debug + serde::Serialize + GetSpan + GetSpanMut, A: AstAllocator> serde::Serialize for Box<'a, T, A> {
+impl<'a, T: Debug + serde::Serialize + GetSpan + GetSpanMut, A: AstAllocator> serde::Serialize
+    for Box<'a, T, A>
+{
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer
+        S: serde::Serializer,
     {
         match self.specialize_ref() {
             Ok(val) => val.serialize(serializer),
@@ -235,12 +239,15 @@ mod _test_variance {
             unimplemented!()
         }
     }
-    fn _assert_box_variance<'a: 'b, 'b>(val: Box<'a, TestAstNodeWithLifetime<'a>>) -> Box<'b, TestAstNodeWithLifetime<'b>> {
+    fn _assert_box_variance<'a: 'b, 'b>(
+        val: Box<'a, TestAstNodeWithLifetime<'a>>,
+    ) -> Box<'b, TestAstNodeWithLifetime<'b>> {
         val
     }
 
-    fn _assert_vec_variance<'a: 'b, 'b>(val: Vec<'a, TestAstNodeWithLifetime<'a>>) -> Vec<'b, TestAstNodeWithLifetime<'b>> {
+    fn _assert_vec_variance<'a: 'b, 'b>(
+        val: Vec<'a, TestAstNodeWithLifetime<'a>>,
+    ) -> Vec<'b, TestAstNodeWithLifetime<'b>> {
         val
     }
 }
-

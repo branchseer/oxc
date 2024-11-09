@@ -1,13 +1,13 @@
 use std::cell::Cell;
 
-use oxc_span::ast_alloc::Box;
 use oxc_allocator::CloneIn;
-use oxc_span::ast_alloc::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::visit::walk_mut::walk_ts_signatures;
 use oxc_ast::{Visit, VisitMut};
 use oxc_ecmascript::BoundNames;
+use oxc_span::ast_alloc::Box;
+use oxc_span::ast_alloc::Vec;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 

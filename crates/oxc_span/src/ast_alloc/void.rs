@@ -80,7 +80,9 @@ impl<'a, T> Box<'a> for VoidBox<'a, T> {
         Err(self)
     }
 
-    fn specialize_ref(&self) -> Result<&oxc_allocator::Box<'a, Self::Target>, &VoidBox<'a, Self::Target>> {
+    fn specialize_ref(
+        &self,
+    ) -> Result<&oxc_allocator::Box<'a, Self::Target>, &VoidBox<'a, Self::Target>> {
         Err(&self)
     }
 }
@@ -174,11 +176,20 @@ unsafe impl super::AstAllocator for VoidAllocator {
         super::Vec::from_alloc_vec(VoidVec(PhantomData))
     }
 
-    unsafe fn transmute_vec<'a, 'b, T1: Debug, T2: Debug>(val: Self::Vec<'a, T1>) -> Self::Vec<'b, T2> {
+    unsafe fn transmute_vec<'a, 'b, T1: Debug, T2: Debug>(
+        val: Self::Vec<'a, T1>,
+    ) -> Self::Vec<'b, T2> {
         unsafe { std::mem::transmute(val) }
     }
 
-    unsafe fn transmute_box<'a, 'b, T1: Debug + GetSpan + GetSpanMut, T2: Debug + GetSpan + GetSpanMut>(val: Self::Box<'a, T1>) -> Self::Box<'b, T2> {
-       unsafe { std::mem::transmute(val) }
+    unsafe fn transmute_box<
+        'a,
+        'b,
+        T1: Debug + GetSpan + GetSpanMut,
+        T2: Debug + GetSpan + GetSpanMut,
+    >(
+        val: Self::Box<'a, T1>,
+    ) -> Self::Box<'b, T2> {
+        unsafe { std::mem::transmute(val) }
     }
 }

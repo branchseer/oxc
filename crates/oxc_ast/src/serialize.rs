@@ -1,7 +1,4 @@
-use oxc_span::{
-    ast_alloc::{AstAllocator},
-    cast_ref, Atom, GetSpan, Span,
-};
+use oxc_span::{ast_alloc::AstAllocator, cast_ref, Atom, GetSpan, Span};
 use serde::{
     ser::{SerializeSeq, Serializer},
     Serialize,
@@ -14,8 +11,11 @@ use crate::ast::{
     JSXIdentifier, JSXMemberExpressionObject, ObjectAssignmentTarget, ObjectPattern, Program,
     RegExpFlags, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
 };
-use oxc_allocator::{Allocator};
-use oxc_span::ast_alloc::{traits::{Box as _, Vec as _}, Box, Vec};
+use oxc_allocator::Allocator;
+use oxc_span::ast_alloc::{
+    traits::{Box as _, Vec as _},
+    Box, Vec,
+};
 
 pub struct EcmaFormatter;
 

@@ -297,7 +297,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         extends: Vec<
             'a,
             (Expression<'a, A>, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, Span),
-            A
+            A,
         >,
     ) -> Vec<'a, TSInterfaceHeritage<'a, A>, A> {
         let Ok(extends) = extends.specialize() else {

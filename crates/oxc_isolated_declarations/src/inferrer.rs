@@ -1,8 +1,8 @@
-use oxc_span::ast_alloc::Box;
 use oxc_ast::ast::{
     ArrowFunctionExpression, BindingPatternKind, Expression, FormalParameter, Function, Statement,
     TSType, TSTypeAnnotation, UnaryExpression,
 };
+use oxc_span::ast_alloc::Box;
 use oxc_span::SPAN;
 
 use crate::{

@@ -1,7 +1,7 @@
-use oxc_span::ast_alloc::Box;
-use oxc_span::ast_alloc::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_span::ast_alloc::Box;
+use oxc_span::ast_alloc::Vec;
 use oxc_span::{Atom, GetSpan, SPAN};
 
 use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};

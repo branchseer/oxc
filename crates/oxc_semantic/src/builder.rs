@@ -740,7 +740,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
         }
         if let Some(implements) = &class.implements {
-            self.visit_ts_class_implementses(implements);
+            self.visit_ts_class_implements(implements);
         }
         self.visit_class_body(&class.body);
 

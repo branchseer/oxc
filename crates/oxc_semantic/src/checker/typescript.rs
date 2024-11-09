@@ -4,6 +4,7 @@ use rustc_hash::FxHashMap;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{ClassElementModifiersExt as _, ClassModifiersExt as _};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, PropName};
 use oxc_span::{Atom, GetSpan, Span};
@@ -107,7 +108,7 @@ fn find_char(span: Span, source_text: &str, c: char) -> Option<Span> {
 
 pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
     // Check for `let x?: number;`
-    if decl.id.optional {
+    if decl.id.optional.is_some() {
         // NOTE: BindingPattern spans cover the identifier _and_ the type annotation.
         let ty = decl
             .id
@@ -119,7 +120,7 @@ pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilde
             ctx.error(unexpected_optional(span, ty));
         }
     }
-    if decl.definite {
+    if decl.definite.is_some() {
         // Check for `let x!: number = 1;`
         //                 ^
         let Some(span) = find_char(decl.span, ctx.source_text, '!') else { return };
@@ -162,15 +163,20 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
 
     for item in &params.items {
         // function a(optional?: number, required: number) { }
-        if has_optional && !item.pattern.optional && !item.pattern.kind.is_assignment_pattern() {
+        if has_optional
+            && item.pattern.optional.is_none()
+            && !item.pattern.kind.is_assignment_pattern()
+        {
             ctx.error(required_parameter_after_optional_parameter(item.span));
         }
-        if item.pattern.optional {
+        if item.pattern.optional.is_some() {
             has_optional = true;
         }
 
         // function a(public x: number) { }
-        if !is_inside_constructor && item.accessibility.is_some() {
+        if !is_inside_constructor
+            && item.modifiers.and_then(|modifiers| modifiers.accessibility).is_some()
+        {
             ctx.error(parameter_property_outside_constructor(item.span));
         }
     }
@@ -327,7 +333,7 @@ fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnost
 }
 
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
-    if !class.r#abstract {
+    if !class.modifiers.is_abstract() {
         for elem in &class.body.body {
             if elem.is_abstract() {
                 let span = elem.property_key().map_or_else(|| elem.span(), GetSpan::span);
@@ -401,7 +407,7 @@ fn accessor_without_body(span: Span) -> OxcDiagnostic {
 }
 
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
-    let is_abstract = method.r#type.is_abstract();
+    let is_abstract = method.modifiers.is_abstract();
     let is_declare = ctx.class_table_builder.current_class_id.map_or(
         ctx.source_type.is_typescript_definition(),
         |id| {
@@ -412,7 +418,7 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
                 #[cfg(not(debug_assertions))]
                 return ctx.source_type.is_typescript_definition();
             };
-            class.declare || ctx.source_type.is_typescript_definition()
+            class.modifiers.is_declare() || ctx.source_type.is_typescript_definition()
         },
     );
 
