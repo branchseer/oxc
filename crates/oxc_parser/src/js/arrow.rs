@@ -2,7 +2,10 @@ use cfg_if::cfg_if;
 use oxc_ast::ast_builder::ScopeToken;
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::{AstAllocator, {traits::Box as _, Box}};
+use oxc_span::ast_alloc::{
+    AstAllocator,
+    {traits::Box as _, Box},
+};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
@@ -39,7 +42,12 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma)?;
             return self
-                .parse_simple_arrow_function_expression(scope_token, span, expr, /* async */ true)
+                .parse_simple_arrow_function_expression(
+                    scope_token,
+                    span,
+                    expr,
+                    /* async */ true,
+                )
                 .map(Some);
         }
         Ok(None)
@@ -246,11 +254,17 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
 
         self.parse_arrow_function_body(
             scope_token,
-            span, /* type_parameters */ None, params, /* return_type */ None, r#async,
+            span,
+            /* type_parameters */ None,
+            params,
+            /* return_type */ None,
+            r#async,
         )
     }
 
-    fn parse_parenthesized_arrow_function_head(&mut self) -> Result<(ArrowFunctionHead<'a, A>, ScopeToken<ArrowFunctionExpression<'a, A>>)> {
+    fn parse_parenthesized_arrow_function_head(
+        &mut self,
+    ) -> Result<(ArrowFunctionHead<'a, A>, ScopeToken<ArrowFunctionExpression<'a, A>>)> {
         let scope_token = self.ast.enter_scope();
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
@@ -329,8 +343,15 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
     fn parse_parenthesized_arrow_function(&mut self) -> Result<Option<Expression<'a, A>>> {
         let ((type_parameters, params, return_type, r#async, span), scope_token) =
             self.parse_parenthesized_arrow_function_head()?;
-        self.parse_arrow_function_body(scope_token, span, type_parameters, params, return_type, r#async)
-            .map(Some)
+        self.parse_arrow_function_body(
+            scope_token,
+            span,
+            type_parameters,
+            params,
+            return_type,
+            r#async,
+        )
+        .map(Some)
     }
 
     fn parse_possible_parenthesized_arrow_function_expression(
@@ -345,7 +366,14 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
         {
             return self
-                .parse_arrow_function_body(scope_token, span, type_parameters, params, return_type, r#async)
+                .parse_arrow_function_body(
+                    scope_token,
+                    span,
+                    type_parameters,
+                    params,
+                    return_type,
+                    r#async,
+                )
                 .map(Some);
         }
         self.state.not_parenthesized_arrow.insert(pos);

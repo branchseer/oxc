@@ -185,40 +185,29 @@ impl AstCodegen {
 
         struct StripAllocatorGenerics;
         impl syn::visit_mut::VisitMut for StripAllocatorGenerics {
-            fn visit_type_path_mut(&mut self, type_path: &mut syn::TypePath) {
-                if type_path.path.segments.len() > 1 && type_path.path.segments[0].ident == "A" {
-                    // `A::Box<...>` -> `Box<...>`
-                    type_path.path.segments =
-                        type_path.path.segments.pairs().map(|pair| pair.cloned()).skip(1).collect();
-                };
-                // if let Some(syn::PathSegment {
-                //     arguments: syn::PathArguments::AngleBracketed(generic_args),
-                //     ..
-                // }) = type_path.path.segments.last_mut()
-                // {
-                //     // `Box<'a, ..., A>` ->  `Box<'a, ...>`
-                //     if generic_args
-                //         .args
-                //         .last()
-                //         .is_some_and(|last_arg| last_arg.to_token_stream().to_string() == "A")
-                //     {
-                //         generic_args.args.pop();
-                //     }
-                // }
-                syn::visit_mut::visit_type_path_mut(self, type_path);
+            fn visit_path_segment_mut(&mut self, path_segment: &mut syn::PathSegment) {
+                // `Box<'a, ..., A>` ->  `Box<'a, ...>`
+                if path_segment.ident == "Box" || path_segment.ident == "Vec" {
+                    let syn::PathArguments::AngleBracketed(generic_args) =
+                        &mut path_segment.arguments
+                    else {
+                        panic!(
+                            "Vec/Box must be following by generic arguments. Actual: {}",
+                            path_segment.to_token_stream().to_string()
+                        );
+                    };
+                    let last_arg =
+                        generic_args.args.last().map(|arg| arg.into_token_stream().to_string());
+                    assert_eq!(
+                        last_arg.as_deref(),
+                        Some("A"),
+                        "Last generic argument of Vec/Box be A. Actual: {}",
+                        path_segment.to_token_stream().to_string()
+                    );
+                    generic_args.args.pop();
+                }
+                syn::visit_mut::visit_path_segment_mut(self, path_segment);
             }
-            // fn visit_path_segment_mut(&mut self, path_segment: &mut syn::PathSegment) {
-            //     // `Box<'a, ..., A>` ->  `Box<'a, ...>`
-            //     if path_segment.ident == "Box" || path_segment.ident == "Vec" {
-            //         let syn::PathArguments::AngleBracketed(generic_args) = &mut path_segment.arguments else {
-            //             panic!("Vec/Box must be following by generic arguments. Actual: {}", path_segment.to_token_stream().to_string());
-            //         };
-            //         let last_arg = generic_args.args.last().map(|arg| arg.into_token_stream().to_string());
-            //         assert_eq!(last_arg.as_deref(), Some("A"), "Last generic argument of Vec/Box be A. Actual: {}", path_segment.to_token_stream().to_string());
-            //         generic_args.args.pop();
-            //     }
-            //     syn::visit_mut::visit_path_segment_mut(self, path_segment);
-            // }
             fn visit_type_param_mut(&mut self, type_param: &mut TypeParam) {
                 if type_param.ident != "A" {
                     return;

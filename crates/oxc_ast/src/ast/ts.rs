@@ -23,7 +23,7 @@ use tsify::Tsify;
 
 use super::{inherit_variants, js::*, jsx::*, literal::*};
 use derive_where::derive_where;
-use oxc_span::ast_alloc::{AstAllocator, Vec, Box};
+use oxc_span::ast_alloc::{AstAllocator, Box, Vec};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]

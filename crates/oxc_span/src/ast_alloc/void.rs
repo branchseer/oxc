@@ -1,8 +1,8 @@
+use super::traits::{Box, Sealed, Vec};
 use derive_where::derive_where;
 use oxc_allocator::FromIn;
 use std::fmt::Debug;
 use std::marker::PhantomData;
-use super::traits::{Sealed, Box, Vec};
 
 use crate::{GetSpan, GetSpanMut, Span};
 

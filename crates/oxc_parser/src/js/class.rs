@@ -8,7 +8,11 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_ecmascript::PropName;
-use oxc_span::ast_alloc::{cast, cast_ref, AstAllocator, Box, Vec, traits::{Box as _, Vec as _}};
+use oxc_span::ast_alloc::{
+    cast, cast_ref,
+    traits::{Box as _, Vec as _},
+    AstAllocator, Box, Vec,
+};
 use oxc_span::{GetSpan, GetSpanMut, Span};
 
 type Extends<'a, A> = Vec<
@@ -18,7 +22,7 @@ type Extends<'a, A> = Vec<
         Option<<A as AstAllocator>::Box<'a, TSTypeParameterInstantiation<'a, A>>>,
         Span,
     ),
-    A
+    A,
 >;
 
 /// Section 15.7 Class Definitions

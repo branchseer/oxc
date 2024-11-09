@@ -1,8 +1,10 @@
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::{Span, ast_alloc::{Box, Vec}};
+use oxc_span::{
+    ast_alloc::{Box, Vec},
+    Span,
+};
 use oxc_syntax::operator::AssignmentOperator;
-
 
 use crate::{diagnostics, lexer::Kind, modifiers::Modifier, Context, ParserImpl};
 

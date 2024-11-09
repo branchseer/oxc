@@ -1,7 +1,10 @@
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::ast_alloc::{traits::Box as _, Box};
-use oxc_span::{ast_alloc::{traits::Vec as _, Vec}, GetSpan};
+use oxc_span::{
+    ast_alloc::{traits::Vec as _, Vec},
+    GetSpan,
+};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{

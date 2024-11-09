@@ -313,7 +313,6 @@ impl Module {
         let mut file = std::fs::File::open(&self.file).normalize().map_err(|err| {
             format!("Error reading file: {}, reason: {}", &self.file.to_string_lossy(), err)
         })?;
-        dbg!(&self.file);
         let mut content = String::new();
         file.read_to_string(&mut content).normalize()?;
         let file = parse_file(content.as_str()).normalize()?;

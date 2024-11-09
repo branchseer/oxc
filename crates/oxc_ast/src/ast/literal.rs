@@ -14,7 +14,7 @@ use derive_where::derive_where;
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::ast_alloc::{AstAllocator, Vec, Box};
+use oxc_span::ast_alloc::{AstAllocator, Box, Vec};
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]

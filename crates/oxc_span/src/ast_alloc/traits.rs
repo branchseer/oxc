@@ -1,4 +1,3 @@
-
 use std::fmt::Debug;
 use std::ops::{Deref as _, DerefMut as _};
 
@@ -11,17 +10,16 @@ use super::void::VoidVec;
 
 pub(super) trait Sealed {}
 
-
 /// Safety: Box and Vec are variant on its lifetime `'a`
 #[allow(private_bounds)]
 pub unsafe trait AstAllocator: Sized + 'static + Sealed {
     // For runtime specialization
     const IS_VOID: bool;
     type Box<'a, T: Debug + GetSpan + GetSpanMut>: Box<'a, Target = T>
-    + GetSpan
-    + GetSpanMut
-    + FromIn<'a, T, Self>
-    + Debug
+        + GetSpan
+        + GetSpanMut
+        + FromIn<'a, T, Self>
+        + Debug
     where
         Self: 'a;
 
@@ -158,9 +156,7 @@ impl<'a, T> Vec<'a> for oxc_allocator::Vec<'a, T> {
     }
 
     #[inline]
-    fn specialize(
-        self,
-    ) -> Result<oxc_allocator::Vec<'a, Self::Item>, VoidVec<'a, Self::Item>> {
+    fn specialize(self) -> Result<oxc_allocator::Vec<'a, Self::Item>, VoidVec<'a, Self::Item>> {
         Ok(self)
     }
 

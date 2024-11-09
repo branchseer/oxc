@@ -8,7 +8,10 @@ use crate::{
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::ast_alloc::{traits::{Box as _, Vec as _}, Box, Vec};
+use oxc_span::ast_alloc::{
+    traits::{Box as _, Vec as _},
+    Box, Vec,
+};
 use oxc_span::{cast_ref, GetSpan, Span};
 
 impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {

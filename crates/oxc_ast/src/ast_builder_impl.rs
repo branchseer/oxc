@@ -6,8 +6,8 @@
 )]
 
 use oxc_allocator::{Allocator, FromIn, String};
-use oxc_span::ast_alloc::{AstAllocator, Vec, Box};
-use oxc_span::{ast_alloc::traits::{Vec as _}, Atom, GetSpan, GetSpanMut, Span};
+use oxc_span::ast_alloc::{AstAllocator, Box, Vec};
+use oxc_span::{ast_alloc::traits::Vec as _, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
 use std::fmt::Debug;
 use std::mem;

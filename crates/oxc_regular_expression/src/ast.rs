@@ -5,7 +5,10 @@ use derive_where::derive_where;
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
 use oxc_span::{
-    ast_alloc::{AstAllocator, Vec, Box}, cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span,
+    ast_alloc::{AstAllocator, Box, Vec},
+    cmp::ContentEq,
+    hash::ContentHash,
+    Atom, GetSpan, GetSpanMut, Span,
 };
 #[cfg(feature = "serialize")]
 use serde::Serialize;
