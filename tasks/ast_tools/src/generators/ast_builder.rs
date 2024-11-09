@@ -47,7 +47,7 @@ impl Generator for AstBuilderGenerator {
                 ///@@line_break
                 use oxc_allocator::{Allocator, IntoIn};
                 use oxc_syntax::scope::ScopeFlags;
-                use oxc_span::ast_alloc::AstAllocator;
+                use oxc_span::ast_alloc::{AstAllocator, Vec, Box};
                 use derive_where::derive_where;
                 use std::marker::PhantomData;
 
@@ -395,7 +395,7 @@ fn generate_struct_builder_fn(ty: &StructDef, with_handle: bool, ctx: &LateCtx) 
         ///@@line_break
         #alloc_docs
         #[inline]
-        pub fn #alloc_fn_name #generic_params (#self_param, #scope_token_param #(#params),*) -> A::Box<'a, #as_type> #where_clause {
+        pub fn #alloc_fn_name #generic_params (#self_param, #scope_token_param #(#params),*) -> Box<'a, #as_type, A> #where_clause {
             self.allocator.alloc(self.#fn_name(#(#args),*))
         }
     }
@@ -629,14 +629,14 @@ fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
             (TypeWrapper::Box, Some(def)) => {
                 let t = t_param();
                 let typ = def.to_type_with_generic_allocator();
-                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, A::Box<'a, #typ>, A>), t)))
+                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, Box<'a, #typ, A>, A>), t)))
             }
             (TypeWrapper::OptBox, Some(def)) => {
                 let t = t_param();
                 let typ = def.to_type_with_generic_allocator();
                 (
                     Some(parse_quote!(#t)),
-                    Some((quote!(#t: IntoIn<'a, Option<A::Box<'a, #typ>>, A>), t)),
+                    Some((quote!(#t: IntoIn<'a, Option<Box<'a, #typ, A>>, A>), t)),
                 )
             }
             (TypeWrapper::Ref, None) if field.typ.is_str_slice() => {

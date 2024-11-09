@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, ToTokens};
-use syn::parse_quote;
+use syn::{parse_quote, PathSegment};
 
 use super::{
     defs::{EnumDef, StructDef, TypeDef, TypeRef},
@@ -15,22 +15,17 @@ pub trait ToType {
     fn to_type_with_explicit_generics(&self, generics: TokenStream) -> syn::Type;
 }
 
-// `Vec<...>` -> `A::Vec<...>`
-struct InsertAllocatorPrefix;
-impl syn::visit_mut::VisitMut for InsertAllocatorPrefix {
-    fn visit_type_path_mut(&mut self, type_path: &mut syn::TypePath) {
-        if type_path
-            .path
-            .segments
-            .first()
-            .is_some_and(|first_seg| first_seg.ident == "Vec" || first_seg.ident == "Box")
-        {
-            type_path.path.segments.insert(
-                0,
-                syn::PathSegment { ident: format_ident!("A"), arguments: syn::PathArguments::None },
-            );
+// `Vec<...>` -> `Vec<..., A>`
+struct InsertAllocatorGenericParam;
+impl syn::visit_mut::VisitMut for InsertAllocatorGenericParam {
+    fn visit_path_segment_mut(&mut self, path_segment: &mut PathSegment) {
+        if path_segment.ident == "Vec" || path_segment.ident == "Box" {
+            let syn::PathArguments::AngleBracketed(arguments) = &mut path_segment.arguments else {
+                panic!("Vec/Box not followed by <...>");
+            };
+            arguments.args.push(syn::GenericArgument::Type(syn::parse_str("A").unwrap()))
         }
-        syn::visit_mut::visit_type_path_mut(self, type_path)
+        syn::visit_mut::visit_path_segment_mut(self, path_segment);
     }
 }
 
@@ -40,7 +35,7 @@ impl ToType for TypeRef {
     }
     fn to_type_with_generic_allocator(&self) -> syn::Type {
         let mut ty = self.to_type();
-        syn::visit_mut::VisitMut::visit_type_mut(&mut InsertAllocatorPrefix, &mut ty);
+        syn::visit_mut::VisitMut::visit_type_mut(&mut InsertAllocatorGenericParam, &mut ty);
         ty
     }
 

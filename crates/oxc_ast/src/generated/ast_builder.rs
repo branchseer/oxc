@@ -10,7 +10,7 @@
 use crate::{handle::Handler, AstScopeNode};
 use derive_where::derive_where;
 use oxc_allocator::{Allocator, IntoIn};
-use oxc_span::ast_alloc::AstAllocator;
+use oxc_span::ast_alloc::{AstAllocator, Box, Vec};
 use oxc_syntax::scope::ScopeFlags;
 use std::marker::PhantomData;
 
@@ -45,7 +45,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - span: The [`Span`] covering this node
     /// - value
     #[inline]
-    pub fn alloc_boolean_literal(self, span: Span, value: bool) -> A::Box<'a, BooleanLiteral> {
+    pub fn alloc_boolean_literal(self, span: Span, value: bool) -> Box<'a, BooleanLiteral, A> {
         self.allocator.alloc(self.boolean_literal(span, value))
     }
 
@@ -68,7 +68,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_null_literal(self, span: Span) -> A::Box<'a, NullLiteral> {
+    pub fn alloc_null_literal(self, span: Span) -> Box<'a, NullLiteral, A> {
         self.allocator.alloc(self.null_literal(span))
     }
 
@@ -112,7 +112,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         value: f64,
         raw: S,
         base: NumberBase,
-    ) -> A::Box<'a, NumericLiteral<'a>>
+    ) -> Box<'a, NumericLiteral<'a>, A>
     where
         S: IntoIn<'a, &'a str, A>,
     {
@@ -155,7 +155,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         raw: IntoAtom,
         base: BigintBase,
-    ) -> A::Box<'a, BigIntLiteral<'a>>
+    ) -> Box<'a, BigIntLiteral<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -195,7 +195,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         value: EmptyObject,
         regex: RegExp<'a, A>,
-    ) -> A::Box<'a, RegExpLiteral<'a, A>> {
+    ) -> Box<'a, RegExpLiteral<'a, A>, A> {
         self.allocator.alloc(self.reg_exp_literal(span, value, regex))
     }
 
@@ -227,7 +227,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         value: IntoAtom,
-    ) -> A::Box<'a, StringLiteral<'a>>
+    ) -> Box<'a, StringLiteral<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -252,10 +252,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         source_type: SourceType,
         source_text: S,
-        comments: A::Vec<'a, Comment>,
+        comments: Vec<'a, Comment, A>,
         hashbang: Option<Hashbang<'a>>,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> Program<'a, A>
     where
         S: IntoIn<'a, &'a str, A>,
@@ -291,11 +291,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         source_type: SourceType,
         source_text: S,
-        comments: A::Vec<'a, Comment>,
+        comments: Vec<'a, Comment, A>,
         hashbang: Option<Hashbang<'a>>,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, Program<'a, A>>
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, Program<'a, A>, A>
     where
         S: IntoIn<'a, &'a str, A>,
     {
@@ -328,7 +328,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_boolean_literal<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BooleanLiteral>, A>,
+        T: IntoIn<'a, Box<'a, BooleanLiteral, A>, A>,
     {
         let value = Expression::BooleanLiteral(inner.into_in(self.allocator));
         value
@@ -351,7 +351,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_null_literal<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NullLiteral>, A>,
+        T: IntoIn<'a, Box<'a, NullLiteral, A>, A>,
     {
         let value = Expression::NullLiteral(inner.into_in(self.allocator));
         value
@@ -386,7 +386,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_numeric_literal<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NumericLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, NumericLiteral<'a>, A>, A>,
     {
         let value = Expression::NumericLiteral(inner.into_in(self.allocator));
         value
@@ -419,7 +419,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_big_int_literal<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BigIntLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, BigIntLiteral<'a>, A>, A>,
     {
         let value = Expression::BigIntLiteral(inner.into_in(self.allocator));
         value
@@ -449,7 +449,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_reg_exp_literal<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, RegExpLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, RegExpLiteral<'a, A>, A>, A>,
     {
         let value = Expression::RegExpLiteral(inner.into_in(self.allocator));
         value
@@ -480,7 +480,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_string_literal<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StringLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
     {
         let value = Expression::StringLiteral(inner.into_in(self.allocator));
         value
@@ -498,8 +498,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn expression_template_literal(
         self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> Expression<'a, A> {
         let value = self.template_literal(span, quasis, expressions);
         let value = Expression::TemplateLiteral(self.allocator.alloc(value));
@@ -510,7 +510,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_template_literal<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TemplateLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TemplateLiteral<'a, A>, A>, A>,
     {
         let value = Expression::TemplateLiteral(inner.into_in(self.allocator));
         value
@@ -541,7 +541,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_identifier_reference<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value = Expression::Identifier(inner.into_in(self.allocator));
         value
@@ -571,7 +571,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_meta_property<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, MetaProperty<'a>>, A>,
+        T: IntoIn<'a, Box<'a, MetaProperty<'a>, A>, A>,
     {
         let value = Expression::MetaProperty(inner.into_in(self.allocator));
         value
@@ -594,7 +594,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_super<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Super>, A>,
+        T: IntoIn<'a, Box<'a, Super, A>, A>,
     {
         let value = Expression::Super(inner.into_in(self.allocator));
         value
@@ -612,7 +612,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn expression_array(
         self,
         span: Span,
-        elements: A::Vec<'a, ArrayExpressionElement<'a, A>>,
+        elements: Vec<'a, ArrayExpressionElement<'a, A>, A>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a, A> {
         let value = self.array_expression(span, elements, trailing_comma);
@@ -624,7 +624,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_array<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ArrayExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ArrayExpression<'a, A>, A>, A>,
     {
         let value = Expression::ArrayExpression(inner.into_in(self.allocator));
         value
@@ -654,10 +654,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T4,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T4: IntoIn<'a, A::Box<'a, FunctionBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a, A>, A>, A>,
     {
         let value = self.arrow_function_expression(
             span,
@@ -676,7 +676,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_arrow_function<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ArrowFunctionExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ArrowFunctionExpression<'a, A>, A>, A>,
     {
         let value = Expression::ArrowFunctionExpression(inner.into_in(self.allocator));
         value
@@ -708,7 +708,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_assignment<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentExpression<'a, A>, A>, A>,
     {
         let value = Expression::AssignmentExpression(inner.into_in(self.allocator));
         value
@@ -732,7 +732,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_await<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AwaitExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AwaitExpression<'a, A>, A>, A>,
     {
         let value = Expression::AwaitExpression(inner.into_in(self.allocator));
         value
@@ -764,7 +764,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_binary<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BinaryExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, BinaryExpression<'a, A>, A>, A>,
     {
         let value = Expression::BinaryExpression(inner.into_in(self.allocator));
         value
@@ -786,11 +786,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         callee: Expression<'a, A>,
         type_parameters: T1,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         optional: bool,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.call_expression(span, callee, type_parameters, arguments, optional);
         let value = Expression::CallExpression(self.allocator.alloc(value));
@@ -801,7 +801,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_call<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, CallExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, CallExpression<'a, A>, A>, A>,
     {
         let value = Expression::CallExpression(inner.into_in(self.allocator));
         value
@@ -829,7 +829,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_chain<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ChainExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ChainExpression<'a, A>, A>, A>,
     {
         let value = Expression::ChainExpression(inner.into_in(self.allocator));
         value
@@ -855,7 +855,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -865,9 +865,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T3,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         let value = self.class(
             r#type,
@@ -889,7 +889,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_class<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Class<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Class<'a, A>, A>, A>,
     {
         let value = Expression::ClassExpression(inner.into_in(self.allocator));
         value
@@ -921,7 +921,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_conditional<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ConditionalExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ConditionalExpression<'a, A>, A>, A>,
     {
         let value = Expression::ConditionalExpression(inner.into_in(self.allocator));
         value
@@ -959,11 +959,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T5,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         let value = self.function(
             r#type,
@@ -986,7 +986,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_function<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Function<'a, A>, A>, A>,
     {
         let value = Expression::FunctionExpression(inner.into_in(self.allocator));
         value
@@ -1005,7 +1005,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         source: Expression<'a, A>,
-        arguments: A::Vec<'a, Expression<'a, A>>,
+        arguments: Vec<'a, Expression<'a, A>, A>,
     ) -> Expression<'a, A> {
         let value = self.import_expression(span, source, arguments);
         let value = Expression::ImportExpression(self.allocator.alloc(value));
@@ -1016,7 +1016,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_import<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ImportExpression<'a, A>, A>, A>,
     {
         let value = Expression::ImportExpression(inner.into_in(self.allocator));
         value
@@ -1048,7 +1048,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_logical<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, LogicalExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, LogicalExpression<'a, A>, A>, A>,
     {
         let value = Expression::LogicalExpression(inner.into_in(self.allocator));
         value
@@ -1068,11 +1068,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         callee: Expression<'a, A>,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         type_parameters: T1,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.new_expression(span, callee, arguments, type_parameters);
         let value = Expression::NewExpression(self.allocator.alloc(value));
@@ -1083,7 +1083,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_new<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NewExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, NewExpression<'a, A>, A>, A>,
     {
         let value = Expression::NewExpression(inner.into_in(self.allocator));
         value
@@ -1101,7 +1101,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn expression_object(
         self,
         span: Span,
-        properties: A::Vec<'a, ObjectPropertyKind<'a, A>>,
+        properties: Vec<'a, ObjectPropertyKind<'a, A>, A>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a, A> {
         let value = self.object_expression(span, properties, trailing_comma);
@@ -1113,7 +1113,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_object<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ObjectExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ObjectExpression<'a, A>, A>, A>,
     {
         let value = Expression::ObjectExpression(inner.into_in(self.allocator));
         value
@@ -1141,7 +1141,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_parenthesized<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ParenthesizedExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ParenthesizedExpression<'a, A>, A>, A>,
     {
         let value = Expression::ParenthesizedExpression(inner.into_in(self.allocator));
         value
@@ -1158,7 +1158,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn expression_sequence(
         self,
         span: Span,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> Expression<'a, A> {
         let value = self.sequence_expression(span, expressions);
         let value = Expression::SequenceExpression(self.allocator.alloc(value));
@@ -1169,7 +1169,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_sequence<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SequenceExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SequenceExpression<'a, A>, A>, A>,
     {
         let value = Expression::SequenceExpression(inner.into_in(self.allocator));
         value
@@ -1193,7 +1193,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.tagged_template_expression(span, tag, quasi, type_parameters);
         let value = Expression::TaggedTemplateExpression(self.allocator.alloc(value));
@@ -1204,7 +1204,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_tagged_template<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TaggedTemplateExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TaggedTemplateExpression<'a, A>, A>, A>,
     {
         let value = Expression::TaggedTemplateExpression(inner.into_in(self.allocator));
         value
@@ -1227,7 +1227,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_this<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ThisExpression>, A>,
+        T: IntoIn<'a, Box<'a, ThisExpression, A>, A>,
     {
         let value = Expression::ThisExpression(inner.into_in(self.allocator));
         value
@@ -1257,7 +1257,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_unary<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, UnaryExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, UnaryExpression<'a, A>, A>, A>,
     {
         let value = Expression::UnaryExpression(inner.into_in(self.allocator));
         value
@@ -1289,7 +1289,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_update<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, UpdateExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, UpdateExpression<'a, A>, A>, A>,
     {
         let value = Expression::UpdateExpression(inner.into_in(self.allocator));
         value
@@ -1319,7 +1319,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_yield<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, YieldExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, YieldExpression<'a, A>, A>, A>,
     {
         let value = Expression::YieldExpression(inner.into_in(self.allocator));
         value
@@ -1351,7 +1351,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_private_in<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, PrivateInExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, PrivateInExpression<'a, A>, A>, A>,
     {
         let value = Expression::PrivateInExpression(inner.into_in(self.allocator));
         value
@@ -1372,11 +1372,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         let value = self.jsx_element(span, opening_element, closing_element, children);
         let value = Expression::JSXElement(self.allocator.alloc(value));
@@ -1387,7 +1387,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_jsx_element<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXElement<'a, A>, A>, A>,
     {
         let value = Expression::JSXElement(inner.into_in(self.allocator));
         value
@@ -1408,7 +1408,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> Expression<'a, A> {
         let value = self.jsx_fragment(span, opening_fragment, closing_fragment, children);
         let value = Expression::JSXFragment(self.allocator.alloc(value));
@@ -1419,7 +1419,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_jsx_fragment<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXFragment<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXFragment<'a, A>, A>, A>,
     {
         let value = Expression::JSXFragment(inner.into_in(self.allocator));
         value
@@ -1449,7 +1449,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_ts_as<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSAsExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSAsExpression<'a, A>, A>, A>,
     {
         let value = Expression::TSAsExpression(inner.into_in(self.allocator));
         value
@@ -1479,7 +1479,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_ts_satisfies<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSSatisfiesExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSSatisfiesExpression<'a, A>, A>, A>,
     {
         let value = Expression::TSSatisfiesExpression(inner.into_in(self.allocator));
         value
@@ -1509,7 +1509,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_ts_type_assertion<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeAssertion<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeAssertion<'a, A>, A>, A>,
     {
         let value = Expression::TSTypeAssertion(inner.into_in(self.allocator));
         value
@@ -1539,7 +1539,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_ts_non_null<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNonNullExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSNonNullExpression<'a, A>, A>, A>,
     {
         let value = Expression::TSNonNullExpression(inner.into_in(self.allocator));
         value
@@ -1561,7 +1561,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a, A>, A>, A>,
     {
         let value = self.ts_instantiation_expression(span, expression, type_parameters);
         let value = Expression::TSInstantiationExpression(self.allocator.alloc(value));
@@ -1572,7 +1572,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn expression_from_ts_instantiation<T>(self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInstantiationExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInstantiationExpression<'a, A>, A>, A>,
     {
         let value = Expression::TSInstantiationExpression(inner.into_in(self.allocator));
         value
@@ -1612,7 +1612,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, IdentifierName<'a>>
+    ) -> Box<'a, IdentifierName<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -1655,7 +1655,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, IdentifierReference<'a>>
+    ) -> Box<'a, IdentifierReference<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -1694,7 +1694,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, BindingIdentifier<'a>>
+    ) -> Box<'a, BindingIdentifier<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -1729,7 +1729,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, LabelIdentifier<'a>>
+    ) -> Box<'a, LabelIdentifier<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -1755,7 +1755,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_this_expression(self, span: Span) -> A::Box<'a, ThisExpression> {
+    pub fn alloc_this_expression(self, span: Span) -> Box<'a, ThisExpression, A> {
         self.allocator.alloc(self.this_expression(span))
     }
 
@@ -1771,7 +1771,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn array_expression(
         self,
         span: Span,
-        elements: A::Vec<'a, ArrayExpressionElement<'a, A>>,
+        elements: Vec<'a, ArrayExpressionElement<'a, A>, A>,
         trailing_comma: Option<Span>,
     ) -> ArrayExpression<'a, A> {
         let value = ArrayExpression { span, elements, trailing_comma };
@@ -1790,9 +1790,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_array_expression(
         self,
         span: Span,
-        elements: A::Vec<'a, ArrayExpressionElement<'a, A>>,
+        elements: Vec<'a, ArrayExpressionElement<'a, A>, A>,
         trailing_comma: Option<Span>,
-    ) -> A::Box<'a, ArrayExpression<'a, A>> {
+    ) -> Box<'a, ArrayExpression<'a, A>, A> {
         self.allocator.alloc(self.array_expression(span, elements, trailing_comma))
     }
 
@@ -1821,7 +1821,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ArrayExpressionElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SpreadElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SpreadElement<'a, A>, A>, A>,
     {
         let value = ArrayExpressionElement::SpreadElement(inner.into_in(self.allocator));
         value
@@ -1875,7 +1875,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_elision(self, span: Span) -> A::Box<'a, Elision> {
+    pub fn alloc_elision(self, span: Span) -> Box<'a, Elision, A> {
         self.allocator.alloc(self.elision(span))
     }
 
@@ -1891,7 +1891,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn object_expression(
         self,
         span: Span,
-        properties: A::Vec<'a, ObjectPropertyKind<'a, A>>,
+        properties: Vec<'a, ObjectPropertyKind<'a, A>, A>,
         trailing_comma: Option<Span>,
     ) -> ObjectExpression<'a, A> {
         let value = ObjectExpression { span, properties, trailing_comma };
@@ -1910,9 +1910,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_object_expression(
         self,
         span: Span,
-        properties: A::Vec<'a, ObjectPropertyKind<'a, A>>,
+        properties: Vec<'a, ObjectPropertyKind<'a, A>, A>,
         trailing_comma: Option<Span>,
-    ) -> A::Box<'a, ObjectExpression<'a, A>> {
+    ) -> Box<'a, ObjectExpression<'a, A>, A> {
         self.allocator.alloc(self.object_expression(span, properties, trailing_comma))
     }
 
@@ -1950,7 +1950,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn object_property_kind_from_object_property<T>(self, inner: T) -> ObjectPropertyKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ObjectProperty<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ObjectProperty<'a, A>, A>, A>,
     {
         let value = ObjectPropertyKind::ObjectProperty(inner.into_in(self.allocator));
         value
@@ -1978,7 +1978,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn object_property_kind_from_spread_element<T>(self, inner: T) -> ObjectPropertyKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SpreadElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SpreadElement<'a, A>, A>, A>,
     {
         let value = ObjectPropertyKind::SpreadProperty(inner.into_in(self.allocator));
         value
@@ -2037,7 +2037,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         method: bool,
         shorthand: bool,
         computed: bool,
-    ) -> A::Box<'a, ObjectProperty<'a, A>> {
+    ) -> Box<'a, ObjectProperty<'a, A>, A> {
         self.allocator
             .alloc(self.object_property(span, kind, key, value, init, method, shorthand, computed))
     }
@@ -2067,7 +2067,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn property_key_from_identifier_name<T>(self, inner: T) -> PropertyKey<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierName<'a>, A>, A>,
     {
         let value = PropertyKey::StaticIdentifier(inner.into_in(self.allocator));
         value
@@ -2098,7 +2098,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn property_key_from_private_identifier<T>(self, inner: T) -> PropertyKey<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, PrivateIdentifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, PrivateIdentifier<'a>, A>, A>,
     {
         let value = PropertyKey::PrivateIdentifier(inner.into_in(self.allocator));
         value
@@ -2122,8 +2122,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn template_literal(
         self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> TemplateLiteral<'a, A> {
         let value = TemplateLiteral { span, quasis, expressions };
         value
@@ -2141,9 +2141,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_template_literal(
         self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
-    ) -> A::Box<'a, TemplateLiteral<'a, A>> {
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
+    ) -> Box<'a, TemplateLiteral<'a, A>, A> {
         self.allocator.alloc(self.template_literal(span, quasis, expressions))
     }
 
@@ -2165,7 +2165,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> TaggedTemplateExpression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TaggedTemplateExpression {
             span,
@@ -2192,9 +2192,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         tag: Expression<'a, A>,
         quasi: TemplateLiteral<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TaggedTemplateExpression<'a, A>>
+    ) -> Box<'a, TaggedTemplateExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.tagged_template_expression(span, tag, quasi, type_parameters))
     }
@@ -2232,7 +2232,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         tail: bool,
         value: TemplateElementValue<'a>,
-    ) -> A::Box<'a, TemplateElement<'a>> {
+    ) -> Box<'a, TemplateElement<'a>, A> {
         self.allocator.alloc(self.template_element(span, tail, value))
     }
 
@@ -2262,7 +2262,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn member_expression_from_computed<T>(self, inner: T) -> MemberExpression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ComputedMemberExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ComputedMemberExpression<'a, A>, A>, A>,
     {
         let value = MemberExpression::ComputedMemberExpression(inner.into_in(self.allocator));
         value
@@ -2294,7 +2294,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn member_expression_from_static<T>(self, inner: T) -> MemberExpression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StaticMemberExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, StaticMemberExpression<'a, A>, A>, A>,
     {
         let value = MemberExpression::StaticMemberExpression(inner.into_in(self.allocator));
         value
@@ -2329,7 +2329,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> MemberExpression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, PrivateFieldExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, PrivateFieldExpression<'a, A>, A>, A>,
     {
         let value = MemberExpression::PrivateFieldExpression(inner.into_in(self.allocator));
         value
@@ -2372,7 +2372,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         object: Expression<'a, A>,
         expression: Expression<'a, A>,
         optional: bool,
-    ) -> A::Box<'a, ComputedMemberExpression<'a, A>> {
+    ) -> Box<'a, ComputedMemberExpression<'a, A>, A> {
         self.allocator.alloc(self.computed_member_expression(span, object, expression, optional))
     }
 
@@ -2413,7 +2413,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         object: Expression<'a, A>,
         property: IdentifierName<'a>,
         optional: bool,
-    ) -> A::Box<'a, StaticMemberExpression<'a, A>> {
+    ) -> Box<'a, StaticMemberExpression<'a, A>, A> {
         self.allocator.alloc(self.static_member_expression(span, object, property, optional))
     }
 
@@ -2454,7 +2454,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         object: Expression<'a, A>,
         field: PrivateIdentifier<'a>,
         optional: bool,
-    ) -> A::Box<'a, PrivateFieldExpression<'a, A>> {
+    ) -> Box<'a, PrivateFieldExpression<'a, A>, A> {
         self.allocator.alloc(self.private_field_expression(span, object, field, optional))
     }
 
@@ -2474,11 +2474,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         callee: Expression<'a, A>,
         type_parameters: T1,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         optional: bool,
     ) -> CallExpression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = CallExpression {
             span,
@@ -2506,11 +2506,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         callee: Expression<'a, A>,
         type_parameters: T1,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         optional: bool,
-    ) -> A::Box<'a, CallExpression<'a, A>>
+    ) -> Box<'a, CallExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.call_expression(
             span,
@@ -2535,11 +2535,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         callee: Expression<'a, A>,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         type_parameters: T1,
     ) -> NewExpression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = NewExpression {
             span,
@@ -2564,11 +2564,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         callee: Expression<'a, A>,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, NewExpression<'a, A>>
+    ) -> Box<'a, NewExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.new_expression(span, callee, arguments, type_parameters))
     }
@@ -2606,7 +2606,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
-    ) -> A::Box<'a, MetaProperty<'a>> {
+    ) -> Box<'a, MetaProperty<'a>, A> {
         self.allocator.alloc(self.meta_property(span, meta, property))
     }
 
@@ -2635,7 +2635,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, SpreadElement<'a, A>> {
+    ) -> Box<'a, SpreadElement<'a, A>, A> {
         self.allocator.alloc(self.spread_element(span, argument))
     }
 
@@ -2661,7 +2661,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn argument_from_spread_element<T>(self, inner: T) -> Argument<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SpreadElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SpreadElement<'a, A>, A>, A>,
     {
         let value = Argument::SpreadElement(inner.into_in(self.allocator));
         value
@@ -2710,7 +2710,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         operator: UpdateOperator,
         prefix: bool,
         argument: SimpleAssignmentTarget<'a, A>,
-    ) -> A::Box<'a, UpdateExpression<'a, A>> {
+    ) -> Box<'a, UpdateExpression<'a, A>, A> {
         self.allocator.alloc(self.update_expression(span, operator, prefix, argument))
     }
 
@@ -2747,7 +2747,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         operator: UnaryOperator,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, UnaryExpression<'a, A>> {
+    ) -> Box<'a, UnaryExpression<'a, A>, A> {
         self.allocator.alloc(self.unary_expression(span, operator, argument))
     }
 
@@ -2788,7 +2788,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         left: Expression<'a, A>,
         operator: BinaryOperator,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, BinaryExpression<'a, A>> {
+    ) -> Box<'a, BinaryExpression<'a, A>, A> {
         self.allocator.alloc(self.binary_expression(span, left, operator, right))
     }
 
@@ -2829,7 +2829,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         left: PrivateIdentifier<'a>,
         operator: BinaryOperator,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, PrivateInExpression<'a, A>> {
+    ) -> Box<'a, PrivateInExpression<'a, A>, A> {
         self.allocator.alloc(self.private_in_expression(span, left, operator, right))
     }
 
@@ -2870,7 +2870,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         left: Expression<'a, A>,
         operator: LogicalOperator,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, LogicalExpression<'a, A>> {
+    ) -> Box<'a, LogicalExpression<'a, A>, A> {
         self.allocator.alloc(self.logical_expression(span, left, operator, right))
     }
 
@@ -2911,7 +2911,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         test: Expression<'a, A>,
         consequent: Expression<'a, A>,
         alternate: Expression<'a, A>,
-    ) -> A::Box<'a, ConditionalExpression<'a, A>> {
+    ) -> Box<'a, ConditionalExpression<'a, A>, A> {
         self.allocator.alloc(self.conditional_expression(span, test, consequent, alternate))
     }
 
@@ -2952,7 +2952,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         operator: AssignmentOperator,
         left: AssignmentTarget<'a, A>,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, AssignmentExpression<'a, A>> {
+    ) -> Box<'a, AssignmentExpression<'a, A>, A> {
         self.allocator.alloc(self.assignment_expression(span, operator, left, right))
     }
 
@@ -3002,7 +3002,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value =
             SimpleAssignmentTarget::AssignmentTargetIdentifier(inner.into_in(self.allocator));
@@ -3036,7 +3036,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSAsExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSAsExpression<'a, A>, A>, A>,
     {
         let value = SimpleAssignmentTarget::TSAsExpression(inner.into_in(self.allocator));
         value
@@ -3069,7 +3069,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSSatisfiesExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSSatisfiesExpression<'a, A>, A>, A>,
     {
         let value = SimpleAssignmentTarget::TSSatisfiesExpression(inner.into_in(self.allocator));
         value
@@ -3102,7 +3102,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNonNullExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSNonNullExpression<'a, A>, A>, A>,
     {
         let value = SimpleAssignmentTarget::TSNonNullExpression(inner.into_in(self.allocator));
         value
@@ -3135,7 +3135,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeAssertion<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeAssertion<'a, A>, A>, A>,
     {
         let value = SimpleAssignmentTarget::TSTypeAssertion(inner.into_in(self.allocator));
         value
@@ -3157,7 +3157,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a, A>, A>, A>,
     {
         let value = self.ts_instantiation_expression(span, expression, type_parameters);
         let value = SimpleAssignmentTarget::TSInstantiationExpression(self.allocator.alloc(value));
@@ -3171,7 +3171,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInstantiationExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInstantiationExpression<'a, A>, A>, A>,
     {
         let value =
             SimpleAssignmentTarget::TSInstantiationExpression(inner.into_in(self.allocator));
@@ -3200,7 +3200,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn assignment_target_pattern_array_assignment_target(
         self,
         span: Span,
-        elements: A::Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>>,
+        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
         trailing_comma: Option<Span>,
     ) -> AssignmentTargetPattern<'a, A> {
@@ -3216,7 +3216,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> AssignmentTargetPattern<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ArrayAssignmentTarget<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ArrayAssignmentTarget<'a, A>, A>, A>,
     {
         let value = AssignmentTargetPattern::ArrayAssignmentTarget(inner.into_in(self.allocator));
         value
@@ -3234,7 +3234,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn assignment_target_pattern_object_assignment_target(
         self,
         span: Span,
-        properties: A::Vec<'a, AssignmentTargetProperty<'a, A>>,
+        properties: Vec<'a, AssignmentTargetProperty<'a, A>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
     ) -> AssignmentTargetPattern<'a, A> {
         let value = self.object_assignment_target(span, properties, rest);
@@ -3249,7 +3249,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> AssignmentTargetPattern<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ObjectAssignmentTarget<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ObjectAssignmentTarget<'a, A>, A>, A>,
     {
         let value = AssignmentTargetPattern::ObjectAssignmentTarget(inner.into_in(self.allocator));
         value
@@ -3268,7 +3268,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn array_assignment_target(
         self,
         span: Span,
-        elements: A::Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>>,
+        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
         trailing_comma: Option<Span>,
     ) -> ArrayAssignmentTarget<'a, A> {
@@ -3289,10 +3289,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_array_assignment_target(
         self,
         span: Span,
-        elements: A::Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>>,
+        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
         trailing_comma: Option<Span>,
-    ) -> A::Box<'a, ArrayAssignmentTarget<'a, A>> {
+    ) -> Box<'a, ArrayAssignmentTarget<'a, A>, A> {
         self.allocator.alloc(self.array_assignment_target(span, elements, rest, trailing_comma))
     }
 
@@ -3308,7 +3308,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn object_assignment_target(
         self,
         span: Span,
-        properties: A::Vec<'a, AssignmentTargetProperty<'a, A>>,
+        properties: Vec<'a, AssignmentTargetProperty<'a, A>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
     ) -> ObjectAssignmentTarget<'a, A> {
         let value = ObjectAssignmentTarget { span, properties, rest };
@@ -3327,9 +3327,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_object_assignment_target(
         self,
         span: Span,
-        properties: A::Vec<'a, AssignmentTargetProperty<'a, A>>,
+        properties: Vec<'a, AssignmentTargetProperty<'a, A>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
-    ) -> A::Box<'a, ObjectAssignmentTarget<'a, A>> {
+    ) -> Box<'a, ObjectAssignmentTarget<'a, A>, A> {
         self.allocator.alloc(self.object_assignment_target(span, properties, rest))
     }
 
@@ -3362,7 +3362,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         target: AssignmentTarget<'a, A>,
-    ) -> A::Box<'a, AssignmentTargetRest<'a, A>> {
+    ) -> Box<'a, AssignmentTargetRest<'a, A>, A> {
         self.allocator.alloc(self.assignment_target_rest(span, target))
     }
 
@@ -3394,7 +3394,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> AssignmentTargetMaybeDefault<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentTargetWithDefault<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentTargetWithDefault<'a, A>, A>, A>,
     {
         let value = AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
             inner.into_in(self.allocator),
@@ -3444,7 +3444,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         binding: AssignmentTarget<'a, A>,
         init: Expression<'a, A>,
-    ) -> A::Box<'a, AssignmentTargetWithDefault<'a, A>> {
+    ) -> Box<'a, AssignmentTargetWithDefault<'a, A>, A> {
         self.allocator.alloc(self.assignment_target_with_default(span, binding, init))
     }
 
@@ -3477,7 +3477,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> AssignmentTargetProperty<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentTargetPropertyIdentifier<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentTargetPropertyIdentifier<'a, A>, A>, A>,
     {
         let value = AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
             inner.into_in(self.allocator),
@@ -3513,7 +3513,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> AssignmentTargetProperty<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentTargetPropertyProperty<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentTargetPropertyProperty<'a, A>, A>, A>,
     {
         let value = AssignmentTargetProperty::AssignmentTargetPropertyProperty(
             inner.into_in(self.allocator),
@@ -3554,7 +3554,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a, A>>,
-    ) -> A::Box<'a, AssignmentTargetPropertyIdentifier<'a, A>> {
+    ) -> Box<'a, AssignmentTargetPropertyIdentifier<'a, A>, A> {
         self.allocator.alloc(self.assignment_target_property_identifier(span, binding, init))
     }
 
@@ -3591,7 +3591,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         name: PropertyKey<'a, A>,
         binding: AssignmentTargetMaybeDefault<'a, A>,
-    ) -> A::Box<'a, AssignmentTargetPropertyProperty<'a, A>> {
+    ) -> Box<'a, AssignmentTargetPropertyProperty<'a, A>, A> {
         self.allocator.alloc(self.assignment_target_property_property(span, name, binding))
     }
 
@@ -3606,7 +3606,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn sequence_expression(
         self,
         span: Span,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> SequenceExpression<'a, A> {
         let value = SequenceExpression { span, expressions };
         value
@@ -3623,8 +3623,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_sequence_expression(
         self,
         span: Span,
-        expressions: A::Vec<'a, Expression<'a, A>>,
-    ) -> A::Box<'a, SequenceExpression<'a, A>> {
+        expressions: Vec<'a, Expression<'a, A>, A>,
+    ) -> Box<'a, SequenceExpression<'a, A>, A> {
         self.allocator.alloc(self.sequence_expression(span, expressions))
     }
 
@@ -3647,7 +3647,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_super_(self, span: Span) -> A::Box<'a, Super> {
+    pub fn alloc_super_(self, span: Span) -> Box<'a, Super, A> {
         self.allocator.alloc(self.super_(span))
     }
 
@@ -3680,7 +3680,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, AwaitExpression<'a, A>> {
+    ) -> Box<'a, AwaitExpression<'a, A>, A> {
         self.allocator.alloc(self.await_expression(span, argument))
     }
 
@@ -3713,7 +3713,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         expression: ChainElement<'a, A>,
-    ) -> A::Box<'a, ChainExpression<'a, A>> {
+    ) -> Box<'a, ChainExpression<'a, A>, A> {
         self.allocator.alloc(self.chain_expression(span, expression))
     }
 
@@ -3733,11 +3733,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         callee: Expression<'a, A>,
         type_parameters: T1,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         optional: bool,
     ) -> ChainElement<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.call_expression(span, callee, type_parameters, arguments, optional);
         let value = ChainElement::CallExpression(self.allocator.alloc(value));
@@ -3748,7 +3748,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn chain_element_from_call_expression<T>(self, inner: T) -> ChainElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, CallExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, CallExpression<'a, A>, A>, A>,
     {
         let value = ChainElement::CallExpression(inner.into_in(self.allocator));
         value
@@ -3792,7 +3792,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, ParenthesizedExpression<'a, A>> {
+    ) -> Box<'a, ParenthesizedExpression<'a, A>, A> {
         self.allocator.alloc(self.parenthesized_expression(span, expression))
     }
 
@@ -3807,7 +3807,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn statement_block(
         self,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> Statement<'a, A> {
         let value = self.block_statement(span, body);
         let value = Statement::BlockStatement(self.allocator.alloc(value));
@@ -3818,7 +3818,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_block<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
     {
         let value = Statement::BlockStatement(inner.into_in(self.allocator));
         value
@@ -3846,7 +3846,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_break<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BreakStatement<'a>>, A>,
+        T: IntoIn<'a, Box<'a, BreakStatement<'a>, A>, A>,
     {
         let value = Statement::BreakStatement(inner.into_in(self.allocator));
         value
@@ -3874,7 +3874,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_continue<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ContinueStatement<'a>>, A>,
+        T: IntoIn<'a, Box<'a, ContinueStatement<'a>, A>, A>,
     {
         let value = Statement::ContinueStatement(inner.into_in(self.allocator));
         value
@@ -3897,7 +3897,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_debugger<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, DebuggerStatement>, A>,
+        T: IntoIn<'a, Box<'a, DebuggerStatement, A>, A>,
     {
         let value = Statement::DebuggerStatement(inner.into_in(self.allocator));
         value
@@ -3927,7 +3927,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_do_while<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, DoWhileStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, DoWhileStatement<'a, A>, A>, A>,
     {
         let value = Statement::DoWhileStatement(inner.into_in(self.allocator));
         value
@@ -3950,7 +3950,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_empty<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, EmptyStatement>, A>,
+        T: IntoIn<'a, Box<'a, EmptyStatement, A>, A>,
     {
         let value = Statement::EmptyStatement(inner.into_in(self.allocator));
         value
@@ -3978,7 +3978,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_expression<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ExpressionStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ExpressionStatement<'a, A>, A>, A>,
     {
         let value = Statement::ExpressionStatement(inner.into_in(self.allocator));
         value
@@ -4010,7 +4010,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_for_in<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ForInStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ForInStatement<'a, A>, A>, A>,
     {
         let value = Statement::ForInStatement(inner.into_in(self.allocator));
         value
@@ -4044,7 +4044,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_for_of<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ForOfStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ForOfStatement<'a, A>, A>, A>,
     {
         let value = Statement::ForOfStatement(inner.into_in(self.allocator));
         value
@@ -4078,7 +4078,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_for<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ForStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ForStatement<'a, A>, A>, A>,
     {
         let value = Statement::ForStatement(inner.into_in(self.allocator));
         value
@@ -4110,7 +4110,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_if<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IfStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, IfStatement<'a, A>, A>, A>,
     {
         let value = Statement::IfStatement(inner.into_in(self.allocator));
         value
@@ -4140,7 +4140,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_labeled<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, LabeledStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, LabeledStatement<'a, A>, A>, A>,
     {
         let value = Statement::LabeledStatement(inner.into_in(self.allocator));
         value
@@ -4168,7 +4168,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_return<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ReturnStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ReturnStatement<'a, A>, A>, A>,
     {
         let value = Statement::ReturnStatement(inner.into_in(self.allocator));
         value
@@ -4187,7 +4187,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         discriminant: Expression<'a, A>,
-        cases: A::Vec<'a, SwitchCase<'a, A>>,
+        cases: Vec<'a, SwitchCase<'a, A>, A>,
     ) -> Statement<'a, A> {
         let value = self.switch_statement(span, discriminant, cases);
         let value = Statement::SwitchStatement(self.allocator.alloc(value));
@@ -4198,7 +4198,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_switch<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SwitchStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SwitchStatement<'a, A>, A>, A>,
     {
         let value = Statement::SwitchStatement(inner.into_in(self.allocator));
         value
@@ -4222,7 +4222,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_throw<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ThrowStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ThrowStatement<'a, A>, A>, A>,
     {
         let value = Statement::ThrowStatement(inner.into_in(self.allocator));
         value
@@ -4246,9 +4246,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         finalizer: T3,
     ) -> Statement<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, CatchClause<'a, A>>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, BlockStatement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a, A>, A>>, A>,
     {
         let value = self.try_statement(span, block, handler, finalizer);
         let value = Statement::TryStatement(self.allocator.alloc(value));
@@ -4259,7 +4259,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_try<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TryStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TryStatement<'a, A>, A>, A>,
     {
         let value = Statement::TryStatement(inner.into_in(self.allocator));
         value
@@ -4289,7 +4289,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_while<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, WhileStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, WhileStatement<'a, A>, A>, A>,
     {
         let value = Statement::WhileStatement(inner.into_in(self.allocator));
         value
@@ -4319,7 +4319,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn statement_from_with<T>(self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, WithStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, WithStatement<'a, A>, A>, A>,
     {
         let value = Statement::WithStatement(inner.into_in(self.allocator));
         value
@@ -4373,7 +4373,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         expression: StringLiteral<'a>,
         directive: IntoAtom,
-    ) -> A::Box<'a, Directive<'a>>
+    ) -> Box<'a, Directive<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -4404,7 +4404,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - span: The [`Span`] covering this node
     /// - value
     #[inline]
-    pub fn alloc_hashbang<IntoAtom>(self, span: Span, value: IntoAtom) -> A::Box<'a, Hashbang<'a>>
+    pub fn alloc_hashbang<IntoAtom>(self, span: Span, value: IntoAtom) -> Box<'a, Hashbang<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -4422,7 +4422,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn block_statement(
         self,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> BlockStatement<'a, A> {
         let value = BlockStatement { span, body, scope_id: Default::default() };
         value
@@ -4439,8 +4439,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_block_statement(
         self,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, BlockStatement<'a, A>> {
+        body: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, BlockStatement<'a, A>, A> {
         self.allocator.alloc(self.block_statement(span, body))
     }
 
@@ -4458,7 +4458,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
     ) -> Declaration<'a, A> {
         let value = self.variable_declaration(span, kind, declarations, declare);
@@ -4470,7 +4470,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn declaration_from_variable<T>(self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, VariableDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, VariableDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::VariableDeclaration(inner.into_in(self.allocator));
         value
@@ -4508,11 +4508,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T5,
     ) -> Declaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         let value = self.function(
             r#type,
@@ -4535,7 +4535,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn declaration_from_function<T>(self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Function<'a, A>, A>, A>,
     {
         let value = Declaration::FunctionDeclaration(inner.into_in(self.allocator));
         value
@@ -4561,7 +4561,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -4571,9 +4571,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T3,
     ) -> Declaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         let value = self.class(
             r#type,
@@ -4595,7 +4595,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn declaration_from_class<T>(self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Class<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Class<'a, A>, A>, A>,
     {
         let value = Declaration::ClassDeclaration(inner.into_in(self.allocator));
         value
@@ -4621,7 +4621,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         declare: bool,
     ) -> Declaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
     {
         let value =
             self.ts_type_alias_declaration(span, id, type_parameters, type_annotation, declare);
@@ -4633,7 +4633,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn declaration_from_ts_type_alias<T>(self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeAliasDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeAliasDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSTypeAliasDeclaration(inner.into_in(self.allocator));
         value
@@ -4655,14 +4655,14 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
         type_parameters: T1,
         body: T2,
         declare: bool,
     ) -> Declaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, TSInterfaceBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a, A>, A>, A>,
     {
         let value =
             self.ts_interface_declaration(span, id, extends, type_parameters, body, declare);
@@ -4674,7 +4674,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn declaration_from_ts_interface<T>(self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInterfaceDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInterfaceDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSInterfaceDeclaration(inner.into_in(self.allocator));
         value
@@ -4695,7 +4695,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: A::Vec<'a, TSEnumMember<'a, A>>,
+        members: Vec<'a, TSEnumMember<'a, A>, A>,
         r#const: bool,
         declare: bool,
     ) -> Declaration<'a, A> {
@@ -4708,7 +4708,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn declaration_from_ts_enum<T>(self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSEnumDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSEnumDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSEnumDeclaration(inner.into_in(self.allocator));
         value
@@ -4742,7 +4742,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn declaration_from_ts_module<T>(self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSModuleDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSModuleDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSModuleDeclaration(inner.into_in(self.allocator));
         value
@@ -4774,7 +4774,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn declaration_from_ts_import_equals<T>(self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSImportEqualsDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSImportEqualsDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSImportEqualsDeclaration(inner.into_in(self.allocator));
         value
@@ -4794,7 +4794,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
     ) -> VariableDeclaration<'a, A> {
         let value = VariableDeclaration { span, kind, declarations, declare };
@@ -4815,9 +4815,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
-    ) -> A::Box<'a, VariableDeclaration<'a, A>> {
+    ) -> Box<'a, VariableDeclaration<'a, A>, A> {
         self.allocator.alloc(self.variable_declaration(span, kind, declarations, declare))
     }
 
@@ -4862,7 +4862,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         id: BindingPattern<'a, A>,
         init: Option<Expression<'a, A>>,
         definite: Option<TSDefiniteMark>,
-    ) -> A::Box<'a, VariableDeclarator<'a, A>> {
+    ) -> Box<'a, VariableDeclarator<'a, A>, A> {
         self.allocator.alloc(self.variable_declarator(span, kind, id, init, definite))
     }
 
@@ -4885,7 +4885,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_empty_statement(self, span: Span) -> A::Box<'a, EmptyStatement> {
+    pub fn alloc_empty_statement(self, span: Span) -> Box<'a, EmptyStatement, A> {
         self.allocator.alloc(self.empty_statement(span))
     }
 
@@ -4918,7 +4918,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, ExpressionStatement<'a, A>> {
+    ) -> Box<'a, ExpressionStatement<'a, A>, A> {
         self.allocator.alloc(self.expression_statement(span, expression))
     }
 
@@ -4959,7 +4959,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         test: Expression<'a, A>,
         consequent: Statement<'a, A>,
         alternate: Option<Statement<'a, A>>,
-    ) -> A::Box<'a, IfStatement<'a, A>> {
+    ) -> Box<'a, IfStatement<'a, A>, A> {
         self.allocator.alloc(self.if_statement(span, test, consequent, alternate))
     }
 
@@ -4996,7 +4996,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         body: Statement<'a, A>,
         test: Expression<'a, A>,
-    ) -> A::Box<'a, DoWhileStatement<'a, A>> {
+    ) -> Box<'a, DoWhileStatement<'a, A>, A> {
         self.allocator.alloc(self.do_while_statement(span, body, test))
     }
 
@@ -5033,7 +5033,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         test: Expression<'a, A>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, WhileStatement<'a, A>> {
+    ) -> Box<'a, WhileStatement<'a, A>, A> {
         self.allocator.alloc(self.while_statement(span, test, body))
     }
 
@@ -5078,7 +5078,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         test: Option<Expression<'a, A>>,
         update: Option<Expression<'a, A>>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, ForStatement<'a, A>> {
+    ) -> Box<'a, ForStatement<'a, A>, A> {
         self.allocator.alloc(self.for_statement(span, init, test, update, body))
     }
 
@@ -5096,7 +5096,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
     ) -> ForStatementInit<'a, A> {
         let value = self.variable_declaration(span, kind, declarations, declare);
@@ -5111,7 +5111,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ForStatementInit<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, VariableDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, VariableDeclaration<'a, A>, A>, A>,
     {
         let value = ForStatementInit::VariableDeclaration(inner.into_in(self.allocator));
         value
@@ -5163,7 +5163,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         left: ForStatementLeft<'a, A>,
         right: Expression<'a, A>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, ForInStatement<'a, A>> {
+    ) -> Box<'a, ForInStatement<'a, A>, A> {
         self.allocator.alloc(self.for_in_statement(span, left, right, body))
     }
 
@@ -5181,7 +5181,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
     ) -> ForStatementLeft<'a, A> {
         let value = self.variable_declaration(span, kind, declarations, declare);
@@ -5196,7 +5196,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ForStatementLeft<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, VariableDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, VariableDeclaration<'a, A>, A>, A>,
     {
         let value = ForStatementLeft::VariableDeclaration(inner.into_in(self.allocator));
         value
@@ -5253,7 +5253,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         left: ForStatementLeft<'a, A>,
         right: Expression<'a, A>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, ForOfStatement<'a, A>> {
+    ) -> Box<'a, ForOfStatement<'a, A>, A> {
         self.allocator.alloc(self.for_of_statement(span, r#await, left, right, body))
     }
 
@@ -5286,7 +5286,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         label: Option<LabelIdentifier<'a>>,
-    ) -> A::Box<'a, ContinueStatement<'a>> {
+    ) -> Box<'a, ContinueStatement<'a>, A> {
         self.allocator.alloc(self.continue_statement(span, label))
     }
 
@@ -5319,7 +5319,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         label: Option<LabelIdentifier<'a>>,
-    ) -> A::Box<'a, BreakStatement<'a>> {
+    ) -> Box<'a, BreakStatement<'a>, A> {
         self.allocator.alloc(self.break_statement(span, label))
     }
 
@@ -5352,7 +5352,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         argument: Option<Expression<'a, A>>,
-    ) -> A::Box<'a, ReturnStatement<'a, A>> {
+    ) -> Box<'a, ReturnStatement<'a, A>, A> {
         self.allocator.alloc(self.return_statement(span, argument))
     }
 
@@ -5389,7 +5389,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         object: Expression<'a, A>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, WithStatement<'a, A>> {
+    ) -> Box<'a, WithStatement<'a, A>, A> {
         self.allocator.alloc(self.with_statement(span, object, body))
     }
 
@@ -5406,7 +5406,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         discriminant: Expression<'a, A>,
-        cases: A::Vec<'a, SwitchCase<'a, A>>,
+        cases: Vec<'a, SwitchCase<'a, A>, A>,
     ) -> SwitchStatement<'a, A> {
         let value = SwitchStatement { span, discriminant, cases, scope_id: Default::default() };
         value
@@ -5425,8 +5425,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         discriminant: Expression<'a, A>,
-        cases: A::Vec<'a, SwitchCase<'a, A>>,
-    ) -> A::Box<'a, SwitchStatement<'a, A>> {
+        cases: Vec<'a, SwitchCase<'a, A>, A>,
+    ) -> Box<'a, SwitchStatement<'a, A>, A> {
         self.allocator.alloc(self.switch_statement(span, discriminant, cases))
     }
 
@@ -5443,7 +5443,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         test: Option<Expression<'a, A>>,
-        consequent: A::Vec<'a, Statement<'a, A>>,
+        consequent: Vec<'a, Statement<'a, A>, A>,
     ) -> SwitchCase<'a, A> {
         let value = SwitchCase { span, test, consequent };
         value
@@ -5462,8 +5462,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         test: Option<Expression<'a, A>>,
-        consequent: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, SwitchCase<'a, A>> {
+        consequent: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, SwitchCase<'a, A>, A> {
         self.allocator.alloc(self.switch_case(span, test, consequent))
     }
 
@@ -5500,7 +5500,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         label: LabelIdentifier<'a>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, LabeledStatement<'a, A>> {
+    ) -> Box<'a, LabeledStatement<'a, A>, A> {
         self.allocator.alloc(self.labeled_statement(span, label, body))
     }
 
@@ -5529,7 +5529,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, ThrowStatement<'a, A>> {
+    ) -> Box<'a, ThrowStatement<'a, A>, A> {
         self.allocator.alloc(self.throw_statement(span, argument))
     }
 
@@ -5551,9 +5551,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         finalizer: T3,
     ) -> TryStatement<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, CatchClause<'a, A>>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, BlockStatement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a, A>, A>>, A>,
     {
         let value = TryStatement {
             span,
@@ -5580,11 +5580,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         block: T1,
         handler: T2,
         finalizer: T3,
-    ) -> A::Box<'a, TryStatement<'a, A>>
+    ) -> Box<'a, TryStatement<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, CatchClause<'a, A>>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, BlockStatement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.try_statement(span, block, handler, finalizer))
     }
@@ -5605,7 +5605,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T1,
     ) -> CatchClause<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
     {
         let value = CatchClause {
             span,
@@ -5630,9 +5630,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         param: Option<CatchParameter<'a, A>>,
         body: T1,
-    ) -> A::Box<'a, CatchClause<'a, A>>
+    ) -> Box<'a, CatchClause<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.catch_clause(span, param, body))
     }
@@ -5666,7 +5666,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         pattern: BindingPattern<'a, A>,
-    ) -> A::Box<'a, CatchParameter<'a, A>> {
+    ) -> Box<'a, CatchParameter<'a, A>, A> {
         self.allocator.alloc(self.catch_parameter(span, pattern))
     }
 
@@ -5689,7 +5689,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_debugger_statement(self, span: Span) -> A::Box<'a, DebuggerStatement> {
+    pub fn alloc_debugger_statement(self, span: Span) -> Box<'a, DebuggerStatement, A> {
         self.allocator.alloc(self.debugger_statement(span))
     }
 
@@ -5709,7 +5709,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         optional: Option<TSOptionalMark>,
     ) -> BindingPattern<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = BindingPattern {
             kind,
@@ -5733,9 +5733,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         kind: BindingPatternKind<'a, A>,
         type_annotation: T1,
         optional: Option<TSOptionalMark>,
-    ) -> A::Box<'a, BindingPattern<'a, A>>
+    ) -> Box<'a, BindingPattern<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.binding_pattern(kind, type_annotation, optional))
     }
@@ -5768,7 +5768,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> BindingPatternKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BindingIdentifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, BindingIdentifier<'a>, A>, A>,
     {
         let value = BindingPatternKind::BindingIdentifier(inner.into_in(self.allocator));
         value
@@ -5786,11 +5786,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn binding_pattern_kind_object_pattern<T1>(
         self,
         span: Span,
-        properties: A::Vec<'a, BindingProperty<'a, A>>,
+        properties: Vec<'a, BindingProperty<'a, A>, A>,
         rest: T1,
     ) -> BindingPatternKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = self.object_pattern(span, properties, rest);
         let value = BindingPatternKind::ObjectPattern(self.allocator.alloc(value));
@@ -5801,7 +5801,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn binding_pattern_kind_from_object_pattern<T>(self, inner: T) -> BindingPatternKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ObjectPattern<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ObjectPattern<'a, A>, A>, A>,
     {
         let value = BindingPatternKind::ObjectPattern(inner.into_in(self.allocator));
         value
@@ -5819,11 +5819,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn binding_pattern_kind_array_pattern<T1>(
         self,
         span: Span,
-        elements: A::Vec<'a, Option<BindingPattern<'a, A>>>,
+        elements: Vec<'a, Option<BindingPattern<'a, A>>, A>,
         rest: T1,
     ) -> BindingPatternKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = self.array_pattern(span, elements, rest);
         let value = BindingPatternKind::ArrayPattern(self.allocator.alloc(value));
@@ -5834,7 +5834,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn binding_pattern_kind_from_array_pattern<T>(self, inner: T) -> BindingPatternKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ArrayPattern<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ArrayPattern<'a, A>, A>, A>,
     {
         let value = BindingPatternKind::ArrayPattern(inner.into_in(self.allocator));
         value
@@ -5867,7 +5867,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> BindingPatternKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentPattern<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentPattern<'a, A>, A>, A>,
     {
         let value = BindingPatternKind::AssignmentPattern(inner.into_in(self.allocator));
         value
@@ -5906,7 +5906,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         left: BindingPattern<'a, A>,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, AssignmentPattern<'a, A>> {
+    ) -> Box<'a, AssignmentPattern<'a, A>, A> {
         self.allocator.alloc(self.assignment_pattern(span, left, right))
     }
 
@@ -5922,11 +5922,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn object_pattern<T1>(
         self,
         span: Span,
-        properties: A::Vec<'a, BindingProperty<'a, A>>,
+        properties: Vec<'a, BindingProperty<'a, A>, A>,
         rest: T1,
     ) -> ObjectPattern<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = ObjectPattern { span, properties, rest: rest.into_in(self.allocator) };
         value
@@ -5944,11 +5944,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_object_pattern<T1>(
         self,
         span: Span,
-        properties: A::Vec<'a, BindingProperty<'a, A>>,
+        properties: Vec<'a, BindingProperty<'a, A>, A>,
         rest: T1,
-    ) -> A::Box<'a, ObjectPattern<'a, A>>
+    ) -> Box<'a, ObjectPattern<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.object_pattern(span, properties, rest))
     }
@@ -5994,7 +5994,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         value: BindingPattern<'a, A>,
         shorthand: bool,
         computed: bool,
-    ) -> A::Box<'a, BindingProperty<'a, A>> {
+    ) -> Box<'a, BindingProperty<'a, A>, A> {
         self.allocator.alloc(self.binding_property(span, key, value, shorthand, computed))
     }
 
@@ -6010,11 +6010,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn array_pattern<T1>(
         self,
         span: Span,
-        elements: A::Vec<'a, Option<BindingPattern<'a, A>>>,
+        elements: Vec<'a, Option<BindingPattern<'a, A>>, A>,
         rest: T1,
     ) -> ArrayPattern<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = ArrayPattern { span, elements, rest: rest.into_in(self.allocator) };
         value
@@ -6032,11 +6032,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_array_pattern<T1>(
         self,
         span: Span,
-        elements: A::Vec<'a, Option<BindingPattern<'a, A>>>,
+        elements: Vec<'a, Option<BindingPattern<'a, A>>, A>,
         rest: T1,
-    ) -> A::Box<'a, ArrayPattern<'a, A>>
+    ) -> Box<'a, ArrayPattern<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.array_pattern(span, elements, rest))
     }
@@ -6070,7 +6070,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         argument: BindingPattern<'a, A>,
-    ) -> A::Box<'a, BindingRestElement<'a, A>> {
+    ) -> Box<'a, BindingRestElement<'a, A>, A> {
         self.allocator.alloc(self.binding_rest_element(span, argument))
     }
 
@@ -6106,11 +6106,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T5,
     ) -> Function<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         let value = Function {
             r#type,
@@ -6159,13 +6159,13 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         params: T3,
         return_type: T4,
         body: T5,
-    ) -> A::Box<'a, Function<'a, A>>
+    ) -> Box<'a, Function<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.function(
             r#type,
@@ -6196,11 +6196,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         kind: FormalParameterKind,
-        items: A::Vec<'a, FormalParameter<'a, A>>,
+        items: Vec<'a, FormalParameter<'a, A>, A>,
         rest: T1,
     ) -> FormalParameters<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = FormalParameters { span, kind, items, rest: rest.into_in(self.allocator) };
         value
@@ -6220,11 +6220,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         kind: FormalParameterKind,
-        items: A::Vec<'a, FormalParameter<'a, A>>,
+        items: Vec<'a, FormalParameter<'a, A>, A>,
         rest: T1,
-    ) -> A::Box<'a, FormalParameters<'a, A>>
+    ) -> Box<'a, FormalParameters<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.formal_parameters(span, kind, items, rest))
     }
@@ -6266,7 +6266,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         accessibility: Option<TSAccessibility>,
         readonly: bool,
         r#override: bool,
-    ) -> A::Box<'a, FormalParameterModifiers> {
+    ) -> Box<'a, FormalParameterModifiers, A> {
         self.allocator.alloc(self.formal_parameter_modifiers(
             span,
             accessibility,
@@ -6288,7 +6288,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn formal_parameter(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<FormalParameterModifiers>,
         pattern: BindingPattern<'a, A>,
     ) -> FormalParameter<'a, A> {
@@ -6309,10 +6309,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_formal_parameter(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<FormalParameterModifiers>,
         pattern: BindingPattern<'a, A>,
-    ) -> A::Box<'a, FormalParameter<'a, A>> {
+    ) -> Box<'a, FormalParameter<'a, A>, A> {
         self.allocator.alloc(self.formal_parameter(span, decorators, modifiers, pattern))
     }
 
@@ -6328,8 +6328,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn function_body(
         self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        statements: A::Vec<'a, Statement<'a, A>>,
+        directives: Vec<'a, Directive<'a>, A>,
+        statements: Vec<'a, Statement<'a, A>, A>,
     ) -> FunctionBody<'a, A> {
         let value = FunctionBody { span, directives, statements };
         value
@@ -6347,9 +6347,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_function_body(
         self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        statements: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, FunctionBody<'a, A>> {
+        directives: Vec<'a, Directive<'a>, A>,
+        statements: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, FunctionBody<'a, A>, A> {
         self.allocator.alloc(self.function_body(span, directives, statements))
     }
 
@@ -6377,10 +6377,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T4,
     ) -> ArrowFunctionExpression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T4: IntoIn<'a, A::Box<'a, FunctionBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a, A>, A>, A>,
     {
         let value = ArrowFunctionExpression {
             span,
@@ -6417,12 +6417,12 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         params: T2,
         return_type: T3,
         body: T4,
-    ) -> A::Box<'a, ArrowFunctionExpression<'a, A>>
+    ) -> Box<'a, ArrowFunctionExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T4: IntoIn<'a, A::Box<'a, FunctionBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.arrow_function_expression(
             span,
@@ -6468,7 +6468,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         delegate: bool,
         argument: Option<Expression<'a, A>>,
-    ) -> A::Box<'a, YieldExpression<'a, A>> {
+    ) -> Box<'a, YieldExpression<'a, A>, A> {
         self.allocator.alloc(self.yield_expression(span, delegate, argument))
     }
 
@@ -6500,7 +6500,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         r#abstract: bool,
         declare: bool,
-    ) -> A::Box<'a, ClassModifiers> {
+    ) -> Box<'a, ClassModifiers, A> {
         self.allocator.alloc(self.class_modifiers(span, r#abstract, declare))
     }
 
@@ -6524,7 +6524,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -6534,9 +6534,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T3,
     ) -> Class<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         let value = Class {
             r#type,
@@ -6574,7 +6574,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -6582,11 +6582,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         super_type_parameters: T2,
         implements: Option<TSClassImplements<'a, A>>,
         body: T3,
-    ) -> A::Box<'a, Class<'a, A>>
+    ) -> Box<'a, Class<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.class(
             r#type,
@@ -6610,7 +6610,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - span: The [`Span`] covering this node
     /// - body
     #[inline]
-    pub fn class_body(self, span: Span, body: A::Vec<'a, ClassElement<'a, A>>) -> ClassBody<'a, A> {
+    pub fn class_body(self, span: Span, body: Vec<'a, ClassElement<'a, A>, A>) -> ClassBody<'a, A> {
         let value = ClassBody { span, body };
         value
     }
@@ -6626,8 +6626,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_class_body(
         self,
         span: Span,
-        body: A::Vec<'a, ClassElement<'a, A>>,
-    ) -> A::Box<'a, ClassBody<'a, A>> {
+        body: Vec<'a, ClassElement<'a, A>, A>,
+    ) -> Box<'a, ClassBody<'a, A>, A> {
         self.allocator.alloc(self.class_body(span, body))
     }
 
@@ -6642,7 +6642,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn class_element_static_block(
         self,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> ClassElement<'a, A> {
         let value = self.static_block(span, body);
         let value = ClassElement::StaticBlock(self.allocator.alloc(value));
@@ -6653,7 +6653,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn class_element_from_static_block<T>(self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StaticBlock<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, StaticBlock<'a, A>, A>, A>,
     {
         let value = ClassElement::StaticBlock(inner.into_in(self.allocator));
         value
@@ -6676,7 +6676,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn class_element_method_definition(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Function<'a, A>,
@@ -6694,7 +6694,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn class_element_from_method_definition<T>(self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, MethodDefinition<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, MethodDefinition<'a, A>, A>, A>,
     {
         let value = ClassElement::MethodDefinition(inner.into_in(self.allocator));
         value
@@ -6718,7 +6718,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn class_element_property_definition<T1>(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
@@ -6728,7 +6728,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> ClassElement<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.property_definition(
             span,
@@ -6749,7 +6749,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn class_element_from_property_definition<T>(self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, PropertyDefinition<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, PropertyDefinition<'a, A>, A>, A>,
     {
         let value = ClassElement::PropertyDefinition(inner.into_in(self.allocator));
         value
@@ -6772,7 +6772,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn class_element_accessor_property<T1>(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
@@ -6781,7 +6781,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> ClassElement<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.accessor_property(
             span,
@@ -6801,7 +6801,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn class_element_from_accessor_property<T>(self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AccessorProperty<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AccessorProperty<'a, A>, A>, A>,
     {
         let value = ClassElement::AccessorProperty(inner.into_in(self.allocator));
         value
@@ -6821,11 +6821,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         modifiers: Option<ClassElementModifiers>,
-        parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
         type_annotation: T1,
     ) -> ClassElement<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = self.ts_index_signature(span, modifiers, parameters, type_annotation);
         let value = ClassElement::TSIndexSignature(self.allocator.alloc(value));
@@ -6836,7 +6836,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn class_element_from_ts_index_signature<T>(self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIndexSignature<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSIndexSignature<'a, A>, A>, A>,
     {
         let value = ClassElement::TSIndexSignature(inner.into_in(self.allocator));
         value
@@ -6859,7 +6859,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn method_definition(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Function<'a, A>,
@@ -6889,14 +6889,14 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_method_definition(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Function<'a, A>,
         kind: MethodDefinitionKind,
         computed: bool,
         optional: Option<TSOptionalMark>,
-    ) -> A::Box<'a, MethodDefinition<'a, A>> {
+    ) -> Box<'a, MethodDefinition<'a, A>, A> {
         self.allocator.alloc(
             self.method_definition(
                 span, decorators, modifiers, key, value, kind, computed, optional,
@@ -6966,7 +6966,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#override: bool,
         readonly: bool,
         accessibility: Option<TSAccessibility>,
-    ) -> A::Box<'a, ClassElementModifiers> {
+    ) -> Box<'a, ClassElementModifiers, A> {
         self.allocator.alloc(self.class_element_modifiers(
             span,
             r#async,
@@ -6997,7 +6997,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn property_definition<T1>(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
@@ -7007,7 +7007,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> PropertyDefinition<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = PropertyDefinition {
             span,
@@ -7041,7 +7041,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_property_definition<T1>(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
@@ -7049,9 +7049,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         value: Option<Expression<'a, A>>,
         computed: bool,
         type_annotation: T1,
-    ) -> A::Box<'a, PropertyDefinition<'a, A>>
+    ) -> Box<'a, PropertyDefinition<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.property_definition(
             span,
@@ -7094,7 +7094,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, PrivateIdentifier<'a>>
+    ) -> Box<'a, PrivateIdentifier<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -7112,7 +7112,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn static_block(
         self,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> StaticBlock<'a, A> {
         let value = StaticBlock { span, body, scope_id: Default::default() };
         value
@@ -7129,8 +7129,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_static_block(
         self,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, StaticBlock<'a, A>> {
+        body: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, StaticBlock<'a, A>, A> {
         self.allocator.alloc(self.static_block(span, body))
     }
 
@@ -7148,13 +7148,13 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn module_declaration_import_declaration<T1>(
         self,
         span: Span,
-        specifiers: Option<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>>,
         source: StringLiteral<'a>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ModuleDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = self.import_declaration(span, specifiers, source, with_clause, import_kind);
         let value = ModuleDeclaration::ImportDeclaration(self.allocator.alloc(value));
@@ -7165,7 +7165,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn module_declaration_from_import_declaration<T>(self, inner: T) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ImportDeclaration<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::ImportDeclaration(inner.into_in(self.allocator));
         value
@@ -7191,7 +7191,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         export_kind: ImportOrExportKind,
     ) -> ModuleDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = self.export_all_declaration(span, exported, source, with_clause, export_kind);
         let value = ModuleDeclaration::ExportAllDeclaration(self.allocator.alloc(value));
@@ -7205,7 +7205,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ExportAllDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ExportAllDeclaration<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::ExportAllDeclaration(inner.into_in(self.allocator));
         value
@@ -7238,7 +7238,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ExportDefaultDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ExportDefaultDeclaration<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::ExportDefaultDeclaration(inner.into_in(self.allocator));
         value
@@ -7260,13 +7260,13 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         declaration: Option<Declaration<'a, A>>,
-        specifiers: A::Vec<'a, ExportSpecifier<'a>>,
+        specifiers: Vec<'a, ExportSpecifier<'a>, A>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
     ) -> ModuleDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = self.export_named_declaration(
             span,
@@ -7287,7 +7287,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ExportNamedDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ExportNamedDeclaration<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::ExportNamedDeclaration(inner.into_in(self.allocator));
         value
@@ -7318,7 +7318,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSExportAssignment<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSExportAssignment<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::TSExportAssignment(inner.into_in(self.allocator));
         value
@@ -7349,7 +7349,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNamespaceExportDeclaration<'a>>, A>,
+        T: IntoIn<'a, Box<'a, TSNamespaceExportDeclaration<'a>, A>, A>,
     {
         let value = ModuleDeclaration::TSNamespaceExportDeclaration(inner.into_in(self.allocator));
         value
@@ -7372,7 +7372,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn accessor_property<T1>(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
@@ -7381,7 +7381,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> AccessorProperty<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = AccessorProperty {
             span,
@@ -7413,16 +7413,16 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_accessor_property<T1>(
         self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
         definite: Option<TSDefiniteMark>,
         type_annotation: T1,
-    ) -> A::Box<'a, AccessorProperty<'a, A>>
+    ) -> Box<'a, AccessorProperty<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.accessor_property(
             span,
@@ -7449,7 +7449,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         source: Expression<'a, A>,
-        arguments: A::Vec<'a, Expression<'a, A>>,
+        arguments: Vec<'a, Expression<'a, A>, A>,
     ) -> ImportExpression<'a, A> {
         let value = ImportExpression { span, source, arguments };
         value
@@ -7468,8 +7468,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         source: Expression<'a, A>,
-        arguments: A::Vec<'a, Expression<'a, A>>,
-    ) -> A::Box<'a, ImportExpression<'a, A>> {
+        arguments: Vec<'a, Expression<'a, A>, A>,
+    ) -> Box<'a, ImportExpression<'a, A>, A> {
         self.allocator.alloc(self.import_expression(span, source, arguments))
     }
 
@@ -7487,13 +7487,13 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn import_declaration<T1>(
         self,
         span: Span,
-        specifiers: Option<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>>,
         source: StringLiteral<'a>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ImportDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = ImportDeclaration {
             span,
@@ -7519,13 +7519,13 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_import_declaration<T1>(
         self,
         span: Span,
-        specifiers: Option<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>>,
         source: StringLiteral<'a>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> A::Box<'a, ImportDeclaration<'a, A>>
+    ) -> Box<'a, ImportDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.import_declaration(
             span,
@@ -7565,7 +7565,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ImportDeclarationSpecifier<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportSpecifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, ImportSpecifier<'a>, A>, A>,
     {
         let value = ImportDeclarationSpecifier::ImportSpecifier(inner.into_in(self.allocator));
         value
@@ -7596,7 +7596,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ImportDeclarationSpecifier<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportDefaultSpecifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, ImportDefaultSpecifier<'a>, A>, A>,
     {
         let value =
             ImportDeclarationSpecifier::ImportDefaultSpecifier(inner.into_in(self.allocator));
@@ -7629,7 +7629,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ImportDeclarationSpecifier<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportNamespaceSpecifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, ImportNamespaceSpecifier<'a>, A>, A>,
     {
         let value =
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(inner.into_in(self.allocator));
@@ -7673,7 +7673,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         imported: ModuleExportName<'a>,
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
-    ) -> A::Box<'a, ImportSpecifier<'a>> {
+    ) -> Box<'a, ImportSpecifier<'a>, A> {
         self.allocator.alloc(self.import_specifier(span, imported, local, import_kind))
     }
 
@@ -7706,7 +7706,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         local: BindingIdentifier<'a>,
-    ) -> A::Box<'a, ImportDefaultSpecifier<'a>> {
+    ) -> Box<'a, ImportDefaultSpecifier<'a>, A> {
         self.allocator.alloc(self.import_default_specifier(span, local))
     }
 
@@ -7739,7 +7739,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         local: BindingIdentifier<'a>,
-    ) -> A::Box<'a, ImportNamespaceSpecifier<'a>> {
+    ) -> Box<'a, ImportNamespaceSpecifier<'a>, A> {
         self.allocator.alloc(self.import_namespace_specifier(span, local))
     }
 
@@ -7756,7 +7756,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
-        with_entries: A::Vec<'a, ImportAttribute<'a>>,
+        with_entries: Vec<'a, ImportAttribute<'a>, A>,
     ) -> WithClause<'a, A> {
         let value = WithClause { span, attributes_keyword, with_entries };
         value
@@ -7775,8 +7775,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
-        with_entries: A::Vec<'a, ImportAttribute<'a>>,
-    ) -> A::Box<'a, WithClause<'a, A>> {
+        with_entries: Vec<'a, ImportAttribute<'a>, A>,
+    ) -> Box<'a, WithClause<'a, A>, A> {
         self.allocator.alloc(self.with_clause(span, attributes_keyword, with_entries))
     }
 
@@ -7813,7 +7813,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         key: ImportAttributeKey<'a>,
         value: StringLiteral<'a>,
-    ) -> A::Box<'a, ImportAttribute<'a>> {
+    ) -> Box<'a, ImportAttribute<'a>, A> {
         self.allocator.alloc(self.import_attribute(span, key, value))
     }
 
@@ -7889,13 +7889,13 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         declaration: Option<Declaration<'a, A>>,
-        specifiers: A::Vec<'a, ExportSpecifier<'a>>,
+        specifiers: Vec<'a, ExportSpecifier<'a>, A>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
     ) -> ExportNamedDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = ExportNamedDeclaration {
             span,
@@ -7924,13 +7924,13 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         declaration: Option<Declaration<'a, A>>,
-        specifiers: A::Vec<'a, ExportSpecifier<'a>>,
+        specifiers: Vec<'a, ExportSpecifier<'a>, A>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
-    ) -> A::Box<'a, ExportNamedDeclaration<'a, A>>
+    ) -> Box<'a, ExportNamedDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.export_named_declaration(
             span,
@@ -7975,7 +7975,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         declaration: ExportDefaultDeclarationKind<'a, A>,
         exported: ModuleExportName<'a>,
-    ) -> A::Box<'a, ExportDefaultDeclaration<'a, A>> {
+    ) -> Box<'a, ExportDefaultDeclaration<'a, A>, A> {
         self.allocator.alloc(self.export_default_declaration(span, declaration, exported))
     }
 
@@ -7999,7 +7999,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         export_kind: ImportOrExportKind,
     ) -> ExportAllDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = ExportAllDeclaration {
             span,
@@ -8029,9 +8029,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         source: StringLiteral<'a>,
         with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> A::Box<'a, ExportAllDeclaration<'a, A>>
+    ) -> Box<'a, ExportAllDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.export_all_declaration(
             span,
@@ -8079,7 +8079,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         local: ModuleExportName<'a>,
         exported: ModuleExportName<'a>,
         export_kind: ImportOrExportKind,
-    ) -> A::Box<'a, ExportSpecifier<'a>> {
+    ) -> Box<'a, ExportSpecifier<'a>, A> {
         self.allocator.alloc(self.export_specifier(span, local, exported, export_kind))
     }
 
@@ -8115,11 +8115,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T5,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         let value = self.function(
             r#type,
@@ -8145,7 +8145,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Function<'a, A>, A>, A>,
     {
         let value =
             ExportDefaultDeclarationKind::FunctionDeclaration(inner.into_in(self.allocator));
@@ -8172,7 +8172,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -8182,9 +8182,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: T3,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         let value = self.class(
             r#type,
@@ -8209,7 +8209,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Class<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Class<'a, A>, A>, A>,
     {
         let value = ExportDefaultDeclarationKind::ClassDeclaration(inner.into_in(self.allocator));
         value
@@ -8231,14 +8231,14 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
         type_parameters: T1,
         body: T2,
         declare: bool,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, TSInterfaceBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a, A>, A>, A>,
     {
         let value =
             self.ts_interface_declaration(span, id, extends, type_parameters, body, declare);
@@ -8254,7 +8254,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInterfaceDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInterfaceDeclaration<'a, A>, A>, A>,
     {
         let value =
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(inner.into_in(self.allocator));
@@ -8370,7 +8370,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> TSThisParameter<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSThisParameter {
             span,
@@ -8394,9 +8394,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         this_span: Span,
         type_annotation: T1,
-    ) -> A::Box<'a, TSThisParameter<'a, A>>
+    ) -> Box<'a, TSThisParameter<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_this_parameter(span, this_span, type_annotation))
     }
@@ -8416,7 +8416,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: A::Vec<'a, TSEnumMember<'a, A>>,
+        members: Vec<'a, TSEnumMember<'a, A>, A>,
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a, A> {
@@ -8440,10 +8440,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: A::Vec<'a, TSEnumMember<'a, A>>,
+        members: Vec<'a, TSEnumMember<'a, A>, A>,
         r#const: bool,
         declare: bool,
-    ) -> A::Box<'a, TSEnumDeclaration<'a, A>> {
+    ) -> Box<'a, TSEnumDeclaration<'a, A>, A> {
         self.allocator.alloc(self.ts_enum_declaration(span, id, members, r#const, declare))
     }
 
@@ -8480,7 +8480,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         id: TSEnumMemberName<'a, A>,
         initializer: Option<Expression<'a, A>>,
-    ) -> A::Box<'a, TSEnumMember<'a, A>> {
+    ) -> Box<'a, TSEnumMember<'a, A>, A> {
         self.allocator.alloc(self.ts_enum_member(span, id, initializer))
     }
 
@@ -8509,7 +8509,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_enum_member_name_from_identifier_name<T>(self, inner: T) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierName<'a>, A>, A>,
     {
         let value = TSEnumMemberName::StaticIdentifier(inner.into_in(self.allocator));
         value
@@ -8540,7 +8540,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_enum_member_name_from_string_literal<T>(self, inner: T) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StringLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
     {
         let value = TSEnumMemberName::StaticStringLiteral(inner.into_in(self.allocator));
         value
@@ -8558,8 +8558,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_enum_member_name_template_literal(
         self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> TSEnumMemberName<'a, A> {
         let value = self.template_literal(span, quasis, expressions);
         let value = TSEnumMemberName::StaticTemplateLiteral(self.allocator.alloc(value));
@@ -8570,7 +8570,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_enum_member_name_from_template_literal<T>(self, inner: T) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TemplateLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TemplateLiteral<'a, A>, A>, A>,
     {
         let value = TSEnumMemberName::StaticTemplateLiteral(inner.into_in(self.allocator));
         value
@@ -8605,7 +8605,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_enum_member_name_from_numeric_literal<T>(self, inner: T) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NumericLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, NumericLiteral<'a>, A>, A>,
     {
         let value = TSEnumMemberName::StaticNumericLiteral(inner.into_in(self.allocator));
         value
@@ -8649,7 +8649,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSTypeAnnotation<'a, A>> {
+    ) -> Box<'a, TSTypeAnnotation<'a, A>, A> {
         self.allocator.alloc(self.ts_type_annotation(span, type_annotation))
     }
 
@@ -8678,7 +8678,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         literal: TSLiteral<'a, A>,
-    ) -> A::Box<'a, TSLiteralType<'a, A>> {
+    ) -> Box<'a, TSLiteralType<'a, A>, A> {
         self.allocator.alloc(self.ts_literal_type(span, literal))
     }
 
@@ -8700,7 +8700,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_literal_from_boolean_literal<T>(self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BooleanLiteral>, A>,
+        T: IntoIn<'a, Box<'a, BooleanLiteral, A>, A>,
     {
         let value = TSLiteral::BooleanLiteral(inner.into_in(self.allocator));
         value
@@ -8723,7 +8723,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_literal_from_null_literal<T>(self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NullLiteral>, A>,
+        T: IntoIn<'a, Box<'a, NullLiteral, A>, A>,
     {
         let value = TSLiteral::NullLiteral(inner.into_in(self.allocator));
         value
@@ -8758,7 +8758,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_literal_from_numeric_literal<T>(self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NumericLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, NumericLiteral<'a>, A>, A>,
     {
         let value = TSLiteral::NumericLiteral(inner.into_in(self.allocator));
         value
@@ -8791,7 +8791,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_literal_from_big_int_literal<T>(self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BigIntLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, BigIntLiteral<'a>, A>, A>,
     {
         let value = TSLiteral::BigIntLiteral(inner.into_in(self.allocator));
         value
@@ -8821,7 +8821,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_literal_from_reg_exp_literal<T>(self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, RegExpLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, RegExpLiteral<'a, A>, A>, A>,
     {
         let value = TSLiteral::RegExpLiteral(inner.into_in(self.allocator));
         value
@@ -8852,7 +8852,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_literal_from_string_literal<T>(self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StringLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
     {
         let value = TSLiteral::StringLiteral(inner.into_in(self.allocator));
         value
@@ -8870,8 +8870,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_literal_template_literal(
         self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> TSLiteral<'a, A> {
         let value = self.template_literal(span, quasis, expressions);
         let value = TSLiteral::TemplateLiteral(self.allocator.alloc(value));
@@ -8882,7 +8882,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_literal_from_template_literal<T>(self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TemplateLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TemplateLiteral<'a, A>, A>, A>,
     {
         let value = TSLiteral::TemplateLiteral(inner.into_in(self.allocator));
         value
@@ -8912,7 +8912,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_literal_from_unary_expression<T>(self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, UnaryExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, UnaryExpression<'a, A>, A>, A>,
     {
         let value = TSLiteral::UnaryExpression(inner.into_in(self.allocator));
         value
@@ -8935,7 +8935,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_any_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSAnyKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSAnyKeyword, A>, A>,
     {
         let value = TSType::TSAnyKeyword(inner.into_in(self.allocator));
         value
@@ -8958,7 +8958,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_big_int_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSBigIntKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSBigIntKeyword, A>, A>,
     {
         let value = TSType::TSBigIntKeyword(inner.into_in(self.allocator));
         value
@@ -8981,7 +8981,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_boolean_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSBooleanKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSBooleanKeyword, A>, A>,
     {
         let value = TSType::TSBooleanKeyword(inner.into_in(self.allocator));
         value
@@ -9004,7 +9004,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_intrinsic_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIntrinsicKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSIntrinsicKeyword, A>, A>,
     {
         let value = TSType::TSIntrinsicKeyword(inner.into_in(self.allocator));
         value
@@ -9027,7 +9027,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_never_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNeverKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSNeverKeyword, A>, A>,
     {
         let value = TSType::TSNeverKeyword(inner.into_in(self.allocator));
         value
@@ -9050,7 +9050,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_null_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNullKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSNullKeyword, A>, A>,
     {
         let value = TSType::TSNullKeyword(inner.into_in(self.allocator));
         value
@@ -9073,7 +9073,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_number_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNumberKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSNumberKeyword, A>, A>,
     {
         let value = TSType::TSNumberKeyword(inner.into_in(self.allocator));
         value
@@ -9096,7 +9096,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_object_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSObjectKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSObjectKeyword, A>, A>,
     {
         let value = TSType::TSObjectKeyword(inner.into_in(self.allocator));
         value
@@ -9119,7 +9119,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_string_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSStringKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSStringKeyword, A>, A>,
     {
         let value = TSType::TSStringKeyword(inner.into_in(self.allocator));
         value
@@ -9142,7 +9142,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_symbol_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSSymbolKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSSymbolKeyword, A>, A>,
     {
         let value = TSType::TSSymbolKeyword(inner.into_in(self.allocator));
         value
@@ -9165,7 +9165,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_undefined_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSUndefinedKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSUndefinedKeyword, A>, A>,
     {
         let value = TSType::TSUndefinedKeyword(inner.into_in(self.allocator));
         value
@@ -9188,7 +9188,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_unknown_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSUnknownKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSUnknownKeyword, A>, A>,
     {
         let value = TSType::TSUnknownKeyword(inner.into_in(self.allocator));
         value
@@ -9211,7 +9211,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_void_keyword<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSVoidKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSVoidKeyword, A>, A>,
     {
         let value = TSType::TSVoidKeyword(inner.into_in(self.allocator));
         value
@@ -9235,7 +9235,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_array_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSArrayType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSArrayType<'a, A>, A>, A>,
     {
         let value = TSType::TSArrayType(inner.into_in(self.allocator));
         value
@@ -9269,7 +9269,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_conditional_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSConditionalType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSConditionalType<'a, A>, A>, A>,
     {
         let value = TSType::TSConditionalType(inner.into_in(self.allocator));
         value
@@ -9295,9 +9295,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T3,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value =
             self.ts_constructor_type(span, r#abstract, type_parameters, params, return_type);
@@ -9309,7 +9309,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_constructor_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSConstructorType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSConstructorType<'a, A>, A>, A>,
     {
         let value = TSType::TSConstructorType(inner.into_in(self.allocator));
         value
@@ -9335,10 +9335,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T4,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = self.ts_function_type(span, type_parameters, this_param, params, return_type);
         let value = TSType::TSFunctionType(self.allocator.alloc(value));
@@ -9349,7 +9349,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_function_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSFunctionType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSFunctionType<'a, A>, A>, A>,
     {
         let value = TSType::TSFunctionType(inner.into_in(self.allocator));
         value
@@ -9377,8 +9377,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T2,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSImportAttributes<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.ts_import_type(
             span,
@@ -9396,7 +9396,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_import_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSImportType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSImportType<'a, A>, A>, A>,
     {
         let value = TSType::TSImportType(inner.into_in(self.allocator));
         value
@@ -9426,7 +9426,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_indexed_access_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIndexedAccessType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSIndexedAccessType<'a, A>, A>, A>,
     {
         let value = TSType::TSIndexedAccessType(inner.into_in(self.allocator));
         value
@@ -9442,7 +9442,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_infer_type<T1>(self, span: Span, type_parameter: T1) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         let value = self.ts_infer_type(span, type_parameter);
         let value = TSType::TSInferType(self.allocator.alloc(value));
@@ -9453,7 +9453,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_infer_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInferType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInferType<'a, A>, A>, A>,
     {
         let value = TSType::TSInferType(inner.into_in(self.allocator));
         value
@@ -9470,7 +9470,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_type_intersection_type(
         self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_intersection_type(span, types);
         let value = TSType::TSIntersectionType(self.allocator.alloc(value));
@@ -9481,7 +9481,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_intersection_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIntersectionType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSIntersectionType<'a, A>, A>, A>,
     {
         let value = TSType::TSIntersectionType(inner.into_in(self.allocator));
         value
@@ -9505,7 +9505,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_literal_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSLiteralType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSLiteralType<'a, A>, A>, A>,
     {
         let value = TSType::TSLiteralType(inner.into_in(self.allocator));
         value
@@ -9533,7 +9533,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         readonly: TSMappedTypeModifierOperator,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         let value = self.ts_mapped_type(
             span,
@@ -9551,7 +9551,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_mapped_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSMappedType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSMappedType<'a, A>, A>, A>,
     {
         let value = TSType::TSMappedType(inner.into_in(self.allocator));
         value
@@ -9583,7 +9583,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_named_tuple_member<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNamedTupleMember<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSNamedTupleMember<'a, A>, A>, A>,
     {
         let value = TSType::TSNamedTupleMember(inner.into_in(self.allocator));
         value
@@ -9613,7 +9613,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_qualified_name<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSQualifiedName<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSQualifiedName<'a, A>, A>, A>,
     {
         let value = TSType::TSQualifiedName(inner.into_in(self.allocator));
         value
@@ -9631,8 +9631,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_type_template_literal_type(
         self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        types: A::Vec<'a, TSType<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_template_literal_type(span, quasis, types);
         let value = TSType::TSTemplateLiteralType(self.allocator.alloc(value));
@@ -9643,7 +9643,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_template_literal_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTemplateLiteralType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTemplateLiteralType<'a, A>, A>, A>,
     {
         let value = TSType::TSTemplateLiteralType(inner.into_in(self.allocator));
         value
@@ -9666,7 +9666,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_this_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSThisType>, A>,
+        T: IntoIn<'a, Box<'a, TSThisType, A>, A>,
     {
         let value = TSType::TSThisType(inner.into_in(self.allocator));
         value
@@ -9683,7 +9683,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_type_tuple_type(
         self,
         span: Span,
-        element_types: A::Vec<'a, TSTupleElement<'a, A>>,
+        element_types: Vec<'a, TSTupleElement<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_tuple_type(span, element_types);
         let value = TSType::TSTupleType(self.allocator.alloc(value));
@@ -9694,7 +9694,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_tuple_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTupleType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTupleType<'a, A>, A>, A>,
     {
         let value = TSType::TSTupleType(inner.into_in(self.allocator));
         value
@@ -9711,7 +9711,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_type_type_literal(
         self,
         span: Span,
-        members: A::Vec<'a, TSSignature<'a, A>>,
+        members: Vec<'a, TSSignature<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_type_literal(span, members);
         let value = TSType::TSTypeLiteral(self.allocator.alloc(value));
@@ -9722,7 +9722,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_type_literal<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeLiteral<'a, A>, A>, A>,
     {
         let value = TSType::TSTypeLiteral(inner.into_in(self.allocator));
         value
@@ -9752,7 +9752,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_type_operator<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeOperator<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeOperator<'a, A>, A>, A>,
     {
         let value = TSType::TSTypeOperatorType(inner.into_in(self.allocator));
         value
@@ -9776,7 +9776,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.ts_type_predicate(span, parameter_name, asserts, type_annotation);
         let value = TSType::TSTypePredicate(self.allocator.alloc(value));
@@ -9787,7 +9787,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_type_predicate<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypePredicate<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypePredicate<'a, A>, A>, A>,
     {
         let value = TSType::TSTypePredicate(inner.into_in(self.allocator));
         value
@@ -9809,7 +9809,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.ts_type_query(span, expr_name, type_parameters);
         let value = TSType::TSTypeQuery(self.allocator.alloc(value));
@@ -9820,7 +9820,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_type_query<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeQuery<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeQuery<'a, A>, A>, A>,
     {
         let value = TSType::TSTypeQuery(inner.into_in(self.allocator));
         value
@@ -9842,7 +9842,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.ts_type_reference(span, type_name, type_parameters);
         let value = TSType::TSTypeReference(self.allocator.alloc(value));
@@ -9853,7 +9853,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_type_reference<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeReference<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeReference<'a, A>, A>, A>,
     {
         let value = TSType::TSTypeReference(inner.into_in(self.allocator));
         value
@@ -9867,7 +9867,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - span: The [`Span`] covering this node
     /// - types: The types in the union.
     #[inline]
-    pub fn ts_type_union_type(self, span: Span, types: A::Vec<'a, TSType<'a, A>>) -> TSType<'a, A> {
+    pub fn ts_type_union_type(self, span: Span, types: Vec<'a, TSType<'a, A>, A>) -> TSType<'a, A> {
         let value = self.ts_union_type(span, types);
         let value = TSType::TSUnionType(self.allocator.alloc(value));
         value
@@ -9877,7 +9877,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_union_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSUnionType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSUnionType<'a, A>, A>, A>,
     {
         let value = TSType::TSUnionType(inner.into_in(self.allocator));
         value
@@ -9905,7 +9905,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_ts_parenthesized_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSParenthesizedType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSParenthesizedType<'a, A>, A>, A>,
     {
         let value = TSType::TSParenthesizedType(inner.into_in(self.allocator));
         value
@@ -9935,7 +9935,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_js_doc_nullable_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSDocNullableType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSDocNullableType<'a, A>, A>, A>,
     {
         let value = TSType::JSDocNullableType(inner.into_in(self.allocator));
         value
@@ -9965,7 +9965,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_js_doc_non_nullable_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSDocNonNullableType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSDocNonNullableType<'a, A>, A>, A>,
     {
         let value = TSType::JSDocNonNullableType(inner.into_in(self.allocator));
         value
@@ -9988,7 +9988,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_from_js_doc_unknown_type<T>(self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSDocUnknownType>, A>,
+        T: IntoIn<'a, Box<'a, JSDocUnknownType, A>, A>,
     {
         let value = TSType::JSDocUnknownType(inner.into_in(self.allocator));
         value
@@ -10042,7 +10042,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         extends_type: TSType<'a, A>,
         true_type: TSType<'a, A>,
         false_type: TSType<'a, A>,
-    ) -> A::Box<'a, TSConditionalType<'a, A>> {
+    ) -> Box<'a, TSConditionalType<'a, A>, A> {
         self.allocator.alloc(self.ts_conditional_type(
             span,
             check_type,
@@ -10060,7 +10060,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - span: The [`Span`] covering this node
     /// - types: The types in the union.
     #[inline]
-    pub fn ts_union_type(self, span: Span, types: A::Vec<'a, TSType<'a, A>>) -> TSUnionType<'a, A> {
+    pub fn ts_union_type(self, span: Span, types: Vec<'a, TSType<'a, A>, A>) -> TSUnionType<'a, A> {
         let value = TSUnionType { span, types };
         value
     }
@@ -10076,8 +10076,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_union_type(
         self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
-    ) -> A::Box<'a, TSUnionType<'a, A>> {
+        types: Vec<'a, TSType<'a, A>, A>,
+    ) -> Box<'a, TSUnionType<'a, A>, A> {
         self.allocator.alloc(self.ts_union_type(span, types))
     }
 
@@ -10092,7 +10092,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_intersection_type(
         self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSIntersectionType<'a, A> {
         let value = TSIntersectionType { span, types };
         value
@@ -10109,8 +10109,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_intersection_type(
         self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
-    ) -> A::Box<'a, TSIntersectionType<'a, A>> {
+        types: Vec<'a, TSType<'a, A>, A>,
+    ) -> Box<'a, TSIntersectionType<'a, A>, A> {
         self.allocator.alloc(self.ts_intersection_type(span, types))
     }
 
@@ -10143,7 +10143,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSParenthesizedType<'a, A>> {
+    ) -> Box<'a, TSParenthesizedType<'a, A>, A> {
         self.allocator.alloc(self.ts_parenthesized_type(span, type_annotation))
     }
 
@@ -10180,7 +10180,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSTypeOperator<'a, A>> {
+    ) -> Box<'a, TSTypeOperator<'a, A>, A> {
         self.allocator.alloc(self.ts_type_operator(span, operator, type_annotation))
     }
 
@@ -10209,7 +10209,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         element_type: TSType<'a, A>,
-    ) -> A::Box<'a, TSArrayType<'a, A>> {
+    ) -> Box<'a, TSArrayType<'a, A>, A> {
         self.allocator.alloc(self.ts_array_type(span, element_type))
     }
 
@@ -10246,7 +10246,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         object_type: TSType<'a, A>,
         index_type: TSType<'a, A>,
-    ) -> A::Box<'a, TSIndexedAccessType<'a, A>> {
+    ) -> Box<'a, TSIndexedAccessType<'a, A>, A> {
         self.allocator.alloc(self.ts_indexed_access_type(span, object_type, index_type))
     }
 
@@ -10261,7 +10261,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_tuple_type(
         self,
         span: Span,
-        element_types: A::Vec<'a, TSTupleElement<'a, A>>,
+        element_types: Vec<'a, TSTupleElement<'a, A>, A>,
     ) -> TSTupleType<'a, A> {
         let value = TSTupleType { span, element_types };
         value
@@ -10278,8 +10278,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_tuple_type(
         self,
         span: Span,
-        element_types: A::Vec<'a, TSTupleElement<'a, A>>,
-    ) -> A::Box<'a, TSTupleType<'a, A>> {
+        element_types: Vec<'a, TSTupleElement<'a, A>, A>,
+    ) -> Box<'a, TSTupleType<'a, A>, A> {
         self.allocator.alloc(self.ts_tuple_type(span, element_types))
     }
 
@@ -10320,7 +10320,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         element_type: TSTupleElement<'a, A>,
         label: IdentifierName<'a>,
         optional: bool,
-    ) -> A::Box<'a, TSNamedTupleMember<'a, A>> {
+    ) -> Box<'a, TSNamedTupleMember<'a, A>, A> {
         self.allocator.alloc(self.ts_named_tuple_member(span, element_type, label, optional))
     }
 
@@ -10353,7 +10353,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSOptionalType<'a, A>> {
+    ) -> Box<'a, TSOptionalType<'a, A>, A> {
         self.allocator.alloc(self.ts_optional_type(span, type_annotation))
     }
 
@@ -10382,7 +10382,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSRestType<'a, A>> {
+    ) -> Box<'a, TSRestType<'a, A>, A> {
         self.allocator.alloc(self.ts_rest_type(span, type_annotation))
     }
 
@@ -10408,7 +10408,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_tuple_element_from_ts_optional_type<T>(self, inner: T) -> TSTupleElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSOptionalType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSOptionalType<'a, A>, A>, A>,
     {
         let value = TSTupleElement::TSOptionalType(inner.into_in(self.allocator));
         value
@@ -10436,7 +10436,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_tuple_element_from_ts_rest_type<T>(self, inner: T) -> TSTupleElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSRestType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSRestType<'a, A>, A>, A>,
     {
         let value = TSTupleElement::TSRestType(inner.into_in(self.allocator));
         value
@@ -10467,7 +10467,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_any_keyword(self, span: Span) -> A::Box<'a, TSAnyKeyword> {
+    pub fn alloc_ts_any_keyword(self, span: Span) -> Box<'a, TSAnyKeyword, A> {
         self.allocator.alloc(self.ts_any_keyword(span))
     }
 
@@ -10490,7 +10490,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_string_keyword(self, span: Span) -> A::Box<'a, TSStringKeyword> {
+    pub fn alloc_ts_string_keyword(self, span: Span) -> Box<'a, TSStringKeyword, A> {
         self.allocator.alloc(self.ts_string_keyword(span))
     }
 
@@ -10513,7 +10513,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_boolean_keyword(self, span: Span) -> A::Box<'a, TSBooleanKeyword> {
+    pub fn alloc_ts_boolean_keyword(self, span: Span) -> Box<'a, TSBooleanKeyword, A> {
         self.allocator.alloc(self.ts_boolean_keyword(span))
     }
 
@@ -10536,7 +10536,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_number_keyword(self, span: Span) -> A::Box<'a, TSNumberKeyword> {
+    pub fn alloc_ts_number_keyword(self, span: Span) -> Box<'a, TSNumberKeyword, A> {
         self.allocator.alloc(self.ts_number_keyword(span))
     }
 
@@ -10559,7 +10559,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_never_keyword(self, span: Span) -> A::Box<'a, TSNeverKeyword> {
+    pub fn alloc_ts_never_keyword(self, span: Span) -> Box<'a, TSNeverKeyword, A> {
         self.allocator.alloc(self.ts_never_keyword(span))
     }
 
@@ -10582,7 +10582,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_intrinsic_keyword(self, span: Span) -> A::Box<'a, TSIntrinsicKeyword> {
+    pub fn alloc_ts_intrinsic_keyword(self, span: Span) -> Box<'a, TSIntrinsicKeyword, A> {
         self.allocator.alloc(self.ts_intrinsic_keyword(span))
     }
 
@@ -10605,7 +10605,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_unknown_keyword(self, span: Span) -> A::Box<'a, TSUnknownKeyword> {
+    pub fn alloc_ts_unknown_keyword(self, span: Span) -> Box<'a, TSUnknownKeyword, A> {
         self.allocator.alloc(self.ts_unknown_keyword(span))
     }
 
@@ -10628,7 +10628,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_null_keyword(self, span: Span) -> A::Box<'a, TSNullKeyword> {
+    pub fn alloc_ts_null_keyword(self, span: Span) -> Box<'a, TSNullKeyword, A> {
         self.allocator.alloc(self.ts_null_keyword(span))
     }
 
@@ -10651,7 +10651,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_undefined_keyword(self, span: Span) -> A::Box<'a, TSUndefinedKeyword> {
+    pub fn alloc_ts_undefined_keyword(self, span: Span) -> Box<'a, TSUndefinedKeyword, A> {
         self.allocator.alloc(self.ts_undefined_keyword(span))
     }
 
@@ -10674,7 +10674,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_void_keyword(self, span: Span) -> A::Box<'a, TSVoidKeyword> {
+    pub fn alloc_ts_void_keyword(self, span: Span) -> Box<'a, TSVoidKeyword, A> {
         self.allocator.alloc(self.ts_void_keyword(span))
     }
 
@@ -10697,7 +10697,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_symbol_keyword(self, span: Span) -> A::Box<'a, TSSymbolKeyword> {
+    pub fn alloc_ts_symbol_keyword(self, span: Span) -> Box<'a, TSSymbolKeyword, A> {
         self.allocator.alloc(self.ts_symbol_keyword(span))
     }
 
@@ -10720,7 +10720,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_this_type(self, span: Span) -> A::Box<'a, TSThisType> {
+    pub fn alloc_ts_this_type(self, span: Span) -> Box<'a, TSThisType, A> {
         self.allocator.alloc(self.ts_this_type(span))
     }
 
@@ -10743,7 +10743,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_object_keyword(self, span: Span) -> A::Box<'a, TSObjectKeyword> {
+    pub fn alloc_ts_object_keyword(self, span: Span) -> Box<'a, TSObjectKeyword, A> {
         self.allocator.alloc(self.ts_object_keyword(span))
     }
 
@@ -10766,7 +10766,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_big_int_keyword(self, span: Span) -> A::Box<'a, TSBigIntKeyword> {
+    pub fn alloc_ts_big_int_keyword(self, span: Span) -> Box<'a, TSBigIntKeyword, A> {
         self.allocator.alloc(self.ts_big_int_keyword(span))
     }
 
@@ -10786,7 +10786,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> TSTypeReference<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSTypeReference {
             span,
@@ -10810,9 +10810,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         type_name: TSTypeName<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSTypeReference<'a, A>>
+    ) -> Box<'a, TSTypeReference<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_type_reference(span, type_name, type_parameters))
     }
@@ -10842,7 +10842,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_name_from_identifier_reference<T>(self, inner: T) -> TSTypeName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value = TSTypeName::IdentifierReference(inner.into_in(self.allocator));
         value
@@ -10872,7 +10872,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_type_name_from_ts_qualified_name<T>(self, inner: T) -> TSTypeName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSQualifiedName<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSQualifiedName<'a, A>, A>, A>,
     {
         let value = TSTypeName::QualifiedName(inner.into_in(self.allocator));
         value
@@ -10911,7 +10911,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         left: TSTypeName<'a, A>,
         right: IdentifierName<'a>,
-    ) -> A::Box<'a, TSQualifiedName<'a, A>> {
+    ) -> Box<'a, TSQualifiedName<'a, A>, A> {
         self.allocator.alloc(self.ts_qualified_name(span, left, right))
     }
 
@@ -10926,7 +10926,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_type_parameter_instantiation(
         self,
         span: Span,
-        params: A::Vec<'a, TSType<'a, A>>,
+        params: Vec<'a, TSType<'a, A>, A>,
     ) -> TSTypeParameterInstantiation<'a, A> {
         let value = TSTypeParameterInstantiation { span, params };
         value
@@ -10943,8 +10943,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_type_parameter_instantiation(
         self,
         span: Span,
-        params: A::Vec<'a, TSType<'a, A>>,
-    ) -> A::Box<'a, TSTypeParameterInstantiation<'a, A>> {
+        params: Vec<'a, TSType<'a, A>, A>,
+    ) -> Box<'a, TSTypeParameterInstantiation<'a, A>, A> {
         self.allocator.alloc(self.ts_type_parameter_instantiation(span, params))
     }
 
@@ -10997,7 +10997,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         r#in: bool,
         out: bool,
         r#const: bool,
-    ) -> A::Box<'a, TSTypeParameter<'a, A>> {
+    ) -> Box<'a, TSTypeParameter<'a, A>, A> {
         self.allocator
             .alloc(self.ts_type_parameter(span, name, constraint, default, r#in, out, r#const))
     }
@@ -11013,7 +11013,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_type_parameter_declaration(
         self,
         span: Span,
-        params: A::Vec<'a, TSTypeParameter<'a, A>>,
+        params: Vec<'a, TSTypeParameter<'a, A>, A>,
     ) -> TSTypeParameterDeclaration<'a, A> {
         let value = TSTypeParameterDeclaration { span, params };
         value
@@ -11030,8 +11030,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_type_parameter_declaration(
         self,
         span: Span,
-        params: A::Vec<'a, TSTypeParameter<'a, A>>,
-    ) -> A::Box<'a, TSTypeParameterDeclaration<'a, A>> {
+        params: Vec<'a, TSTypeParameter<'a, A>, A>,
+    ) -> Box<'a, TSTypeParameterDeclaration<'a, A>, A> {
         self.allocator.alloc(self.ts_type_parameter_declaration(span, params))
     }
 
@@ -11055,7 +11055,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         declare: bool,
     ) -> TSTypeAliasDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
     {
         let value = TSTypeAliasDeclaration {
             span,
@@ -11086,9 +11086,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
         type_annotation: TSType<'a, A>,
         declare: bool,
-    ) -> A::Box<'a, TSTypeAliasDeclaration<'a, A>>
+    ) -> Box<'a, TSTypeAliasDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_type_alias_declaration(
             span,
@@ -11115,7 +11115,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> TSClassImplementsItem<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSClassImplementsItem {
             span,
@@ -11139,9 +11139,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         expression: TSTypeName<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSClassImplementsItem<'a, A>>
+    ) -> Box<'a, TSClassImplementsItem<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_class_implements_item(span, expression, type_parameters))
     }
@@ -11157,7 +11157,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_class_implements(
         self,
         span: Span,
-        items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
+        items: Vec<'a, TSClassImplementsItem<'a, A>, A>,
     ) -> TSClassImplements<'a, A> {
         let value = TSClassImplements { span, items };
         value
@@ -11174,8 +11174,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_class_implements(
         self,
         span: Span,
-        items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
-    ) -> A::Box<'a, TSClassImplements<'a, A>> {
+        items: Vec<'a, TSClassImplementsItem<'a, A>, A>,
+    ) -> Box<'a, TSClassImplements<'a, A>, A> {
         self.allocator.alloc(self.ts_class_implements(span, items))
     }
 
@@ -11195,14 +11195,14 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
         type_parameters: T1,
         body: T2,
         declare: bool,
     ) -> TSInterfaceDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, TSInterfaceBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a, A>, A>, A>,
     {
         let value = TSInterfaceDeclaration {
             span,
@@ -11232,14 +11232,14 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
         type_parameters: T1,
         body: T2,
         declare: bool,
-    ) -> A::Box<'a, TSInterfaceDeclaration<'a, A>>
+    ) -> Box<'a, TSInterfaceDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, TSInterfaceBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_interface_declaration(
             span,
@@ -11262,7 +11262,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_interface_body(
         self,
         span: Span,
-        body: A::Vec<'a, TSSignature<'a, A>>,
+        body: Vec<'a, TSSignature<'a, A>, A>,
     ) -> TSInterfaceBody<'a, A> {
         let value = TSInterfaceBody { span, body };
         value
@@ -11279,8 +11279,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_interface_body(
         self,
         span: Span,
-        body: A::Vec<'a, TSSignature<'a, A>>,
-    ) -> A::Box<'a, TSInterfaceBody<'a, A>> {
+        body: Vec<'a, TSSignature<'a, A>, A>,
+    ) -> Box<'a, TSInterfaceBody<'a, A>, A> {
         self.allocator.alloc(self.ts_interface_body(span, body))
     }
 
@@ -11306,7 +11306,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> TSPropertySignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSPropertySignature {
             span,
@@ -11339,9 +11339,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         readonly: bool,
         key: PropertyKey<'a, A>,
         type_annotation: T1,
-    ) -> A::Box<'a, TSPropertySignature<'a, A>>
+    ) -> Box<'a, TSPropertySignature<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_property_signature(
             span,
@@ -11367,11 +11367,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         modifiers: Option<ClassElementModifiers>,
-        parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
         type_annotation: T1,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = self.ts_index_signature(span, modifiers, parameters, type_annotation);
         let value = TSSignature::TSIndexSignature(self.allocator.alloc(value));
@@ -11382,7 +11382,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_signature_from_ts_index_signature<T>(self, inner: T) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIndexSignature<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSIndexSignature<'a, A>, A>, A>,
     {
         let value = TSSignature::TSIndexSignature(inner.into_in(self.allocator));
         value
@@ -11410,7 +11410,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value =
             self.ts_property_signature(span, computed, optional, readonly, key, type_annotation);
@@ -11422,7 +11422,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_signature_from_ts_property_signature<T>(self, inner: T) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSPropertySignature<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSPropertySignature<'a, A>, A>, A>,
     {
         let value = TSSignature::TSPropertySignature(inner.into_in(self.allocator));
         value
@@ -11448,9 +11448,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T3,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.ts_call_signature_declaration(
             span,
@@ -11467,7 +11467,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_signature_from_ts_call_signature_declaration<T>(self, inner: T) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSCallSignatureDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSCallSignatureDeclaration<'a, A>, A>, A>,
     {
         let value = TSSignature::TSCallSignatureDeclaration(inner.into_in(self.allocator));
         value
@@ -11491,9 +11491,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T3,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value =
             self.ts_construct_signature_declaration(span, type_parameters, params, return_type);
@@ -11508,7 +11508,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSConstructSignatureDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSConstructSignatureDeclaration<'a, A>, A>, A>,
     {
         let value = TSSignature::TSConstructSignatureDeclaration(inner.into_in(self.allocator));
         value
@@ -11542,10 +11542,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T4,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.ts_method_signature(
             span,
@@ -11566,7 +11566,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_signature_from_ts_method_signature<T>(self, inner: T) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSMethodSignature<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSMethodSignature<'a, A>, A>, A>,
     {
         let value = TSSignature::TSMethodSignature(inner.into_in(self.allocator));
         value
@@ -11586,11 +11586,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         modifiers: Option<ClassElementModifiers>,
-        parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
         type_annotation: T1,
     ) -> TSIndexSignature<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = TSIndexSignature {
             span,
@@ -11615,11 +11615,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         modifiers: Option<ClassElementModifiers>,
-        parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
         type_annotation: T1,
-    ) -> A::Box<'a, TSIndexSignature<'a, A>>
+    ) -> Box<'a, TSIndexSignature<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_index_signature(span, modifiers, parameters, type_annotation))
     }
@@ -11644,9 +11644,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T3,
     ) -> TSCallSignatureDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSCallSignatureDeclaration {
             span,
@@ -11676,11 +11676,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         this_param: Option<TSThisParameter<'a, A>>,
         params: T2,
         return_type: T3,
-    ) -> A::Box<'a, TSCallSignatureDeclaration<'a, A>>
+    ) -> Box<'a, TSCallSignatureDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_call_signature_declaration(
             span,
@@ -11719,10 +11719,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T4,
     ) -> TSMethodSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSMethodSignature {
             span,
@@ -11765,12 +11765,12 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         this_param: T2,
         params: T3,
         return_type: T4,
-    ) -> A::Box<'a, TSMethodSignature<'a, A>>
+    ) -> Box<'a, TSMethodSignature<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_method_signature(
             span,
@@ -11803,9 +11803,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T3,
     ) -> TSConstructSignatureDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSConstructSignatureDeclaration {
             span,
@@ -11833,11 +11833,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
         params: T2,
         return_type: T3,
-    ) -> A::Box<'a, TSConstructSignatureDeclaration<'a, A>>
+    ) -> Box<'a, TSConstructSignatureDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_construct_signature_declaration(
             span,
@@ -11864,7 +11864,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ) -> TSIndexSignatureName<'a, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = TSIndexSignatureName {
             span,
@@ -11888,10 +11888,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         name: IntoAtom,
         type_annotation: T1,
-    ) -> A::Box<'a, TSIndexSignatureName<'a, A>>
+    ) -> Box<'a, TSIndexSignatureName<'a, A>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_index_signature_name(span, name, type_annotation))
     }
@@ -11912,7 +11912,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> TSInterfaceHeritage<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSInterfaceHeritage {
             span,
@@ -11936,9 +11936,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         expression: Expression<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSInterfaceHeritage<'a, A>>
+    ) -> Box<'a, TSInterfaceHeritage<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_interface_heritage(span, expression, type_parameters))
     }
@@ -11961,7 +11961,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: T1,
     ) -> TSTypePredicate<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSTypePredicate {
             span,
@@ -11988,9 +11988,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         parameter_name: TSTypePredicateName<'a, A>,
         asserts: bool,
         type_annotation: T1,
-    ) -> A::Box<'a, TSTypePredicate<'a, A>>
+    ) -> Box<'a, TSTypePredicate<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_type_predicate(span, parameter_name, asserts, type_annotation))
     }
@@ -12023,7 +12023,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> TSTypePredicateName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierName<'a>, A>, A>,
     {
         let value = TSTypePredicateName::Identifier(inner.into_in(self.allocator));
         value
@@ -12091,7 +12091,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         body: Option<TSModuleDeclarationBody<'a, A>>,
         kind: TSModuleDeclarationKind,
         declare: bool,
-    ) -> A::Box<'a, TSModuleDeclaration<'a, A>> {
+    ) -> Box<'a, TSModuleDeclaration<'a, A>, A> {
         self.allocator.alloc(self.ts_module_declaration(span, id, body, kind, declare))
     }
 
@@ -12188,7 +12188,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> TSModuleDeclarationBody<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSModuleDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSModuleDeclaration<'a, A>, A>, A>,
     {
         let value = TSModuleDeclarationBody::TSModuleDeclaration(inner.into_in(self.allocator));
         value
@@ -12206,8 +12206,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_module_declaration_body_module_block(
         self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> TSModuleDeclarationBody<'a, A> {
         let value = self.ts_module_block(span, directives, body);
         let value = TSModuleDeclarationBody::TSModuleBlock(self.allocator.alloc(value));
@@ -12221,7 +12221,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> TSModuleDeclarationBody<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSModuleBlock<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSModuleBlock<'a, A>, A>, A>,
     {
         let value = TSModuleDeclarationBody::TSModuleBlock(inner.into_in(self.allocator));
         value
@@ -12239,8 +12239,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_module_block(
         self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> TSModuleBlock<'a, A> {
         let value = TSModuleBlock { span, directives, body };
         value
@@ -12258,9 +12258,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_module_block(
         self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, TSModuleBlock<'a, A>> {
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, TSModuleBlock<'a, A>, A> {
         self.allocator.alloc(self.ts_module_block(span, directives, body))
     }
 
@@ -12275,7 +12275,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_type_literal(
         self,
         span: Span,
-        members: A::Vec<'a, TSSignature<'a, A>>,
+        members: Vec<'a, TSSignature<'a, A>, A>,
     ) -> TSTypeLiteral<'a, A> {
         let value = TSTypeLiteral { span, members };
         value
@@ -12292,8 +12292,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_type_literal(
         self,
         span: Span,
-        members: A::Vec<'a, TSSignature<'a, A>>,
-    ) -> A::Box<'a, TSTypeLiteral<'a, A>> {
+        members: Vec<'a, TSSignature<'a, A>, A>,
+    ) -> Box<'a, TSTypeLiteral<'a, A>, A> {
         self.allocator.alloc(self.ts_type_literal(span, members))
     }
 
@@ -12307,7 +12307,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_infer_type<T1>(self, span: Span, type_parameter: T1) -> TSInferType<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         let value = TSInferType { span, type_parameter: type_parameter.into_in(self.allocator) };
         value
@@ -12325,9 +12325,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         type_parameter: T1,
-    ) -> A::Box<'a, TSInferType<'a, A>>
+    ) -> Box<'a, TSInferType<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_infer_type(span, type_parameter))
     }
@@ -12348,7 +12348,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> TSTypeQuery<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSTypeQuery {
             span,
@@ -12372,9 +12372,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         expr_name: TSTypeQueryExprName<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSTypeQuery<'a, A>>
+    ) -> Box<'a, TSTypeQuery<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_type_query(span, expr_name, type_parameters))
     }
@@ -12401,8 +12401,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T2,
     ) -> TSTypeQueryExprName<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSImportAttributes<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.ts_import_type(
             span,
@@ -12423,7 +12423,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> TSTypeQueryExprName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSImportType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSImportType<'a, A>, A>, A>,
     {
         let value = TSTypeQueryExprName::TSImportType(inner.into_in(self.allocator));
         value
@@ -12460,8 +12460,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T2,
     ) -> TSImportType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSImportAttributes<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSImportType {
             span,
@@ -12494,10 +12494,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         qualifier: Option<TSTypeName<'a, A>>,
         attributes: T1,
         type_parameters: T2,
-    ) -> A::Box<'a, TSImportType<'a, A>>
+    ) -> Box<'a, TSImportType<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSImportAttributes<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_import_type(
             span,
@@ -12522,7 +12522,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
-        elements: A::Vec<'a, TSImportAttribute<'a, A>>,
+        elements: Vec<'a, TSImportAttribute<'a, A>, A>,
     ) -> TSImportAttributes<'a, A> {
         let value = TSImportAttributes { span, attributes_keyword, elements };
         value
@@ -12541,8 +12541,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
-        elements: A::Vec<'a, TSImportAttribute<'a, A>>,
-    ) -> A::Box<'a, TSImportAttributes<'a, A>> {
+        elements: Vec<'a, TSImportAttribute<'a, A>, A>,
+    ) -> Box<'a, TSImportAttributes<'a, A>, A> {
         self.allocator.alloc(self.ts_import_attributes(span, attributes_keyword, elements))
     }
 
@@ -12579,7 +12579,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         name: TSImportAttributeName<'a>,
         value: Expression<'a, A>,
-    ) -> A::Box<'a, TSImportAttribute<'a, A>> {
+    ) -> Box<'a, TSImportAttribute<'a, A>, A> {
         self.allocator.alloc(self.ts_import_attribute(span, name, value))
     }
 
@@ -12665,10 +12665,10 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T4,
     ) -> TSFunctionType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = TSFunctionType {
             span,
@@ -12698,12 +12698,12 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         this_param: T2,
         params: T3,
         return_type: T4,
-    ) -> A::Box<'a, TSFunctionType<'a, A>>
+    ) -> Box<'a, TSFunctionType<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_function_type(
             span,
@@ -12734,9 +12734,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         return_type: T3,
     ) -> TSConstructorType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = TSConstructorType {
             span,
@@ -12766,11 +12766,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
         params: T2,
         return_type: T3,
-    ) -> A::Box<'a, TSConstructorType<'a, A>>
+    ) -> Box<'a, TSConstructorType<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_constructor_type(
             span,
@@ -12803,7 +12803,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         readonly: TSMappedTypeModifierOperator,
     ) -> TSMappedType<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         let value = TSMappedType {
             span,
@@ -12837,9 +12837,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_annotation: Option<TSType<'a, A>>,
         optional: TSMappedTypeModifierOperator,
         readonly: TSMappedTypeModifierOperator,
-    ) -> A::Box<'a, TSMappedType<'a, A>>
+    ) -> Box<'a, TSMappedType<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_mapped_type(
             span,
@@ -12863,8 +12863,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn ts_template_literal_type(
         self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        types: A::Vec<'a, TSType<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSTemplateLiteralType<'a, A> {
         let value = TSTemplateLiteralType { span, quasis, types };
         value
@@ -12882,9 +12882,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     pub fn alloc_ts_template_literal_type(
         self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        types: A::Vec<'a, TSType<'a, A>>,
-    ) -> A::Box<'a, TSTemplateLiteralType<'a, A>> {
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        types: Vec<'a, TSType<'a, A>, A>,
+    ) -> Box<'a, TSTemplateLiteralType<'a, A>, A> {
         self.allocator.alloc(self.ts_template_literal_type(span, quasis, types))
     }
 
@@ -12921,7 +12921,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         expression: Expression<'a, A>,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSAsExpression<'a, A>> {
+    ) -> Box<'a, TSAsExpression<'a, A>, A> {
         self.allocator.alloc(self.ts_as_expression(span, expression, type_annotation))
     }
 
@@ -12958,7 +12958,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         expression: Expression<'a, A>,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSSatisfiesExpression<'a, A>> {
+    ) -> Box<'a, TSSatisfiesExpression<'a, A>, A> {
         self.allocator.alloc(self.ts_satisfies_expression(span, expression, type_annotation))
     }
 
@@ -12991,7 +12991,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSTypeAssertionAnnotation<'a, A>> {
+    ) -> Box<'a, TSTypeAssertionAnnotation<'a, A>, A> {
         self.allocator.alloc(self.ts_type_assertion_annotation(span, type_annotation))
     }
 
@@ -13028,7 +13028,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, TSTypeAssertion<'a, A>> {
+    ) -> Box<'a, TSTypeAssertion<'a, A>, A> {
         self.allocator.alloc(self.ts_type_assertion(span, type_annotation, expression))
     }
 
@@ -13069,7 +13069,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         id: BindingIdentifier<'a>,
         module_reference: TSModuleReference<'a, A>,
         import_kind: ImportOrExportKind,
-    ) -> A::Box<'a, TSImportEqualsDeclaration<'a, A>> {
+    ) -> Box<'a, TSImportEqualsDeclaration<'a, A>, A> {
         self.allocator.alloc(self.ts_import_equals_declaration(
             span,
             id,
@@ -13103,7 +13103,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> TSModuleReference<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSExternalModuleReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, TSExternalModuleReference<'a>, A>, A>,
     {
         let value = TSModuleReference::ExternalModuleReference(inner.into_in(self.allocator));
         value
@@ -13147,7 +13147,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         expression: StringLiteral<'a>,
-    ) -> A::Box<'a, TSExternalModuleReference<'a>> {
+    ) -> Box<'a, TSExternalModuleReference<'a>, A> {
         self.allocator.alloc(self.ts_external_module_reference(span, expression))
     }
 
@@ -13184,7 +13184,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         expression: Expression<'a, A>,
         definite_mark: TSDefiniteMark,
-    ) -> A::Box<'a, TSNonNullExpression<'a, A>> {
+    ) -> Box<'a, TSNonNullExpression<'a, A>, A> {
         self.allocator.alloc(self.ts_non_null_expression(span, expression, definite_mark))
     }
 
@@ -13213,7 +13213,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, Decorator<'a, A>> {
+    ) -> Box<'a, Decorator<'a, A>, A> {
         self.allocator.alloc(self.decorator(span, expression))
     }
 
@@ -13246,7 +13246,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, TSExportAssignment<'a, A>> {
+    ) -> Box<'a, TSExportAssignment<'a, A>, A> {
         self.allocator.alloc(self.ts_export_assignment(span, expression))
     }
 
@@ -13279,7 +13279,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         id: IdentifierName<'a>,
-    ) -> A::Box<'a, TSNamespaceExportDeclaration<'a>> {
+    ) -> Box<'a, TSNamespaceExportDeclaration<'a>, A> {
         self.allocator.alloc(self.ts_namespace_export_declaration(span, id))
     }
 
@@ -13299,7 +13299,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         type_parameters: T1,
     ) -> TSInstantiationExpression<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a, A>, A>, A>,
     {
         let value = TSInstantiationExpression {
             span,
@@ -13323,9 +13323,9 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         expression: Expression<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSInstantiationExpression<'a, A>>
+    ) -> Box<'a, TSInstantiationExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_instantiation_expression(span, expression, type_parameters))
     }
@@ -13349,7 +13349,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_optional_mark(self, span: Span) -> A::Box<'a, TSOptionalMark> {
+    pub fn alloc_ts_optional_mark(self, span: Span) -> Box<'a, TSOptionalMark, A> {
         self.allocator.alloc(self.ts_optional_mark(span))
     }
 
@@ -13372,7 +13372,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_definite_mark(self, span: Span) -> A::Box<'a, TSDefiniteMark> {
+    pub fn alloc_ts_definite_mark(self, span: Span) -> Box<'a, TSDefiniteMark, A> {
         self.allocator.alloc(self.ts_definite_mark(span))
     }
 
@@ -13409,7 +13409,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         type_annotation: TSType<'a, A>,
         postfix: bool,
-    ) -> A::Box<'a, JSDocNullableType<'a, A>> {
+    ) -> Box<'a, JSDocNullableType<'a, A>, A> {
         self.allocator.alloc(self.js_doc_nullable_type(span, type_annotation, postfix))
     }
 
@@ -13446,7 +13446,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         type_annotation: TSType<'a, A>,
         postfix: bool,
-    ) -> A::Box<'a, JSDocNonNullableType<'a, A>> {
+    ) -> Box<'a, JSDocNonNullableType<'a, A>, A> {
         self.allocator.alloc(self.js_doc_non_nullable_type(span, type_annotation, postfix))
     }
 
@@ -13469,7 +13469,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_js_doc_unknown_type(self, span: Span) -> A::Box<'a, JSDocUnknownType> {
+    pub fn alloc_js_doc_unknown_type(self, span: Span) -> Box<'a, JSDocUnknownType, A> {
         self.allocator.alloc(self.js_doc_unknown_type(span))
     }
 
@@ -13488,11 +13488,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXElement<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         let value = JSXElement {
             span,
@@ -13518,11 +13518,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
-    ) -> A::Box<'a, JSXElement<'a, A>>
+        children: Vec<'a, JSXChild<'a, A>, A>,
+    ) -> Box<'a, JSXElement<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.jsx_element(span, opening_element, closing_element, children))
     }
@@ -13543,11 +13543,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         self_closing: bool,
         name: JSXElementName<'a, A>,
-        attributes: A::Vec<'a, JSXAttributeItem<'a, A>>,
+        attributes: Vec<'a, JSXAttributeItem<'a, A>, A>,
         type_parameters: T1,
     ) -> JSXOpeningElement<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = JSXOpeningElement {
             span,
@@ -13575,11 +13575,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         self_closing: bool,
         name: JSXElementName<'a, A>,
-        attributes: A::Vec<'a, JSXAttributeItem<'a, A>>,
+        attributes: Vec<'a, JSXAttributeItem<'a, A>, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, JSXOpeningElement<'a, A>>
+    ) -> Box<'a, JSXOpeningElement<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.jsx_opening_element(
             span,
@@ -13619,7 +13619,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         name: JSXElementName<'a, A>,
-    ) -> A::Box<'a, JSXClosingElement<'a, A>> {
+    ) -> Box<'a, JSXClosingElement<'a, A>, A> {
         self.allocator.alloc(self.jsx_closing_element(span, name))
     }
 
@@ -13638,7 +13638,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXFragment<'a, A> {
         let value = JSXFragment { span, opening_fragment, closing_fragment, children };
         value
@@ -13659,8 +13659,8 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
-    ) -> A::Box<'a, JSXFragment<'a, A>> {
+        children: Vec<'a, JSXChild<'a, A>, A>,
+    ) -> Box<'a, JSXFragment<'a, A>, A> {
         self.allocator.alloc(self.jsx_fragment(span, opening_fragment, closing_fragment, children))
     }
 
@@ -13689,7 +13689,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_element_name_from_jsx_identifier<T>(self, inner: T) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXIdentifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXIdentifier<'a>, A>, A>,
     {
         let value = JSXElementName::Identifier(inner.into_in(self.allocator));
         value
@@ -13720,7 +13720,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_element_name_from_identifier_reference<T>(self, inner: T) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value = JSXElementName::IdentifierReference(inner.into_in(self.allocator));
         value
@@ -13750,7 +13750,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_element_name_from_jsx_namespaced_name<T>(self, inner: T) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXNamespacedName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXNamespacedName<'a>, A>, A>,
     {
         let value = JSXElementName::NamespacedName(inner.into_in(self.allocator));
         value
@@ -13780,7 +13780,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_element_name_from_jsx_member_expression<T>(self, inner: T) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXMemberExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXMemberExpression<'a, A>, A>, A>,
     {
         let value = JSXElementName::MemberExpression(inner.into_in(self.allocator));
         value
@@ -13803,7 +13803,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_element_name_from_this_expression<T>(self, inner: T) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ThisExpression>, A>,
+        T: IntoIn<'a, Box<'a, ThisExpression, A>, A>,
     {
         let value = JSXElementName::ThisExpression(inner.into_in(self.allocator));
         value
@@ -13842,7 +13842,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
-    ) -> A::Box<'a, JSXNamespacedName<'a>> {
+    ) -> Box<'a, JSXNamespacedName<'a>, A> {
         self.allocator.alloc(self.jsx_namespaced_name(span, namespace, property))
     }
 
@@ -13879,7 +13879,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         object: JSXMemberExpressionObject<'a, A>,
         property: JSXIdentifier<'a>,
-    ) -> A::Box<'a, JSXMemberExpression<'a, A>> {
+    ) -> Box<'a, JSXMemberExpression<'a, A>, A> {
         self.allocator.alloc(self.jsx_member_expression(span, object, property))
     }
 
@@ -13911,7 +13911,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> JSXMemberExpressionObject<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value = JSXMemberExpressionObject::IdentifierReference(inner.into_in(self.allocator));
         value
@@ -13944,7 +13944,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> JSXMemberExpressionObject<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXMemberExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXMemberExpression<'a, A>, A>, A>,
     {
         let value = JSXMemberExpressionObject::MemberExpression(inner.into_in(self.allocator));
         value
@@ -13973,7 +13973,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> JSXMemberExpressionObject<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ThisExpression>, A>,
+        T: IntoIn<'a, Box<'a, ThisExpression, A>, A>,
     {
         let value = JSXMemberExpressionObject::ThisExpression(inner.into_in(self.allocator));
         value
@@ -14008,7 +14008,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         expression: JSXExpression<'a, A>,
-    ) -> A::Box<'a, JSXExpressionContainer<'a, A>> {
+    ) -> Box<'a, JSXExpressionContainer<'a, A>, A> {
         self.allocator.alloc(self.jsx_expression_container(span, expression))
     }
 
@@ -14057,7 +14057,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_jsx_empty_expression(self, span: Span) -> A::Box<'a, JSXEmptyExpression> {
+    pub fn alloc_jsx_empty_expression(self, span: Span) -> Box<'a, JSXEmptyExpression, A> {
         self.allocator.alloc(self.jsx_empty_expression(span))
     }
 
@@ -14085,7 +14085,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_attribute_item_from_jsx_attribute<T>(self, inner: T) -> JSXAttributeItem<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXAttribute<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXAttribute<'a, A>, A>, A>,
     {
         let value = JSXAttributeItem::Attribute(inner.into_in(self.allocator));
         value
@@ -14116,7 +14116,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> JSXAttributeItem<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXSpreadAttribute<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXSpreadAttribute<'a, A>, A>, A>,
     {
         let value = JSXAttributeItem::SpreadAttribute(inner.into_in(self.allocator));
         value
@@ -14155,7 +14155,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         name: JSXAttributeName<'a, A>,
         value: Option<JSXAttributeValue<'a, A>>,
-    ) -> A::Box<'a, JSXAttribute<'a, A>> {
+    ) -> Box<'a, JSXAttribute<'a, A>, A> {
         self.allocator.alloc(self.jsx_attribute(span, name, value))
     }
 
@@ -14188,7 +14188,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, JSXSpreadAttribute<'a, A>> {
+    ) -> Box<'a, JSXSpreadAttribute<'a, A>, A> {
         self.allocator.alloc(self.jsx_spread_attribute(span, argument))
     }
 
@@ -14217,7 +14217,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_attribute_name_from_jsx_identifier<T>(self, inner: T) -> JSXAttributeName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXIdentifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXIdentifier<'a>, A>, A>,
     {
         let value = JSXAttributeName::Identifier(inner.into_in(self.allocator));
         value
@@ -14247,7 +14247,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_attribute_name_from_jsx_namespaced_name<T>(self, inner: T) -> JSXAttributeName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXNamespacedName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXNamespacedName<'a>, A>, A>,
     {
         let value = JSXAttributeName::NamespacedName(inner.into_in(self.allocator));
         value
@@ -14278,7 +14278,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_attribute_value_from_string_literal<T>(self, inner: T) -> JSXAttributeValue<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StringLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
     {
         let value = JSXAttributeValue::StringLiteral(inner.into_in(self.allocator));
         value
@@ -14309,7 +14309,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         inner: T,
     ) -> JSXAttributeValue<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXExpressionContainer<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXExpressionContainer<'a, A>, A>, A>,
     {
         let value = JSXAttributeValue::ExpressionContainer(inner.into_in(self.allocator));
         value
@@ -14330,11 +14330,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXAttributeValue<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         let value = self.jsx_element(span, opening_element, closing_element, children);
         let value = JSXAttributeValue::Element(self.allocator.alloc(value));
@@ -14345,7 +14345,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_attribute_value_from_jsx_element<T>(self, inner: T) -> JSXAttributeValue<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXElement<'a, A>, A>, A>,
     {
         let value = JSXAttributeValue::Element(inner.into_in(self.allocator));
         value
@@ -14366,7 +14366,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXAttributeValue<'a, A> {
         let value = self.jsx_fragment(span, opening_fragment, closing_fragment, children);
         let value = JSXAttributeValue::Fragment(self.allocator.alloc(value));
@@ -14377,7 +14377,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_attribute_value_from_jsx_fragment<T>(self, inner: T) -> JSXAttributeValue<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXFragment<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXFragment<'a, A>, A>, A>,
     {
         let value = JSXAttributeValue::Fragment(inner.into_in(self.allocator));
         value
@@ -14411,7 +14411,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, JSXIdentifier<'a>>
+    ) -> Box<'a, JSXIdentifier<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -14439,7 +14439,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_child_from_jsx_text<T>(self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXText<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXText<'a>, A>, A>,
     {
         let value = JSXChild::Text(inner.into_in(self.allocator));
         value
@@ -14460,11 +14460,11 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXChild<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         let value = self.jsx_element(span, opening_element, closing_element, children);
         let value = JSXChild::Element(self.allocator.alloc(value));
@@ -14475,7 +14475,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_child_from_jsx_element<T>(self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXElement<'a, A>, A>, A>,
     {
         let value = JSXChild::Element(inner.into_in(self.allocator));
         value
@@ -14496,7 +14496,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXChild<'a, A> {
         let value = self.jsx_fragment(span, opening_fragment, closing_fragment, children);
         let value = JSXChild::Fragment(self.allocator.alloc(value));
@@ -14507,7 +14507,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_child_from_jsx_fragment<T>(self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXFragment<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXFragment<'a, A>, A>, A>,
     {
         let value = JSXChild::Fragment(inner.into_in(self.allocator));
         value
@@ -14535,7 +14535,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_child_from_jsx_expression_container<T>(self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXExpressionContainer<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXExpressionContainer<'a, A>, A>, A>,
     {
         let value = JSXChild::ExpressionContainer(inner.into_in(self.allocator));
         value
@@ -14563,7 +14563,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn jsx_child_from_jsx_spread_child<T>(self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXSpreadChild<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXSpreadChild<'a, A>, A>, A>,
     {
         let value = JSXChild::Spread(inner.into_in(self.allocator));
         value
@@ -14598,7 +14598,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, JSXSpreadChild<'a, A>> {
+    ) -> Box<'a, JSXSpreadChild<'a, A>, A> {
         self.allocator.alloc(self.jsx_spread_child(span, expression))
     }
 
@@ -14626,7 +14626,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     /// - span: The [`Span`] covering this node
     /// - value: The text content.
     #[inline]
-    pub fn alloc_jsx_text<IntoAtom>(self, span: Span, value: IntoAtom) -> A::Box<'a, JSXText<'a>>
+    pub fn alloc_jsx_text<IntoAtom>(self, span: Span, value: IntoAtom) -> Box<'a, JSXText<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -14671,7 +14671,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// - span: The [`Span`] covering this node
     /// - value
     #[inline]
-    pub fn alloc_boolean_literal(&mut self, span: Span, value: bool) -> A::Box<'a, BooleanLiteral> {
+    pub fn alloc_boolean_literal(&mut self, span: Span, value: bool) -> Box<'a, BooleanLiteral, A> {
         self.allocator.alloc(self.boolean_literal(span, value))
     }
 
@@ -14695,7 +14695,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_null_literal(&mut self, span: Span) -> A::Box<'a, NullLiteral> {
+    pub fn alloc_null_literal(&mut self, span: Span) -> Box<'a, NullLiteral, A> {
         self.allocator.alloc(self.null_literal(span))
     }
 
@@ -14740,7 +14740,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         value: f64,
         raw: S,
         base: NumberBase,
-    ) -> A::Box<'a, NumericLiteral<'a>>
+    ) -> Box<'a, NumericLiteral<'a>, A>
     where
         S: IntoIn<'a, &'a str, A>,
     {
@@ -14784,7 +14784,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         raw: IntoAtom,
         base: BigintBase,
-    ) -> A::Box<'a, BigIntLiteral<'a>>
+    ) -> Box<'a, BigIntLiteral<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -14825,7 +14825,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         value: EmptyObject,
         regex: RegExp<'a, A>,
-    ) -> A::Box<'a, RegExpLiteral<'a, A>> {
+    ) -> Box<'a, RegExpLiteral<'a, A>, A> {
         self.allocator.alloc(self.reg_exp_literal(span, value, regex))
     }
 
@@ -14858,7 +14858,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         value: IntoAtom,
-    ) -> A::Box<'a, StringLiteral<'a>>
+    ) -> Box<'a, StringLiteral<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -14884,10 +14884,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         source_type: SourceType,
         source_text: S,
-        comments: A::Vec<'a, Comment>,
+        comments: Vec<'a, Comment, A>,
         hashbang: Option<Hashbang<'a>>,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> Program<'a, A>
     where
         S: IntoIn<'a, &'a str, A>,
@@ -14926,11 +14926,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         source_type: SourceType,
         source_text: S,
-        comments: A::Vec<'a, Comment>,
+        comments: Vec<'a, Comment, A>,
         hashbang: Option<Hashbang<'a>>,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, Program<'a, A>>
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, Program<'a, A>, A>
     where
         S: IntoIn<'a, &'a str, A>,
     {
@@ -14965,7 +14965,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_boolean_literal<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BooleanLiteral>, A>,
+        T: IntoIn<'a, Box<'a, BooleanLiteral, A>, A>,
     {
         let value = Expression::BooleanLiteral(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -14990,7 +14990,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_null_literal<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NullLiteral>, A>,
+        T: IntoIn<'a, Box<'a, NullLiteral, A>, A>,
     {
         let value = Expression::NullLiteral(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15027,7 +15027,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_numeric_literal<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NumericLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, NumericLiteral<'a>, A>, A>,
     {
         let value = Expression::NumericLiteral(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15062,7 +15062,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_big_int_literal<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BigIntLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, BigIntLiteral<'a>, A>, A>,
     {
         let value = Expression::BigIntLiteral(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15094,7 +15094,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_reg_exp_literal<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, RegExpLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, RegExpLiteral<'a, A>, A>, A>,
     {
         let value = Expression::RegExpLiteral(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15127,7 +15127,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_string_literal<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StringLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
     {
         let value = Expression::StringLiteral(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15146,8 +15146,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn expression_template_literal(
         &mut self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> Expression<'a, A> {
         let value = self.template_literal(span, quasis, expressions);
         let value = Expression::TemplateLiteral(self.allocator.alloc(value));
@@ -15159,7 +15159,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_template_literal<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TemplateLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TemplateLiteral<'a, A>, A>, A>,
     {
         let value = Expression::TemplateLiteral(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15192,7 +15192,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_identifier_reference<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value = Expression::Identifier(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15224,7 +15224,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_meta_property<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, MetaProperty<'a>>, A>,
+        T: IntoIn<'a, Box<'a, MetaProperty<'a>, A>, A>,
     {
         let value = Expression::MetaProperty(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15249,7 +15249,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_super<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Super>, A>,
+        T: IntoIn<'a, Box<'a, Super, A>, A>,
     {
         let value = Expression::Super(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15268,7 +15268,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn expression_array(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, ArrayExpressionElement<'a, A>>,
+        elements: Vec<'a, ArrayExpressionElement<'a, A>, A>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a, A> {
         let value = self.array_expression(span, elements, trailing_comma);
@@ -15281,7 +15281,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_array<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ArrayExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ArrayExpression<'a, A>, A>, A>,
     {
         let value = Expression::ArrayExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15313,10 +15313,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T4,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T4: IntoIn<'a, A::Box<'a, FunctionBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a, A>, A>, A>,
     {
         let value = self.arrow_function_expression(
             scope_token,
@@ -15337,7 +15337,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_arrow_function<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ArrowFunctionExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ArrowFunctionExpression<'a, A>, A>, A>,
     {
         let value = Expression::ArrowFunctionExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15371,7 +15371,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_assignment<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentExpression<'a, A>, A>, A>,
     {
         let value = Expression::AssignmentExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15401,7 +15401,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_await<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AwaitExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AwaitExpression<'a, A>, A>, A>,
     {
         let value = Expression::AwaitExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15435,7 +15435,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_binary<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BinaryExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, BinaryExpression<'a, A>, A>, A>,
     {
         let value = Expression::BinaryExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15458,11 +15458,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         callee: Expression<'a, A>,
         type_parameters: T1,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         optional: bool,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.call_expression(span, callee, type_parameters, arguments, optional);
         let value = Expression::CallExpression(self.allocator.alloc(value));
@@ -15474,7 +15474,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_call<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, CallExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, CallExpression<'a, A>, A>, A>,
     {
         let value = Expression::CallExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15504,7 +15504,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_chain<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ChainExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ChainExpression<'a, A>, A>, A>,
     {
         let value = Expression::ChainExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15532,7 +15532,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -15542,9 +15542,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T3,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         let value = self.class(
             scope_token,
@@ -15568,7 +15568,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_class<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Class<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Class<'a, A>, A>, A>,
     {
         let value = Expression::ClassExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15602,7 +15602,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_conditional<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ConditionalExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ConditionalExpression<'a, A>, A>, A>,
     {
         let value = Expression::ConditionalExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15642,11 +15642,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T5,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         let value = self.function(
             scope_token,
@@ -15671,7 +15671,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_function<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Function<'a, A>, A>, A>,
     {
         let value = Expression::FunctionExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15691,7 +15691,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         source: Expression<'a, A>,
-        arguments: A::Vec<'a, Expression<'a, A>>,
+        arguments: Vec<'a, Expression<'a, A>, A>,
     ) -> Expression<'a, A> {
         let value = self.import_expression(span, source, arguments);
         let value = Expression::ImportExpression(self.allocator.alloc(value));
@@ -15703,7 +15703,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_import<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ImportExpression<'a, A>, A>, A>,
     {
         let value = Expression::ImportExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15737,7 +15737,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_logical<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, LogicalExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, LogicalExpression<'a, A>, A>, A>,
     {
         let value = Expression::LogicalExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15758,11 +15758,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         callee: Expression<'a, A>,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         type_parameters: T1,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.new_expression(span, callee, arguments, type_parameters);
         let value = Expression::NewExpression(self.allocator.alloc(value));
@@ -15774,7 +15774,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_new<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NewExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, NewExpression<'a, A>, A>, A>,
     {
         let value = Expression::NewExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15793,7 +15793,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn expression_object(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, ObjectPropertyKind<'a, A>>,
+        properties: Vec<'a, ObjectPropertyKind<'a, A>, A>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a, A> {
         let value = self.object_expression(span, properties, trailing_comma);
@@ -15806,7 +15806,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_object<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ObjectExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ObjectExpression<'a, A>, A>, A>,
     {
         let value = Expression::ObjectExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15836,7 +15836,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_parenthesized<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ParenthesizedExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ParenthesizedExpression<'a, A>, A>, A>,
     {
         let value = Expression::ParenthesizedExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15854,7 +15854,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn expression_sequence(
         &mut self,
         span: Span,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> Expression<'a, A> {
         let value = self.sequence_expression(span, expressions);
         let value = Expression::SequenceExpression(self.allocator.alloc(value));
@@ -15866,7 +15866,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_sequence<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SequenceExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SequenceExpression<'a, A>, A>, A>,
     {
         let value = Expression::SequenceExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15891,7 +15891,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.tagged_template_expression(span, tag, quasi, type_parameters);
         let value = Expression::TaggedTemplateExpression(self.allocator.alloc(value));
@@ -15903,7 +15903,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_tagged_template<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TaggedTemplateExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TaggedTemplateExpression<'a, A>, A>, A>,
     {
         let value = Expression::TaggedTemplateExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15928,7 +15928,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_this<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ThisExpression>, A>,
+        T: IntoIn<'a, Box<'a, ThisExpression, A>, A>,
     {
         let value = Expression::ThisExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15960,7 +15960,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_unary<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, UnaryExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, UnaryExpression<'a, A>, A>, A>,
     {
         let value = Expression::UnaryExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -15994,7 +15994,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_update<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, UpdateExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, UpdateExpression<'a, A>, A>, A>,
     {
         let value = Expression::UpdateExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16026,7 +16026,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_yield<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, YieldExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, YieldExpression<'a, A>, A>, A>,
     {
         let value = Expression::YieldExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16060,7 +16060,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_private_in<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, PrivateInExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, PrivateInExpression<'a, A>, A>, A>,
     {
         let value = Expression::PrivateInExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16082,11 +16082,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         let value = self.jsx_element(span, opening_element, closing_element, children);
         let value = Expression::JSXElement(self.allocator.alloc(value));
@@ -16098,7 +16098,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_jsx_element<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXElement<'a, A>, A>, A>,
     {
         let value = Expression::JSXElement(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16120,7 +16120,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> Expression<'a, A> {
         let value = self.jsx_fragment(span, opening_fragment, closing_fragment, children);
         let value = Expression::JSXFragment(self.allocator.alloc(value));
@@ -16132,7 +16132,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_jsx_fragment<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXFragment<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXFragment<'a, A>, A>, A>,
     {
         let value = Expression::JSXFragment(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16164,7 +16164,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_ts_as<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSAsExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSAsExpression<'a, A>, A>, A>,
     {
         let value = Expression::TSAsExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16196,7 +16196,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_ts_satisfies<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSSatisfiesExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSSatisfiesExpression<'a, A>, A>, A>,
     {
         let value = Expression::TSSatisfiesExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16228,7 +16228,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_ts_type_assertion<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeAssertion<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeAssertion<'a, A>, A>, A>,
     {
         let value = Expression::TSTypeAssertion(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16260,7 +16260,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_ts_non_null<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNonNullExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSNonNullExpression<'a, A>, A>, A>,
     {
         let value = Expression::TSNonNullExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16283,7 +16283,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> Expression<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a, A>, A>, A>,
     {
         let value = self.ts_instantiation_expression(span, expression, type_parameters);
         let value = Expression::TSInstantiationExpression(self.allocator.alloc(value));
@@ -16295,7 +16295,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn expression_from_ts_instantiation<T>(&mut self, inner: T) -> Expression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInstantiationExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInstantiationExpression<'a, A>, A>, A>,
     {
         let value = Expression::TSInstantiationExpression(inner.into_in(self.allocator));
         self.handler.handle_expression(&value);
@@ -16338,7 +16338,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, IdentifierName<'a>>
+    ) -> Box<'a, IdentifierName<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -16382,7 +16382,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, IdentifierReference<'a>>
+    ) -> Box<'a, IdentifierReference<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -16426,7 +16426,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, BindingIdentifier<'a>>
+    ) -> Box<'a, BindingIdentifier<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -16462,7 +16462,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, LabelIdentifier<'a>>
+    ) -> Box<'a, LabelIdentifier<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -16489,7 +16489,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_this_expression(&mut self, span: Span) -> A::Box<'a, ThisExpression> {
+    pub fn alloc_this_expression(&mut self, span: Span) -> Box<'a, ThisExpression, A> {
         self.allocator.alloc(self.this_expression(span))
     }
 
@@ -16505,7 +16505,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn array_expression(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, ArrayExpressionElement<'a, A>>,
+        elements: Vec<'a, ArrayExpressionElement<'a, A>, A>,
         trailing_comma: Option<Span>,
     ) -> ArrayExpression<'a, A> {
         let value = ArrayExpression { span, elements, trailing_comma };
@@ -16525,9 +16525,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_array_expression(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, ArrayExpressionElement<'a, A>>,
+        elements: Vec<'a, ArrayExpressionElement<'a, A>, A>,
         trailing_comma: Option<Span>,
-    ) -> A::Box<'a, ArrayExpression<'a, A>> {
+    ) -> Box<'a, ArrayExpression<'a, A>, A> {
         self.allocator.alloc(self.array_expression(span, elements, trailing_comma))
     }
 
@@ -16557,7 +16557,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ArrayExpressionElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SpreadElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SpreadElement<'a, A>, A>, A>,
     {
         let value = ArrayExpressionElement::SpreadElement(inner.into_in(self.allocator));
         self.handler.handle_array_expression_element(&value);
@@ -16622,7 +16622,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_elision(&mut self, span: Span) -> A::Box<'a, Elision> {
+    pub fn alloc_elision(&mut self, span: Span) -> Box<'a, Elision, A> {
         self.allocator.alloc(self.elision(span))
     }
 
@@ -16638,7 +16638,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn object_expression(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, ObjectPropertyKind<'a, A>>,
+        properties: Vec<'a, ObjectPropertyKind<'a, A>, A>,
         trailing_comma: Option<Span>,
     ) -> ObjectExpression<'a, A> {
         let value = ObjectExpression { span, properties, trailing_comma };
@@ -16658,9 +16658,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_object_expression(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, ObjectPropertyKind<'a, A>>,
+        properties: Vec<'a, ObjectPropertyKind<'a, A>, A>,
         trailing_comma: Option<Span>,
-    ) -> A::Box<'a, ObjectExpression<'a, A>> {
+    ) -> Box<'a, ObjectExpression<'a, A>, A> {
         self.allocator.alloc(self.object_expression(span, properties, trailing_comma))
     }
 
@@ -16702,7 +16702,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ObjectPropertyKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ObjectProperty<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ObjectProperty<'a, A>, A>, A>,
     {
         let value = ObjectPropertyKind::ObjectProperty(inner.into_in(self.allocator));
         self.handler.handle_object_property_kind(&value);
@@ -16735,7 +16735,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ObjectPropertyKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SpreadElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SpreadElement<'a, A>, A>, A>,
     {
         let value = ObjectPropertyKind::SpreadProperty(inner.into_in(self.allocator));
         self.handler.handle_object_property_kind(&value);
@@ -16796,7 +16796,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         method: bool,
         shorthand: bool,
         computed: bool,
-    ) -> A::Box<'a, ObjectProperty<'a, A>> {
+    ) -> Box<'a, ObjectProperty<'a, A>, A> {
         self.allocator
             .alloc(self.object_property(span, kind, key, value, init, method, shorthand, computed))
     }
@@ -16827,7 +16827,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn property_key_from_identifier_name<T>(&mut self, inner: T) -> PropertyKey<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierName<'a>, A>, A>,
     {
         let value = PropertyKey::StaticIdentifier(inner.into_in(self.allocator));
         self.handler.handle_property_key(&value);
@@ -16860,7 +16860,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn property_key_from_private_identifier<T>(&mut self, inner: T) -> PropertyKey<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, PrivateIdentifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, PrivateIdentifier<'a>, A>, A>,
     {
         let value = PropertyKey::PrivateIdentifier(inner.into_in(self.allocator));
         self.handler.handle_property_key(&value);
@@ -16886,8 +16886,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn template_literal(
         &mut self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> TemplateLiteral<'a, A> {
         let value = TemplateLiteral { span, quasis, expressions };
         self.handler.handle_template_literal(&value);
@@ -16906,9 +16906,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_template_literal(
         &mut self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
-    ) -> A::Box<'a, TemplateLiteral<'a, A>> {
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
+    ) -> Box<'a, TemplateLiteral<'a, A>, A> {
         self.allocator.alloc(self.template_literal(span, quasis, expressions))
     }
 
@@ -16930,7 +16930,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> TaggedTemplateExpression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TaggedTemplateExpression {
             span,
@@ -16958,9 +16958,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         tag: Expression<'a, A>,
         quasi: TemplateLiteral<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TaggedTemplateExpression<'a, A>>
+    ) -> Box<'a, TaggedTemplateExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.tagged_template_expression(span, tag, quasi, type_parameters))
     }
@@ -16999,7 +16999,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         tail: bool,
         value: TemplateElementValue<'a>,
-    ) -> A::Box<'a, TemplateElement<'a>> {
+    ) -> Box<'a, TemplateElement<'a>, A> {
         self.allocator.alloc(self.template_element(span, tail, value))
     }
 
@@ -17030,7 +17030,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn member_expression_from_computed<T>(&mut self, inner: T) -> MemberExpression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ComputedMemberExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ComputedMemberExpression<'a, A>, A>, A>,
     {
         let value = MemberExpression::ComputedMemberExpression(inner.into_in(self.allocator));
         self.handler.handle_member_expression(&value);
@@ -17064,7 +17064,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn member_expression_from_static<T>(&mut self, inner: T) -> MemberExpression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StaticMemberExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, StaticMemberExpression<'a, A>, A>, A>,
     {
         let value = MemberExpression::StaticMemberExpression(inner.into_in(self.allocator));
         self.handler.handle_member_expression(&value);
@@ -17101,7 +17101,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> MemberExpression<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, PrivateFieldExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, PrivateFieldExpression<'a, A>, A>, A>,
     {
         let value = MemberExpression::PrivateFieldExpression(inner.into_in(self.allocator));
         self.handler.handle_member_expression(&value);
@@ -17146,7 +17146,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         object: Expression<'a, A>,
         expression: Expression<'a, A>,
         optional: bool,
-    ) -> A::Box<'a, ComputedMemberExpression<'a, A>> {
+    ) -> Box<'a, ComputedMemberExpression<'a, A>, A> {
         self.allocator.alloc(self.computed_member_expression(span, object, expression, optional))
     }
 
@@ -17188,7 +17188,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         object: Expression<'a, A>,
         property: IdentifierName<'a>,
         optional: bool,
-    ) -> A::Box<'a, StaticMemberExpression<'a, A>> {
+    ) -> Box<'a, StaticMemberExpression<'a, A>, A> {
         self.allocator.alloc(self.static_member_expression(span, object, property, optional))
     }
 
@@ -17230,7 +17230,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         object: Expression<'a, A>,
         field: PrivateIdentifier<'a>,
         optional: bool,
-    ) -> A::Box<'a, PrivateFieldExpression<'a, A>> {
+    ) -> Box<'a, PrivateFieldExpression<'a, A>, A> {
         self.allocator.alloc(self.private_field_expression(span, object, field, optional))
     }
 
@@ -17250,11 +17250,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         callee: Expression<'a, A>,
         type_parameters: T1,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         optional: bool,
     ) -> CallExpression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = CallExpression {
             span,
@@ -17283,11 +17283,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         callee: Expression<'a, A>,
         type_parameters: T1,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         optional: bool,
-    ) -> A::Box<'a, CallExpression<'a, A>>
+    ) -> Box<'a, CallExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.call_expression(
             span,
@@ -17312,11 +17312,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         callee: Expression<'a, A>,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         type_parameters: T1,
     ) -> NewExpression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = NewExpression {
             span,
@@ -17342,11 +17342,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         callee: Expression<'a, A>,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, NewExpression<'a, A>>
+    ) -> Box<'a, NewExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.new_expression(span, callee, arguments, type_parameters))
     }
@@ -17385,7 +17385,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
-    ) -> A::Box<'a, MetaProperty<'a>> {
+    ) -> Box<'a, MetaProperty<'a>, A> {
         self.allocator.alloc(self.meta_property(span, meta, property))
     }
 
@@ -17419,7 +17419,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, SpreadElement<'a, A>> {
+    ) -> Box<'a, SpreadElement<'a, A>, A> {
         self.allocator.alloc(self.spread_element(span, argument))
     }
 
@@ -17446,7 +17446,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn argument_from_spread_element<T>(&mut self, inner: T) -> Argument<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SpreadElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SpreadElement<'a, A>, A>, A>,
     {
         let value = Argument::SpreadElement(inner.into_in(self.allocator));
         self.handler.handle_argument(&value);
@@ -17498,7 +17498,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         operator: UpdateOperator,
         prefix: bool,
         argument: SimpleAssignmentTarget<'a, A>,
-    ) -> A::Box<'a, UpdateExpression<'a, A>> {
+    ) -> Box<'a, UpdateExpression<'a, A>, A> {
         self.allocator.alloc(self.update_expression(span, operator, prefix, argument))
     }
 
@@ -17536,7 +17536,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         operator: UnaryOperator,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, UnaryExpression<'a, A>> {
+    ) -> Box<'a, UnaryExpression<'a, A>, A> {
         self.allocator.alloc(self.unary_expression(span, operator, argument))
     }
 
@@ -17578,7 +17578,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         left: Expression<'a, A>,
         operator: BinaryOperator,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, BinaryExpression<'a, A>> {
+    ) -> Box<'a, BinaryExpression<'a, A>, A> {
         self.allocator.alloc(self.binary_expression(span, left, operator, right))
     }
 
@@ -17620,7 +17620,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         left: PrivateIdentifier<'a>,
         operator: BinaryOperator,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, PrivateInExpression<'a, A>> {
+    ) -> Box<'a, PrivateInExpression<'a, A>, A> {
         self.allocator.alloc(self.private_in_expression(span, left, operator, right))
     }
 
@@ -17662,7 +17662,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         left: Expression<'a, A>,
         operator: LogicalOperator,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, LogicalExpression<'a, A>> {
+    ) -> Box<'a, LogicalExpression<'a, A>, A> {
         self.allocator.alloc(self.logical_expression(span, left, operator, right))
     }
 
@@ -17704,7 +17704,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         test: Expression<'a, A>,
         consequent: Expression<'a, A>,
         alternate: Expression<'a, A>,
-    ) -> A::Box<'a, ConditionalExpression<'a, A>> {
+    ) -> Box<'a, ConditionalExpression<'a, A>, A> {
         self.allocator.alloc(self.conditional_expression(span, test, consequent, alternate))
     }
 
@@ -17746,7 +17746,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         operator: AssignmentOperator,
         left: AssignmentTarget<'a, A>,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, AssignmentExpression<'a, A>> {
+    ) -> Box<'a, AssignmentExpression<'a, A>, A> {
         self.allocator.alloc(self.assignment_expression(span, operator, left, right))
     }
 
@@ -17799,7 +17799,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value =
             SimpleAssignmentTarget::AssignmentTargetIdentifier(inner.into_in(self.allocator));
@@ -17835,7 +17835,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSAsExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSAsExpression<'a, A>, A>, A>,
     {
         let value = SimpleAssignmentTarget::TSAsExpression(inner.into_in(self.allocator));
         self.handler.handle_simple_assignment_target(&value);
@@ -17870,7 +17870,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSSatisfiesExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSSatisfiesExpression<'a, A>, A>, A>,
     {
         let value = SimpleAssignmentTarget::TSSatisfiesExpression(inner.into_in(self.allocator));
         self.handler.handle_simple_assignment_target(&value);
@@ -17905,7 +17905,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNonNullExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSNonNullExpression<'a, A>, A>, A>,
     {
         let value = SimpleAssignmentTarget::TSNonNullExpression(inner.into_in(self.allocator));
         self.handler.handle_simple_assignment_target(&value);
@@ -17940,7 +17940,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeAssertion<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeAssertion<'a, A>, A>, A>,
     {
         let value = SimpleAssignmentTarget::TSTypeAssertion(inner.into_in(self.allocator));
         self.handler.handle_simple_assignment_target(&value);
@@ -17963,7 +17963,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a, A>, A>, A>,
     {
         let value = self.ts_instantiation_expression(span, expression, type_parameters);
         let value = SimpleAssignmentTarget::TSInstantiationExpression(self.allocator.alloc(value));
@@ -17978,7 +17978,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> SimpleAssignmentTarget<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInstantiationExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInstantiationExpression<'a, A>, A>, A>,
     {
         let value =
             SimpleAssignmentTarget::TSInstantiationExpression(inner.into_in(self.allocator));
@@ -18009,7 +18009,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn assignment_target_pattern_array_assignment_target(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>>,
+        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
         trailing_comma: Option<Span>,
     ) -> AssignmentTargetPattern<'a, A> {
@@ -18026,7 +18026,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> AssignmentTargetPattern<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ArrayAssignmentTarget<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ArrayAssignmentTarget<'a, A>, A>, A>,
     {
         let value = AssignmentTargetPattern::ArrayAssignmentTarget(inner.into_in(self.allocator));
         self.handler.handle_assignment_target_pattern(&value);
@@ -18045,7 +18045,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn assignment_target_pattern_object_assignment_target(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, AssignmentTargetProperty<'a, A>>,
+        properties: Vec<'a, AssignmentTargetProperty<'a, A>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
     ) -> AssignmentTargetPattern<'a, A> {
         let value = self.object_assignment_target(span, properties, rest);
@@ -18061,7 +18061,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> AssignmentTargetPattern<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ObjectAssignmentTarget<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ObjectAssignmentTarget<'a, A>, A>, A>,
     {
         let value = AssignmentTargetPattern::ObjectAssignmentTarget(inner.into_in(self.allocator));
         self.handler.handle_assignment_target_pattern(&value);
@@ -18081,7 +18081,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn array_assignment_target(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>>,
+        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
         trailing_comma: Option<Span>,
     ) -> ArrayAssignmentTarget<'a, A> {
@@ -18103,10 +18103,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_array_assignment_target(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>>,
+        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a, A>>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
         trailing_comma: Option<Span>,
-    ) -> A::Box<'a, ArrayAssignmentTarget<'a, A>> {
+    ) -> Box<'a, ArrayAssignmentTarget<'a, A>, A> {
         self.allocator.alloc(self.array_assignment_target(span, elements, rest, trailing_comma))
     }
 
@@ -18122,7 +18122,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn object_assignment_target(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, AssignmentTargetProperty<'a, A>>,
+        properties: Vec<'a, AssignmentTargetProperty<'a, A>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
     ) -> ObjectAssignmentTarget<'a, A> {
         let value = ObjectAssignmentTarget { span, properties, rest };
@@ -18142,9 +18142,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_object_assignment_target(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, AssignmentTargetProperty<'a, A>>,
+        properties: Vec<'a, AssignmentTargetProperty<'a, A>, A>,
         rest: Option<AssignmentTargetRest<'a, A>>,
-    ) -> A::Box<'a, ObjectAssignmentTarget<'a, A>> {
+    ) -> Box<'a, ObjectAssignmentTarget<'a, A>, A> {
         self.allocator.alloc(self.object_assignment_target(span, properties, rest))
     }
 
@@ -18178,7 +18178,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         target: AssignmentTarget<'a, A>,
-    ) -> A::Box<'a, AssignmentTargetRest<'a, A>> {
+    ) -> Box<'a, AssignmentTargetRest<'a, A>, A> {
         self.allocator.alloc(self.assignment_target_rest(span, target))
     }
 
@@ -18211,7 +18211,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> AssignmentTargetMaybeDefault<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentTargetWithDefault<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentTargetWithDefault<'a, A>, A>, A>,
     {
         let value = AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
             inner.into_in(self.allocator),
@@ -18264,7 +18264,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         binding: AssignmentTarget<'a, A>,
         init: Expression<'a, A>,
-    ) -> A::Box<'a, AssignmentTargetWithDefault<'a, A>> {
+    ) -> Box<'a, AssignmentTargetWithDefault<'a, A>, A> {
         self.allocator.alloc(self.assignment_target_with_default(span, binding, init))
     }
 
@@ -18298,7 +18298,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> AssignmentTargetProperty<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentTargetPropertyIdentifier<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentTargetPropertyIdentifier<'a, A>, A>, A>,
     {
         let value = AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
             inner.into_in(self.allocator),
@@ -18336,7 +18336,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> AssignmentTargetProperty<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentTargetPropertyProperty<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentTargetPropertyProperty<'a, A>, A>, A>,
     {
         let value = AssignmentTargetProperty::AssignmentTargetPropertyProperty(
             inner.into_in(self.allocator),
@@ -18379,7 +18379,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a, A>>,
-    ) -> A::Box<'a, AssignmentTargetPropertyIdentifier<'a, A>> {
+    ) -> Box<'a, AssignmentTargetPropertyIdentifier<'a, A>, A> {
         self.allocator.alloc(self.assignment_target_property_identifier(span, binding, init))
     }
 
@@ -18417,7 +18417,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         name: PropertyKey<'a, A>,
         binding: AssignmentTargetMaybeDefault<'a, A>,
-    ) -> A::Box<'a, AssignmentTargetPropertyProperty<'a, A>> {
+    ) -> Box<'a, AssignmentTargetPropertyProperty<'a, A>, A> {
         self.allocator.alloc(self.assignment_target_property_property(span, name, binding))
     }
 
@@ -18432,7 +18432,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn sequence_expression(
         &mut self,
         span: Span,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> SequenceExpression<'a, A> {
         let value = SequenceExpression { span, expressions };
         self.handler.handle_sequence_expression(&value);
@@ -18450,8 +18450,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_sequence_expression(
         &mut self,
         span: Span,
-        expressions: A::Vec<'a, Expression<'a, A>>,
-    ) -> A::Box<'a, SequenceExpression<'a, A>> {
+        expressions: Vec<'a, Expression<'a, A>, A>,
+    ) -> Box<'a, SequenceExpression<'a, A>, A> {
         self.allocator.alloc(self.sequence_expression(span, expressions))
     }
 
@@ -18475,7 +18475,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_super_(&mut self, span: Span) -> A::Box<'a, Super> {
+    pub fn alloc_super_(&mut self, span: Span) -> Box<'a, Super, A> {
         self.allocator.alloc(self.super_(span))
     }
 
@@ -18509,7 +18509,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, AwaitExpression<'a, A>> {
+    ) -> Box<'a, AwaitExpression<'a, A>, A> {
         self.allocator.alloc(self.await_expression(span, argument))
     }
 
@@ -18543,7 +18543,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         expression: ChainElement<'a, A>,
-    ) -> A::Box<'a, ChainExpression<'a, A>> {
+    ) -> Box<'a, ChainExpression<'a, A>, A> {
         self.allocator.alloc(self.chain_expression(span, expression))
     }
 
@@ -18563,11 +18563,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         callee: Expression<'a, A>,
         type_parameters: T1,
-        arguments: A::Vec<'a, Argument<'a, A>>,
+        arguments: Vec<'a, Argument<'a, A>, A>,
         optional: bool,
     ) -> ChainElement<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.call_expression(span, callee, type_parameters, arguments, optional);
         let value = ChainElement::CallExpression(self.allocator.alloc(value));
@@ -18579,7 +18579,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn chain_element_from_call_expression<T>(&mut self, inner: T) -> ChainElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, CallExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, CallExpression<'a, A>, A>, A>,
     {
         let value = ChainElement::CallExpression(inner.into_in(self.allocator));
         self.handler.handle_chain_element(&value);
@@ -18626,7 +18626,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, ParenthesizedExpression<'a, A>> {
+    ) -> Box<'a, ParenthesizedExpression<'a, A>, A> {
         self.allocator.alloc(self.parenthesized_expression(span, expression))
     }
 
@@ -18642,7 +18642,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         scope_token: ScopeToken<BlockStatement<'a, A>>,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> Statement<'a, A> {
         let value = self.block_statement(scope_token, span, body);
         let value = Statement::BlockStatement(self.allocator.alloc(value));
@@ -18654,7 +18654,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_block<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
     {
         let value = Statement::BlockStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18684,7 +18684,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_break<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BreakStatement<'a>>, A>,
+        T: IntoIn<'a, Box<'a, BreakStatement<'a>, A>, A>,
     {
         let value = Statement::BreakStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18714,7 +18714,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_continue<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ContinueStatement<'a>>, A>,
+        T: IntoIn<'a, Box<'a, ContinueStatement<'a>, A>, A>,
     {
         let value = Statement::ContinueStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18739,7 +18739,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_debugger<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, DebuggerStatement>, A>,
+        T: IntoIn<'a, Box<'a, DebuggerStatement, A>, A>,
     {
         let value = Statement::DebuggerStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18771,7 +18771,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_do_while<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, DoWhileStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, DoWhileStatement<'a, A>, A>, A>,
     {
         let value = Statement::DoWhileStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18796,7 +18796,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_empty<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, EmptyStatement>, A>,
+        T: IntoIn<'a, Box<'a, EmptyStatement, A>, A>,
     {
         let value = Statement::EmptyStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18826,7 +18826,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_expression<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ExpressionStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ExpressionStatement<'a, A>, A>, A>,
     {
         let value = Statement::ExpressionStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18861,7 +18861,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_for_in<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ForInStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ForInStatement<'a, A>, A>, A>,
     {
         let value = Statement::ForInStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18898,7 +18898,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_for_of<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ForOfStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ForOfStatement<'a, A>, A>, A>,
     {
         let value = Statement::ForOfStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18935,7 +18935,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_for<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ForStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ForStatement<'a, A>, A>, A>,
     {
         let value = Statement::ForStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -18969,7 +18969,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_if<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IfStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, IfStatement<'a, A>, A>, A>,
     {
         let value = Statement::IfStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -19001,7 +19001,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_labeled<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, LabeledStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, LabeledStatement<'a, A>, A>, A>,
     {
         let value = Statement::LabeledStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -19031,7 +19031,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_return<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ReturnStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ReturnStatement<'a, A>, A>, A>,
     {
         let value = Statement::ReturnStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -19052,7 +19052,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         scope_token: ScopeToken<SwitchStatement<'a, A>>,
         span: Span,
         discriminant: Expression<'a, A>,
-        cases: A::Vec<'a, SwitchCase<'a, A>>,
+        cases: Vec<'a, SwitchCase<'a, A>, A>,
     ) -> Statement<'a, A> {
         let value = self.switch_statement(scope_token, span, discriminant, cases);
         let value = Statement::SwitchStatement(self.allocator.alloc(value));
@@ -19064,7 +19064,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_switch<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, SwitchStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, SwitchStatement<'a, A>, A>, A>,
     {
         let value = Statement::SwitchStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -19090,7 +19090,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_throw<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ThrowStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ThrowStatement<'a, A>, A>, A>,
     {
         let value = Statement::ThrowStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -19115,9 +19115,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         finalizer: T3,
     ) -> Statement<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, CatchClause<'a, A>>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, BlockStatement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a, A>, A>>, A>,
     {
         let value = self.try_statement(span, block, handler, finalizer);
         let value = Statement::TryStatement(self.allocator.alloc(value));
@@ -19129,7 +19129,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_try<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TryStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TryStatement<'a, A>, A>, A>,
     {
         let value = Statement::TryStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -19161,7 +19161,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_while<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, WhileStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, WhileStatement<'a, A>, A>, A>,
     {
         let value = Statement::WhileStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -19193,7 +19193,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn statement_from_with<T>(&mut self, inner: T) -> Statement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, WithStatement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, WithStatement<'a, A>, A>, A>,
     {
         let value = Statement::WithStatement(inner.into_in(self.allocator));
         self.handler.handle_statement(&value);
@@ -19254,7 +19254,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         expression: StringLiteral<'a>,
         directive: IntoAtom,
-    ) -> A::Box<'a, Directive<'a>>
+    ) -> Box<'a, Directive<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -19290,7 +19290,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         value: IntoAtom,
-    ) -> A::Box<'a, Hashbang<'a>>
+    ) -> Box<'a, Hashbang<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -19309,7 +19309,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         _scope_token: ScopeToken<BlockStatement<'a, A>>,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> BlockStatement<'a, A> {
         let value = BlockStatement { span, body, scope_id: Default::default() };
         self.handler.leave_scope();
@@ -19329,8 +19329,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         _scope_token: ScopeToken<BlockStatement<'a, A>>,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, BlockStatement<'a, A>> {
+        body: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, BlockStatement<'a, A>, A> {
         self.allocator.alloc(self.block_statement(_scope_token, span, body))
     }
 
@@ -19348,7 +19348,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
     ) -> Declaration<'a, A> {
         let value = self.variable_declaration(span, kind, declarations, declare);
@@ -19361,7 +19361,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_from_variable<T>(&mut self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, VariableDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, VariableDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::VariableDeclaration(inner.into_in(self.allocator));
         self.handler.handle_declaration(&value);
@@ -19401,11 +19401,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T5,
     ) -> Declaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         let value = self.function(
             scope_token,
@@ -19430,7 +19430,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_from_function<T>(&mut self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Function<'a, A>, A>, A>,
     {
         let value = Declaration::FunctionDeclaration(inner.into_in(self.allocator));
         self.handler.handle_declaration(&value);
@@ -19458,7 +19458,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -19468,9 +19468,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T3,
     ) -> Declaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         let value = self.class(
             scope_token,
@@ -19494,7 +19494,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_from_class<T>(&mut self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Class<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Class<'a, A>, A>, A>,
     {
         let value = Declaration::ClassDeclaration(inner.into_in(self.allocator));
         self.handler.handle_declaration(&value);
@@ -19522,7 +19522,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         declare: bool,
     ) -> Declaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
     {
         let value = self.ts_type_alias_declaration(
             scope_token,
@@ -19541,7 +19541,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_from_ts_type_alias<T>(&mut self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeAliasDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeAliasDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSTypeAliasDeclaration(inner.into_in(self.allocator));
         self.handler.handle_declaration(&value);
@@ -19565,14 +19565,14 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         scope_token: ScopeToken<TSInterfaceDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
         type_parameters: T1,
         body: T2,
         declare: bool,
     ) -> Declaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, TSInterfaceBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a, A>, A>, A>,
     {
         let value = self.ts_interface_declaration(
             scope_token,
@@ -19592,7 +19592,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_from_ts_interface<T>(&mut self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInterfaceDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInterfaceDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSInterfaceDeclaration(inner.into_in(self.allocator));
         self.handler.handle_declaration(&value);
@@ -19615,7 +19615,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: A::Vec<'a, TSEnumMember<'a, A>>,
+        members: Vec<'a, TSEnumMember<'a, A>, A>,
         r#const: bool,
         declare: bool,
     ) -> Declaration<'a, A> {
@@ -19629,7 +19629,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_from_ts_enum<T>(&mut self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSEnumDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSEnumDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSEnumDeclaration(inner.into_in(self.allocator));
         self.handler.handle_declaration(&value);
@@ -19666,7 +19666,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_from_ts_module<T>(&mut self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSModuleDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSModuleDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSModuleDeclaration(inner.into_in(self.allocator));
         self.handler.handle_declaration(&value);
@@ -19700,7 +19700,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn declaration_from_ts_import_equals<T>(&mut self, inner: T) -> Declaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSImportEqualsDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSImportEqualsDeclaration<'a, A>, A>, A>,
     {
         let value = Declaration::TSImportEqualsDeclaration(inner.into_in(self.allocator));
         self.handler.handle_declaration(&value);
@@ -19721,7 +19721,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
     ) -> VariableDeclaration<'a, A> {
         let value = VariableDeclaration { span, kind, declarations, declare };
@@ -19743,9 +19743,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
-    ) -> A::Box<'a, VariableDeclaration<'a, A>> {
+    ) -> Box<'a, VariableDeclaration<'a, A>, A> {
         self.allocator.alloc(self.variable_declaration(span, kind, declarations, declare))
     }
 
@@ -19791,7 +19791,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         id: BindingPattern<'a, A>,
         init: Option<Expression<'a, A>>,
         definite: Option<TSDefiniteMark>,
-    ) -> A::Box<'a, VariableDeclarator<'a, A>> {
+    ) -> Box<'a, VariableDeclarator<'a, A>, A> {
         self.allocator.alloc(self.variable_declarator(span, kind, id, init, definite))
     }
 
@@ -19815,7 +19815,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_empty_statement(&mut self, span: Span) -> A::Box<'a, EmptyStatement> {
+    pub fn alloc_empty_statement(&mut self, span: Span) -> Box<'a, EmptyStatement, A> {
         self.allocator.alloc(self.empty_statement(span))
     }
 
@@ -19849,7 +19849,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, ExpressionStatement<'a, A>> {
+    ) -> Box<'a, ExpressionStatement<'a, A>, A> {
         self.allocator.alloc(self.expression_statement(span, expression))
     }
 
@@ -19891,7 +19891,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         test: Expression<'a, A>,
         consequent: Statement<'a, A>,
         alternate: Option<Statement<'a, A>>,
-    ) -> A::Box<'a, IfStatement<'a, A>> {
+    ) -> Box<'a, IfStatement<'a, A>, A> {
         self.allocator.alloc(self.if_statement(span, test, consequent, alternate))
     }
 
@@ -19929,7 +19929,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         body: Statement<'a, A>,
         test: Expression<'a, A>,
-    ) -> A::Box<'a, DoWhileStatement<'a, A>> {
+    ) -> Box<'a, DoWhileStatement<'a, A>, A> {
         self.allocator.alloc(self.do_while_statement(span, body, test))
     }
 
@@ -19967,7 +19967,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         test: Expression<'a, A>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, WhileStatement<'a, A>> {
+    ) -> Box<'a, WhileStatement<'a, A>, A> {
         self.allocator.alloc(self.while_statement(span, test, body))
     }
 
@@ -20016,7 +20016,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         test: Option<Expression<'a, A>>,
         update: Option<Expression<'a, A>>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, ForStatement<'a, A>> {
+    ) -> Box<'a, ForStatement<'a, A>, A> {
         self.allocator.alloc(self.for_statement(_scope_token, span, init, test, update, body))
     }
 
@@ -20034,7 +20034,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
     ) -> ForStatementInit<'a, A> {
         let value = self.variable_declaration(span, kind, declarations, declare);
@@ -20050,7 +20050,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ForStatementInit<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, VariableDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, VariableDeclaration<'a, A>, A>, A>,
     {
         let value = ForStatementInit::VariableDeclaration(inner.into_in(self.allocator));
         self.handler.handle_for_statement_init(&value);
@@ -20108,7 +20108,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         left: ForStatementLeft<'a, A>,
         right: Expression<'a, A>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, ForInStatement<'a, A>> {
+    ) -> Box<'a, ForInStatement<'a, A>, A> {
         self.allocator.alloc(self.for_in_statement(_scope_token, span, left, right, body))
     }
 
@@ -20126,7 +20126,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         kind: VariableDeclarationKind,
-        declarations: A::Vec<'a, VariableDeclarator<'a, A>>,
+        declarations: Vec<'a, VariableDeclarator<'a, A>, A>,
         declare: bool,
     ) -> ForStatementLeft<'a, A> {
         let value = self.variable_declaration(span, kind, declarations, declare);
@@ -20142,7 +20142,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ForStatementLeft<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, VariableDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, VariableDeclaration<'a, A>, A>, A>,
     {
         let value = ForStatementLeft::VariableDeclaration(inner.into_in(self.allocator));
         self.handler.handle_for_statement_left(&value);
@@ -20205,7 +20205,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         left: ForStatementLeft<'a, A>,
         right: Expression<'a, A>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, ForOfStatement<'a, A>> {
+    ) -> Box<'a, ForOfStatement<'a, A>, A> {
         self.allocator.alloc(self.for_of_statement(_scope_token, span, r#await, left, right, body))
     }
 
@@ -20239,7 +20239,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         label: Option<LabelIdentifier<'a>>,
-    ) -> A::Box<'a, ContinueStatement<'a>> {
+    ) -> Box<'a, ContinueStatement<'a>, A> {
         self.allocator.alloc(self.continue_statement(span, label))
     }
 
@@ -20273,7 +20273,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         label: Option<LabelIdentifier<'a>>,
-    ) -> A::Box<'a, BreakStatement<'a>> {
+    ) -> Box<'a, BreakStatement<'a>, A> {
         self.allocator.alloc(self.break_statement(span, label))
     }
 
@@ -20307,7 +20307,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         argument: Option<Expression<'a, A>>,
-    ) -> A::Box<'a, ReturnStatement<'a, A>> {
+    ) -> Box<'a, ReturnStatement<'a, A>, A> {
         self.allocator.alloc(self.return_statement(span, argument))
     }
 
@@ -20345,7 +20345,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         object: Expression<'a, A>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, WithStatement<'a, A>> {
+    ) -> Box<'a, WithStatement<'a, A>, A> {
         self.allocator.alloc(self.with_statement(span, object, body))
     }
 
@@ -20363,7 +20363,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         _scope_token: ScopeToken<SwitchStatement<'a, A>>,
         span: Span,
         discriminant: Expression<'a, A>,
-        cases: A::Vec<'a, SwitchCase<'a, A>>,
+        cases: Vec<'a, SwitchCase<'a, A>, A>,
     ) -> SwitchStatement<'a, A> {
         let value = SwitchStatement { span, discriminant, cases, scope_id: Default::default() };
         self.handler.leave_scope();
@@ -20385,8 +20385,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         _scope_token: ScopeToken<SwitchStatement<'a, A>>,
         span: Span,
         discriminant: Expression<'a, A>,
-        cases: A::Vec<'a, SwitchCase<'a, A>>,
-    ) -> A::Box<'a, SwitchStatement<'a, A>> {
+        cases: Vec<'a, SwitchCase<'a, A>, A>,
+    ) -> Box<'a, SwitchStatement<'a, A>, A> {
         self.allocator.alloc(self.switch_statement(_scope_token, span, discriminant, cases))
     }
 
@@ -20403,7 +20403,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         test: Option<Expression<'a, A>>,
-        consequent: A::Vec<'a, Statement<'a, A>>,
+        consequent: Vec<'a, Statement<'a, A>, A>,
     ) -> SwitchCase<'a, A> {
         let value = SwitchCase { span, test, consequent };
         self.handler.handle_switch_case(&value);
@@ -20423,8 +20423,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         test: Option<Expression<'a, A>>,
-        consequent: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, SwitchCase<'a, A>> {
+        consequent: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, SwitchCase<'a, A>, A> {
         self.allocator.alloc(self.switch_case(span, test, consequent))
     }
 
@@ -20462,7 +20462,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         label: LabelIdentifier<'a>,
         body: Statement<'a, A>,
-    ) -> A::Box<'a, LabeledStatement<'a, A>> {
+    ) -> Box<'a, LabeledStatement<'a, A>, A> {
         self.allocator.alloc(self.labeled_statement(span, label, body))
     }
 
@@ -20496,7 +20496,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, ThrowStatement<'a, A>> {
+    ) -> Box<'a, ThrowStatement<'a, A>, A> {
         self.allocator.alloc(self.throw_statement(span, argument))
     }
 
@@ -20518,9 +20518,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         finalizer: T3,
     ) -> TryStatement<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, CatchClause<'a, A>>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, BlockStatement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a, A>, A>>, A>,
     {
         let value = TryStatement {
             span,
@@ -20548,11 +20548,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         block: T1,
         handler: T2,
         finalizer: T3,
-    ) -> A::Box<'a, TryStatement<'a, A>>
+    ) -> Box<'a, TryStatement<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, CatchClause<'a, A>>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, BlockStatement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, CatchClause<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.try_statement(span, block, handler, finalizer))
     }
@@ -20574,7 +20574,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T1,
     ) -> CatchClause<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
     {
         let value = CatchClause {
             span,
@@ -20602,9 +20602,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         param: Option<CatchParameter<'a, A>>,
         body: T1,
-    ) -> A::Box<'a, CatchClause<'a, A>>
+    ) -> Box<'a, CatchClause<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, BlockStatement<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, BlockStatement<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.catch_clause(_scope_token, span, param, body))
     }
@@ -20639,7 +20639,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         pattern: BindingPattern<'a, A>,
-    ) -> A::Box<'a, CatchParameter<'a, A>> {
+    ) -> Box<'a, CatchParameter<'a, A>, A> {
         self.allocator.alloc(self.catch_parameter(span, pattern))
     }
 
@@ -20663,7 +20663,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_debugger_statement(&mut self, span: Span) -> A::Box<'a, DebuggerStatement> {
+    pub fn alloc_debugger_statement(&mut self, span: Span) -> Box<'a, DebuggerStatement, A> {
         self.allocator.alloc(self.debugger_statement(span))
     }
 
@@ -20683,7 +20683,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         optional: Option<TSOptionalMark>,
     ) -> BindingPattern<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = BindingPattern {
             kind,
@@ -20708,9 +20708,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         kind: BindingPatternKind<'a, A>,
         type_annotation: T1,
         optional: Option<TSOptionalMark>,
-    ) -> A::Box<'a, BindingPattern<'a, A>>
+    ) -> Box<'a, BindingPattern<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.binding_pattern(kind, type_annotation, optional))
     }
@@ -20744,7 +20744,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> BindingPatternKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BindingIdentifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, BindingIdentifier<'a>, A>, A>,
     {
         let value = BindingPatternKind::BindingIdentifier(inner.into_in(self.allocator));
         self.handler.handle_binding_pattern_kind(&value);
@@ -20763,11 +20763,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn binding_pattern_kind_object_pattern<T1>(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, BindingProperty<'a, A>>,
+        properties: Vec<'a, BindingProperty<'a, A>, A>,
         rest: T1,
     ) -> BindingPatternKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = self.object_pattern(span, properties, rest);
         let value = BindingPatternKind::ObjectPattern(self.allocator.alloc(value));
@@ -20782,7 +20782,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> BindingPatternKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ObjectPattern<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ObjectPattern<'a, A>, A>, A>,
     {
         let value = BindingPatternKind::ObjectPattern(inner.into_in(self.allocator));
         self.handler.handle_binding_pattern_kind(&value);
@@ -20801,11 +20801,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn binding_pattern_kind_array_pattern<T1>(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, Option<BindingPattern<'a, A>>>,
+        elements: Vec<'a, Option<BindingPattern<'a, A>>, A>,
         rest: T1,
     ) -> BindingPatternKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = self.array_pattern(span, elements, rest);
         let value = BindingPatternKind::ArrayPattern(self.allocator.alloc(value));
@@ -20820,7 +20820,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> BindingPatternKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ArrayPattern<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ArrayPattern<'a, A>, A>, A>,
     {
         let value = BindingPatternKind::ArrayPattern(inner.into_in(self.allocator));
         self.handler.handle_binding_pattern_kind(&value);
@@ -20855,7 +20855,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> BindingPatternKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AssignmentPattern<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AssignmentPattern<'a, A>, A>, A>,
     {
         let value = BindingPatternKind::AssignmentPattern(inner.into_in(self.allocator));
         self.handler.handle_binding_pattern_kind(&value);
@@ -20896,7 +20896,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         left: BindingPattern<'a, A>,
         right: Expression<'a, A>,
-    ) -> A::Box<'a, AssignmentPattern<'a, A>> {
+    ) -> Box<'a, AssignmentPattern<'a, A>, A> {
         self.allocator.alloc(self.assignment_pattern(span, left, right))
     }
 
@@ -20912,11 +20912,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn object_pattern<T1>(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, BindingProperty<'a, A>>,
+        properties: Vec<'a, BindingProperty<'a, A>, A>,
         rest: T1,
     ) -> ObjectPattern<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = ObjectPattern { span, properties, rest: rest.into_in(self.allocator) };
         self.handler.handle_object_pattern(&value);
@@ -20935,11 +20935,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_object_pattern<T1>(
         &mut self,
         span: Span,
-        properties: A::Vec<'a, BindingProperty<'a, A>>,
+        properties: Vec<'a, BindingProperty<'a, A>, A>,
         rest: T1,
-    ) -> A::Box<'a, ObjectPattern<'a, A>>
+    ) -> Box<'a, ObjectPattern<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.object_pattern(span, properties, rest))
     }
@@ -20986,7 +20986,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         value: BindingPattern<'a, A>,
         shorthand: bool,
         computed: bool,
-    ) -> A::Box<'a, BindingProperty<'a, A>> {
+    ) -> Box<'a, BindingProperty<'a, A>, A> {
         self.allocator.alloc(self.binding_property(span, key, value, shorthand, computed))
     }
 
@@ -21002,11 +21002,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn array_pattern<T1>(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, Option<BindingPattern<'a, A>>>,
+        elements: Vec<'a, Option<BindingPattern<'a, A>>, A>,
         rest: T1,
     ) -> ArrayPattern<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = ArrayPattern { span, elements, rest: rest.into_in(self.allocator) };
         self.handler.handle_array_pattern(&value);
@@ -21025,11 +21025,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_array_pattern<T1>(
         &mut self,
         span: Span,
-        elements: A::Vec<'a, Option<BindingPattern<'a, A>>>,
+        elements: Vec<'a, Option<BindingPattern<'a, A>>, A>,
         rest: T1,
-    ) -> A::Box<'a, ArrayPattern<'a, A>>
+    ) -> Box<'a, ArrayPattern<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.array_pattern(span, elements, rest))
     }
@@ -21064,7 +21064,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         argument: BindingPattern<'a, A>,
-    ) -> A::Box<'a, BindingRestElement<'a, A>> {
+    ) -> Box<'a, BindingRestElement<'a, A>, A> {
         self.allocator.alloc(self.binding_rest_element(span, argument))
     }
 
@@ -21101,11 +21101,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T5,
     ) -> Function<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         let value = Function {
             r#type,
@@ -21157,13 +21157,13 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         params: T3,
         return_type: T4,
         body: T5,
-    ) -> A::Box<'a, Function<'a, A>>
+    ) -> Box<'a, Function<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.function(
             _scope_token,
@@ -21195,11 +21195,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         kind: FormalParameterKind,
-        items: A::Vec<'a, FormalParameter<'a, A>>,
+        items: Vec<'a, FormalParameter<'a, A>, A>,
         rest: T1,
     ) -> FormalParameters<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         let value = FormalParameters { span, kind, items, rest: rest.into_in(self.allocator) };
         self.handler.handle_formal_parameters(&value);
@@ -21220,11 +21220,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         kind: FormalParameterKind,
-        items: A::Vec<'a, FormalParameter<'a, A>>,
+        items: Vec<'a, FormalParameter<'a, A>, A>,
         rest: T1,
-    ) -> A::Box<'a, FormalParameters<'a, A>>
+    ) -> Box<'a, FormalParameters<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, BindingRestElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.formal_parameters(span, kind, items, rest))
     }
@@ -21267,7 +21267,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         accessibility: Option<TSAccessibility>,
         readonly: bool,
         r#override: bool,
-    ) -> A::Box<'a, FormalParameterModifiers> {
+    ) -> Box<'a, FormalParameterModifiers, A> {
         self.allocator.alloc(self.formal_parameter_modifiers(
             span,
             accessibility,
@@ -21289,7 +21289,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn formal_parameter(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<FormalParameterModifiers>,
         pattern: BindingPattern<'a, A>,
     ) -> FormalParameter<'a, A> {
@@ -21311,10 +21311,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_formal_parameter(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<FormalParameterModifiers>,
         pattern: BindingPattern<'a, A>,
-    ) -> A::Box<'a, FormalParameter<'a, A>> {
+    ) -> Box<'a, FormalParameter<'a, A>, A> {
         self.allocator.alloc(self.formal_parameter(span, decorators, modifiers, pattern))
     }
 
@@ -21330,8 +21330,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn function_body(
         &mut self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        statements: A::Vec<'a, Statement<'a, A>>,
+        directives: Vec<'a, Directive<'a>, A>,
+        statements: Vec<'a, Statement<'a, A>, A>,
     ) -> FunctionBody<'a, A> {
         let value = FunctionBody { span, directives, statements };
         self.handler.handle_function_body(&value);
@@ -21350,9 +21350,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_function_body(
         &mut self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        statements: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, FunctionBody<'a, A>> {
+        directives: Vec<'a, Directive<'a>, A>,
+        statements: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, FunctionBody<'a, A>, A> {
         self.allocator.alloc(self.function_body(span, directives, statements))
     }
 
@@ -21381,10 +21381,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T4,
     ) -> ArrowFunctionExpression<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T4: IntoIn<'a, A::Box<'a, FunctionBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a, A>, A>, A>,
     {
         let value = ArrowFunctionExpression {
             span,
@@ -21424,12 +21424,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         params: T2,
         return_type: T3,
         body: T4,
-    ) -> A::Box<'a, ArrowFunctionExpression<'a, A>>
+    ) -> Box<'a, ArrowFunctionExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T4: IntoIn<'a, A::Box<'a, FunctionBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.arrow_function_expression(
             _scope_token,
@@ -21477,7 +21477,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         delegate: bool,
         argument: Option<Expression<'a, A>>,
-    ) -> A::Box<'a, YieldExpression<'a, A>> {
+    ) -> Box<'a, YieldExpression<'a, A>, A> {
         self.allocator.alloc(self.yield_expression(span, delegate, argument))
     }
 
@@ -21515,7 +21515,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         r#abstract: bool,
         declare: bool,
-    ) -> A::Box<'a, ClassModifiers> {
+    ) -> Box<'a, ClassModifiers, A> {
         self.allocator.alloc(self.class_modifiers(span, r#abstract, declare))
     }
 
@@ -21540,7 +21540,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         _scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -21550,9 +21550,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T3,
     ) -> Class<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         let value = Class {
             r#type,
@@ -21593,7 +21593,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         _scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -21601,11 +21601,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         super_type_parameters: T2,
         implements: Option<TSClassImplements<'a, A>>,
         body: T3,
-    ) -> A::Box<'a, Class<'a, A>>
+    ) -> Box<'a, Class<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.class(
             _scope_token,
@@ -21633,7 +21633,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn class_body(
         &mut self,
         span: Span,
-        body: A::Vec<'a, ClassElement<'a, A>>,
+        body: Vec<'a, ClassElement<'a, A>, A>,
     ) -> ClassBody<'a, A> {
         let value = ClassBody { span, body };
         self.handler.handle_class_body(&value);
@@ -21651,8 +21651,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_class_body(
         &mut self,
         span: Span,
-        body: A::Vec<'a, ClassElement<'a, A>>,
-    ) -> A::Box<'a, ClassBody<'a, A>> {
+        body: Vec<'a, ClassElement<'a, A>, A>,
+    ) -> Box<'a, ClassBody<'a, A>, A> {
         self.allocator.alloc(self.class_body(span, body))
     }
 
@@ -21668,7 +21668,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         scope_token: ScopeToken<StaticBlock<'a, A>>,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> ClassElement<'a, A> {
         let value = self.static_block(scope_token, span, body);
         let value = ClassElement::StaticBlock(self.allocator.alloc(value));
@@ -21680,7 +21680,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn class_element_from_static_block<T>(&mut self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StaticBlock<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, StaticBlock<'a, A>, A>, A>,
     {
         let value = ClassElement::StaticBlock(inner.into_in(self.allocator));
         self.handler.handle_class_element(&value);
@@ -21704,7 +21704,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn class_element_method_definition(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Function<'a, A>,
@@ -21723,7 +21723,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn class_element_from_method_definition<T>(&mut self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, MethodDefinition<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, MethodDefinition<'a, A>, A>, A>,
     {
         let value = ClassElement::MethodDefinition(inner.into_in(self.allocator));
         self.handler.handle_class_element(&value);
@@ -21748,7 +21748,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn class_element_property_definition<T1>(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
@@ -21758,7 +21758,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> ClassElement<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.property_definition(
             span,
@@ -21780,7 +21780,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn class_element_from_property_definition<T>(&mut self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, PropertyDefinition<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, PropertyDefinition<'a, A>, A>, A>,
     {
         let value = ClassElement::PropertyDefinition(inner.into_in(self.allocator));
         self.handler.handle_class_element(&value);
@@ -21804,7 +21804,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn class_element_accessor_property<T1>(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
@@ -21813,7 +21813,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> ClassElement<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.accessor_property(
             span,
@@ -21834,7 +21834,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn class_element_from_accessor_property<T>(&mut self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, AccessorProperty<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, AccessorProperty<'a, A>, A>, A>,
     {
         let value = ClassElement::AccessorProperty(inner.into_in(self.allocator));
         self.handler.handle_class_element(&value);
@@ -21855,11 +21855,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         modifiers: Option<ClassElementModifiers>,
-        parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
         type_annotation: T1,
     ) -> ClassElement<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = self.ts_index_signature(span, modifiers, parameters, type_annotation);
         let value = ClassElement::TSIndexSignature(self.allocator.alloc(value));
@@ -21871,7 +21871,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn class_element_from_ts_index_signature<T>(&mut self, inner: T) -> ClassElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIndexSignature<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSIndexSignature<'a, A>, A>, A>,
     {
         let value = ClassElement::TSIndexSignature(inner.into_in(self.allocator));
         self.handler.handle_class_element(&value);
@@ -21895,7 +21895,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn method_definition(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Function<'a, A>,
@@ -21926,14 +21926,14 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_method_definition(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Function<'a, A>,
         kind: MethodDefinitionKind,
         computed: bool,
         optional: Option<TSOptionalMark>,
-    ) -> A::Box<'a, MethodDefinition<'a, A>> {
+    ) -> Box<'a, MethodDefinition<'a, A>, A> {
         self.allocator.alloc(
             self.method_definition(
                 span, decorators, modifiers, key, value, kind, computed, optional,
@@ -22004,7 +22004,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#override: bool,
         readonly: bool,
         accessibility: Option<TSAccessibility>,
-    ) -> A::Box<'a, ClassElementModifiers> {
+    ) -> Box<'a, ClassElementModifiers, A> {
         self.allocator.alloc(self.class_element_modifiers(
             span,
             r#async,
@@ -22035,7 +22035,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn property_definition<T1>(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
@@ -22045,7 +22045,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> PropertyDefinition<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = PropertyDefinition {
             span,
@@ -22080,7 +22080,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_property_definition<T1>(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         optional: Option<TSOptionalMark>,
@@ -22088,9 +22088,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         value: Option<Expression<'a, A>>,
         computed: bool,
         type_annotation: T1,
-    ) -> A::Box<'a, PropertyDefinition<'a, A>>
+    ) -> Box<'a, PropertyDefinition<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.property_definition(
             span,
@@ -22138,7 +22138,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, PrivateIdentifier<'a>>
+    ) -> Box<'a, PrivateIdentifier<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -22157,7 +22157,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         _scope_token: ScopeToken<StaticBlock<'a, A>>,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> StaticBlock<'a, A> {
         let value = StaticBlock { span, body, scope_id: Default::default() };
         self.handler.leave_scope();
@@ -22177,8 +22177,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         _scope_token: ScopeToken<StaticBlock<'a, A>>,
         span: Span,
-        body: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, StaticBlock<'a, A>> {
+        body: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, StaticBlock<'a, A>, A> {
         self.allocator.alloc(self.static_block(_scope_token, span, body))
     }
 
@@ -22196,13 +22196,13 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn module_declaration_import_declaration<T1>(
         &mut self,
         span: Span,
-        specifiers: Option<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>>,
         source: StringLiteral<'a>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ModuleDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = self.import_declaration(span, specifiers, source, with_clause, import_kind);
         let value = ModuleDeclaration::ImportDeclaration(self.allocator.alloc(value));
@@ -22217,7 +22217,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ImportDeclaration<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::ImportDeclaration(inner.into_in(self.allocator));
         self.handler.handle_module_declaration(&value);
@@ -22244,7 +22244,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         export_kind: ImportOrExportKind,
     ) -> ModuleDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = self.export_all_declaration(span, exported, source, with_clause, export_kind);
         let value = ModuleDeclaration::ExportAllDeclaration(self.allocator.alloc(value));
@@ -22259,7 +22259,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ExportAllDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ExportAllDeclaration<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::ExportAllDeclaration(inner.into_in(self.allocator));
         self.handler.handle_module_declaration(&value);
@@ -22294,7 +22294,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ExportDefaultDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ExportDefaultDeclaration<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::ExportDefaultDeclaration(inner.into_in(self.allocator));
         self.handler.handle_module_declaration(&value);
@@ -22317,13 +22317,13 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         declaration: Option<Declaration<'a, A>>,
-        specifiers: A::Vec<'a, ExportSpecifier<'a>>,
+        specifiers: Vec<'a, ExportSpecifier<'a>, A>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
     ) -> ModuleDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = self.export_named_declaration(
             span,
@@ -22345,7 +22345,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ExportNamedDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, ExportNamedDeclaration<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::ExportNamedDeclaration(inner.into_in(self.allocator));
         self.handler.handle_module_declaration(&value);
@@ -22378,7 +22378,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSExportAssignment<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSExportAssignment<'a, A>, A>, A>,
     {
         let value = ModuleDeclaration::TSExportAssignment(inner.into_in(self.allocator));
         self.handler.handle_module_declaration(&value);
@@ -22411,7 +22411,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ModuleDeclaration<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNamespaceExportDeclaration<'a>>, A>,
+        T: IntoIn<'a, Box<'a, TSNamespaceExportDeclaration<'a>, A>, A>,
     {
         let value = ModuleDeclaration::TSNamespaceExportDeclaration(inner.into_in(self.allocator));
         self.handler.handle_module_declaration(&value);
@@ -22435,7 +22435,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn accessor_property<T1>(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
@@ -22444,7 +22444,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> AccessorProperty<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = AccessorProperty {
             span,
@@ -22477,16 +22477,16 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_accessor_property<T1>(
         &mut self,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassElementModifiers>,
         key: PropertyKey<'a, A>,
         value: Option<Expression<'a, A>>,
         computed: bool,
         definite: Option<TSDefiniteMark>,
         type_annotation: T1,
-    ) -> A::Box<'a, AccessorProperty<'a, A>>
+    ) -> Box<'a, AccessorProperty<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.accessor_property(
             span,
@@ -22513,7 +22513,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         source: Expression<'a, A>,
-        arguments: A::Vec<'a, Expression<'a, A>>,
+        arguments: Vec<'a, Expression<'a, A>, A>,
     ) -> ImportExpression<'a, A> {
         let value = ImportExpression { span, source, arguments };
         self.handler.handle_import_expression(&value);
@@ -22533,8 +22533,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         source: Expression<'a, A>,
-        arguments: A::Vec<'a, Expression<'a, A>>,
-    ) -> A::Box<'a, ImportExpression<'a, A>> {
+        arguments: Vec<'a, Expression<'a, A>, A>,
+    ) -> Box<'a, ImportExpression<'a, A>, A> {
         self.allocator.alloc(self.import_expression(span, source, arguments))
     }
 
@@ -22552,13 +22552,13 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn import_declaration<T1>(
         &mut self,
         span: Span,
-        specifiers: Option<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>>,
         source: StringLiteral<'a>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ImportDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = ImportDeclaration {
             span,
@@ -22585,13 +22585,13 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_import_declaration<T1>(
         &mut self,
         span: Span,
-        specifiers: Option<A::Vec<'a, ImportDeclarationSpecifier<'a, A>>>,
+        specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>>,
         source: StringLiteral<'a>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> A::Box<'a, ImportDeclaration<'a, A>>
+    ) -> Box<'a, ImportDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.import_declaration(
             span,
@@ -22632,7 +22632,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ImportDeclarationSpecifier<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportSpecifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, ImportSpecifier<'a>, A>, A>,
     {
         let value = ImportDeclarationSpecifier::ImportSpecifier(inner.into_in(self.allocator));
         self.handler.handle_import_declaration_specifier(&value);
@@ -22665,7 +22665,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ImportDeclarationSpecifier<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportDefaultSpecifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, ImportDefaultSpecifier<'a>, A>, A>,
     {
         let value =
             ImportDeclarationSpecifier::ImportDefaultSpecifier(inner.into_in(self.allocator));
@@ -22700,7 +22700,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ImportDeclarationSpecifier<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ImportNamespaceSpecifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, ImportNamespaceSpecifier<'a>, A>, A>,
     {
         let value =
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(inner.into_in(self.allocator));
@@ -22746,7 +22746,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         imported: ModuleExportName<'a>,
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
-    ) -> A::Box<'a, ImportSpecifier<'a>> {
+    ) -> Box<'a, ImportSpecifier<'a>, A> {
         self.allocator.alloc(self.import_specifier(span, imported, local, import_kind))
     }
 
@@ -22780,7 +22780,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         local: BindingIdentifier<'a>,
-    ) -> A::Box<'a, ImportDefaultSpecifier<'a>> {
+    ) -> Box<'a, ImportDefaultSpecifier<'a>, A> {
         self.allocator.alloc(self.import_default_specifier(span, local))
     }
 
@@ -22814,7 +22814,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         local: BindingIdentifier<'a>,
-    ) -> A::Box<'a, ImportNamespaceSpecifier<'a>> {
+    ) -> Box<'a, ImportNamespaceSpecifier<'a>, A> {
         self.allocator.alloc(self.import_namespace_specifier(span, local))
     }
 
@@ -22831,7 +22831,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
-        with_entries: A::Vec<'a, ImportAttribute<'a>>,
+        with_entries: Vec<'a, ImportAttribute<'a>, A>,
     ) -> WithClause<'a, A> {
         let value = WithClause { span, attributes_keyword, with_entries };
         self.handler.handle_with_clause(&value);
@@ -22851,8 +22851,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
-        with_entries: A::Vec<'a, ImportAttribute<'a>>,
-    ) -> A::Box<'a, WithClause<'a, A>> {
+        with_entries: Vec<'a, ImportAttribute<'a>, A>,
+    ) -> Box<'a, WithClause<'a, A>, A> {
         self.allocator.alloc(self.with_clause(span, attributes_keyword, with_entries))
     }
 
@@ -22890,7 +22890,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         key: ImportAttributeKey<'a>,
         value: StringLiteral<'a>,
-    ) -> A::Box<'a, ImportAttribute<'a>> {
+    ) -> Box<'a, ImportAttribute<'a>, A> {
         self.allocator.alloc(self.import_attribute(span, key, value))
     }
 
@@ -22976,13 +22976,13 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         declaration: Option<Declaration<'a, A>>,
-        specifiers: A::Vec<'a, ExportSpecifier<'a>>,
+        specifiers: Vec<'a, ExportSpecifier<'a>, A>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
     ) -> ExportNamedDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = ExportNamedDeclaration {
             span,
@@ -23012,13 +23012,13 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         declaration: Option<Declaration<'a, A>>,
-        specifiers: A::Vec<'a, ExportSpecifier<'a>>,
+        specifiers: Vec<'a, ExportSpecifier<'a>, A>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: T1,
-    ) -> A::Box<'a, ExportNamedDeclaration<'a, A>>
+    ) -> Box<'a, ExportNamedDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.export_named_declaration(
             span,
@@ -23064,7 +23064,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         declaration: ExportDefaultDeclarationKind<'a, A>,
         exported: ModuleExportName<'a>,
-    ) -> A::Box<'a, ExportDefaultDeclaration<'a, A>> {
+    ) -> Box<'a, ExportDefaultDeclaration<'a, A>, A> {
         self.allocator.alloc(self.export_default_declaration(span, declaration, exported))
     }
 
@@ -23088,7 +23088,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         export_kind: ImportOrExportKind,
     ) -> ExportAllDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         let value = ExportAllDeclaration {
             span,
@@ -23119,9 +23119,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         source: StringLiteral<'a>,
         with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> A::Box<'a, ExportAllDeclaration<'a, A>>
+    ) -> Box<'a, ExportAllDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, WithClause<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.export_all_declaration(
             span,
@@ -23170,7 +23170,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         local: ModuleExportName<'a>,
         exported: ModuleExportName<'a>,
         export_kind: ImportOrExportKind,
-    ) -> A::Box<'a, ExportSpecifier<'a>> {
+    ) -> Box<'a, ExportSpecifier<'a>, A> {
         self.allocator.alloc(self.export_specifier(span, local, exported, export_kind))
     }
 
@@ -23207,11 +23207,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T5,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
-        T5: IntoIn<'a, Option<A::Box<'a, FunctionBody<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a, A>, A>>, A>,
     {
         let value = self.function(
             scope_token,
@@ -23239,7 +23239,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Function<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Function<'a, A>, A>, A>,
     {
         let value =
             ExportDefaultDeclarationKind::FunctionDeclaration(inner.into_in(self.allocator));
@@ -23268,7 +23268,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         scope_token: ScopeToken<Class<'a, A>>,
         r#type: ClassType,
         span: Span,
-        decorators: A::Vec<'a, Decorator<'a, A>>,
+        decorators: Vec<'a, Decorator<'a, A>, A>,
         modifiers: Option<ClassModifiers>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -23278,9 +23278,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: T3,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, ClassBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a, A>, A>, A>,
     {
         let value = self.class(
             scope_token,
@@ -23307,7 +23307,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, Class<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, Class<'a, A>, A>, A>,
     {
         let value = ExportDefaultDeclarationKind::ClassDeclaration(inner.into_in(self.allocator));
         self.handler.handle_export_default_declaration_kind(&value);
@@ -23331,14 +23331,14 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         scope_token: ScopeToken<TSInterfaceDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
         type_parameters: T1,
         body: T2,
         declare: bool,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, TSInterfaceBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a, A>, A>, A>,
     {
         let value = self.ts_interface_declaration(
             scope_token,
@@ -23362,7 +23362,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> ExportDefaultDeclarationKind<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInterfaceDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInterfaceDeclaration<'a, A>, A>, A>,
     {
         let value =
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(inner.into_in(self.allocator));
@@ -23489,7 +23489,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> TSThisParameter<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSThisParameter {
             span,
@@ -23514,9 +23514,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         this_span: Span,
         type_annotation: T1,
-    ) -> A::Box<'a, TSThisParameter<'a, A>>
+    ) -> Box<'a, TSThisParameter<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_this_parameter(span, this_span, type_annotation))
     }
@@ -23537,7 +23537,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         _scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: A::Vec<'a, TSEnumMember<'a, A>>,
+        members: Vec<'a, TSEnumMember<'a, A>, A>,
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a, A> {
@@ -23564,10 +23564,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         _scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: A::Vec<'a, TSEnumMember<'a, A>>,
+        members: Vec<'a, TSEnumMember<'a, A>, A>,
         r#const: bool,
         declare: bool,
-    ) -> A::Box<'a, TSEnumDeclaration<'a, A>> {
+    ) -> Box<'a, TSEnumDeclaration<'a, A>, A> {
         self.allocator.alloc(self.ts_enum_declaration(
             _scope_token,
             span,
@@ -23612,7 +23612,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         id: TSEnumMemberName<'a, A>,
         initializer: Option<Expression<'a, A>>,
-    ) -> A::Box<'a, TSEnumMember<'a, A>> {
+    ) -> Box<'a, TSEnumMember<'a, A>, A> {
         self.allocator.alloc(self.ts_enum_member(span, id, initializer))
     }
 
@@ -23645,7 +23645,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierName<'a>, A>, A>,
     {
         let value = TSEnumMemberName::StaticIdentifier(inner.into_in(self.allocator));
         self.handler.handle_ts_enum_member_name(&value);
@@ -23681,7 +23681,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StringLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
     {
         let value = TSEnumMemberName::StaticStringLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_enum_member_name(&value);
@@ -23700,8 +23700,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_enum_member_name_template_literal(
         &mut self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> TSEnumMemberName<'a, A> {
         let value = self.template_literal(span, quasis, expressions);
         let value = TSEnumMemberName::StaticTemplateLiteral(self.allocator.alloc(value));
@@ -23716,7 +23716,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TemplateLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TemplateLiteral<'a, A>, A>, A>,
     {
         let value = TSEnumMemberName::StaticTemplateLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_enum_member_name(&value);
@@ -23756,7 +23756,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NumericLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, NumericLiteral<'a>, A>, A>,
     {
         let value = TSEnumMemberName::StaticNumericLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_enum_member_name(&value);
@@ -23803,7 +23803,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSTypeAnnotation<'a, A>> {
+    ) -> Box<'a, TSTypeAnnotation<'a, A>, A> {
         self.allocator.alloc(self.ts_type_annotation(span, type_annotation))
     }
 
@@ -23837,7 +23837,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         literal: TSLiteral<'a, A>,
-    ) -> A::Box<'a, TSLiteralType<'a, A>> {
+    ) -> Box<'a, TSLiteralType<'a, A>, A> {
         self.allocator.alloc(self.ts_literal_type(span, literal))
     }
 
@@ -23860,7 +23860,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_literal_from_boolean_literal<T>(&mut self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BooleanLiteral>, A>,
+        T: IntoIn<'a, Box<'a, BooleanLiteral, A>, A>,
     {
         let value = TSLiteral::BooleanLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_literal(&value);
@@ -23885,7 +23885,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_literal_from_null_literal<T>(&mut self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NullLiteral>, A>,
+        T: IntoIn<'a, Box<'a, NullLiteral, A>, A>,
     {
         let value = TSLiteral::NullLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_literal(&value);
@@ -23922,7 +23922,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_literal_from_numeric_literal<T>(&mut self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, NumericLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, NumericLiteral<'a>, A>, A>,
     {
         let value = TSLiteral::NumericLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_literal(&value);
@@ -23957,7 +23957,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_literal_from_big_int_literal<T>(&mut self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, BigIntLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, BigIntLiteral<'a>, A>, A>,
     {
         let value = TSLiteral::BigIntLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_literal(&value);
@@ -23989,7 +23989,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_literal_from_reg_exp_literal<T>(&mut self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, RegExpLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, RegExpLiteral<'a, A>, A>, A>,
     {
         let value = TSLiteral::RegExpLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_literal(&value);
@@ -24022,7 +24022,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_literal_from_string_literal<T>(&mut self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StringLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
     {
         let value = TSLiteral::StringLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_literal(&value);
@@ -24041,8 +24041,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_literal_template_literal(
         &mut self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        expressions: A::Vec<'a, Expression<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        expressions: Vec<'a, Expression<'a, A>, A>,
     ) -> TSLiteral<'a, A> {
         let value = self.template_literal(span, quasis, expressions);
         let value = TSLiteral::TemplateLiteral(self.allocator.alloc(value));
@@ -24054,7 +24054,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_literal_from_template_literal<T>(&mut self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TemplateLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TemplateLiteral<'a, A>, A>, A>,
     {
         let value = TSLiteral::TemplateLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_literal(&value);
@@ -24086,7 +24086,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_literal_from_unary_expression<T>(&mut self, inner: T) -> TSLiteral<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, UnaryExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, UnaryExpression<'a, A>, A>, A>,
     {
         let value = TSLiteral::UnaryExpression(inner.into_in(self.allocator));
         self.handler.handle_ts_literal(&value);
@@ -24111,7 +24111,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_any_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSAnyKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSAnyKeyword, A>, A>,
     {
         let value = TSType::TSAnyKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24136,7 +24136,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_big_int_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSBigIntKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSBigIntKeyword, A>, A>,
     {
         let value = TSType::TSBigIntKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24161,7 +24161,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_boolean_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSBooleanKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSBooleanKeyword, A>, A>,
     {
         let value = TSType::TSBooleanKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24186,7 +24186,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_intrinsic_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIntrinsicKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSIntrinsicKeyword, A>, A>,
     {
         let value = TSType::TSIntrinsicKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24211,7 +24211,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_never_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNeverKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSNeverKeyword, A>, A>,
     {
         let value = TSType::TSNeverKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24236,7 +24236,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_null_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNullKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSNullKeyword, A>, A>,
     {
         let value = TSType::TSNullKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24261,7 +24261,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_number_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNumberKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSNumberKeyword, A>, A>,
     {
         let value = TSType::TSNumberKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24286,7 +24286,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_object_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSObjectKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSObjectKeyword, A>, A>,
     {
         let value = TSType::TSObjectKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24311,7 +24311,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_string_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSStringKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSStringKeyword, A>, A>,
     {
         let value = TSType::TSStringKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24336,7 +24336,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_symbol_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSSymbolKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSSymbolKeyword, A>, A>,
     {
         let value = TSType::TSSymbolKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24361,7 +24361,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_undefined_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSUndefinedKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSUndefinedKeyword, A>, A>,
     {
         let value = TSType::TSUndefinedKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24386,7 +24386,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_unknown_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSUnknownKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSUnknownKeyword, A>, A>,
     {
         let value = TSType::TSUnknownKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24411,7 +24411,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_void_keyword<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSVoidKeyword>, A>,
+        T: IntoIn<'a, Box<'a, TSVoidKeyword, A>, A>,
     {
         let value = TSType::TSVoidKeyword(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24437,7 +24437,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_array_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSArrayType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSArrayType<'a, A>, A>, A>,
     {
         let value = TSType::TSArrayType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24481,7 +24481,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_conditional_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSConditionalType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSConditionalType<'a, A>, A>, A>,
     {
         let value = TSType::TSConditionalType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24508,9 +24508,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T3,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value =
             self.ts_constructor_type(span, r#abstract, type_parameters, params, return_type);
@@ -24523,7 +24523,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_constructor_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSConstructorType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSConstructorType<'a, A>, A>, A>,
     {
         let value = TSType::TSConstructorType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24550,10 +24550,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T4,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = self.ts_function_type(span, type_parameters, this_param, params, return_type);
         let value = TSType::TSFunctionType(self.allocator.alloc(value));
@@ -24565,7 +24565,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_function_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSFunctionType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSFunctionType<'a, A>, A>, A>,
     {
         let value = TSType::TSFunctionType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24594,8 +24594,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T2,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSImportAttributes<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.ts_import_type(
             span,
@@ -24614,7 +24614,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_import_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSImportType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSImportType<'a, A>, A>, A>,
     {
         let value = TSType::TSImportType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24646,7 +24646,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_indexed_access_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIndexedAccessType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSIndexedAccessType<'a, A>, A>, A>,
     {
         let value = TSType::TSIndexedAccessType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24663,7 +24663,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_infer_type<T1>(&mut self, span: Span, type_parameter: T1) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         let value = self.ts_infer_type(span, type_parameter);
         let value = TSType::TSInferType(self.allocator.alloc(value));
@@ -24675,7 +24675,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_infer_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSInferType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSInferType<'a, A>, A>, A>,
     {
         let value = TSType::TSInferType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24693,7 +24693,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_type_intersection_type(
         &mut self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_intersection_type(span, types);
         let value = TSType::TSIntersectionType(self.allocator.alloc(value));
@@ -24705,7 +24705,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_intersection_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIntersectionType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSIntersectionType<'a, A>, A>, A>,
     {
         let value = TSType::TSIntersectionType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24731,7 +24731,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_literal_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSLiteralType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSLiteralType<'a, A>, A>, A>,
     {
         let value = TSType::TSLiteralType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24761,7 +24761,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         readonly: TSMappedTypeModifierOperator,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         let value = self.ts_mapped_type(
             scope_token,
@@ -24781,7 +24781,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_mapped_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSMappedType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSMappedType<'a, A>, A>, A>,
     {
         let value = TSType::TSMappedType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24815,7 +24815,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_named_tuple_member<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSNamedTupleMember<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSNamedTupleMember<'a, A>, A>, A>,
     {
         let value = TSType::TSNamedTupleMember(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24847,7 +24847,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_qualified_name<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSQualifiedName<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSQualifiedName<'a, A>, A>, A>,
     {
         let value = TSType::TSQualifiedName(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24866,8 +24866,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_type_template_literal_type(
         &mut self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        types: A::Vec<'a, TSType<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_template_literal_type(span, quasis, types);
         let value = TSType::TSTemplateLiteralType(self.allocator.alloc(value));
@@ -24879,7 +24879,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_template_literal_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTemplateLiteralType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTemplateLiteralType<'a, A>, A>, A>,
     {
         let value = TSType::TSTemplateLiteralType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24904,7 +24904,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_this_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSThisType>, A>,
+        T: IntoIn<'a, Box<'a, TSThisType, A>, A>,
     {
         let value = TSType::TSThisType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24922,7 +24922,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_type_tuple_type(
         &mut self,
         span: Span,
-        element_types: A::Vec<'a, TSTupleElement<'a, A>>,
+        element_types: Vec<'a, TSTupleElement<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_tuple_type(span, element_types);
         let value = TSType::TSTupleType(self.allocator.alloc(value));
@@ -24934,7 +24934,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_tuple_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTupleType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTupleType<'a, A>, A>, A>,
     {
         let value = TSType::TSTupleType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24952,7 +24952,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_type_type_literal(
         &mut self,
         span: Span,
-        members: A::Vec<'a, TSSignature<'a, A>>,
+        members: Vec<'a, TSSignature<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_type_literal(span, members);
         let value = TSType::TSTypeLiteral(self.allocator.alloc(value));
@@ -24964,7 +24964,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_type_literal<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeLiteral<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeLiteral<'a, A>, A>, A>,
     {
         let value = TSType::TSTypeLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -24996,7 +24996,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_type_operator<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeOperator<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeOperator<'a, A>, A>, A>,
     {
         let value = TSType::TSTypeOperatorType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25021,7 +25021,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.ts_type_predicate(span, parameter_name, asserts, type_annotation);
         let value = TSType::TSTypePredicate(self.allocator.alloc(value));
@@ -25033,7 +25033,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_type_predicate<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypePredicate<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypePredicate<'a, A>, A>, A>,
     {
         let value = TSType::TSTypePredicate(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25056,7 +25056,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.ts_type_query(span, expr_name, type_parameters);
         let value = TSType::TSTypeQuery(self.allocator.alloc(value));
@@ -25068,7 +25068,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_type_query<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeQuery<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeQuery<'a, A>, A>, A>,
     {
         let value = TSType::TSTypeQuery(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25091,7 +25091,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> TSType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.ts_type_reference(span, type_name, type_parameters);
         let value = TSType::TSTypeReference(self.allocator.alloc(value));
@@ -25103,7 +25103,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_type_reference<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSTypeReference<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSTypeReference<'a, A>, A>, A>,
     {
         let value = TSType::TSTypeReference(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25121,7 +25121,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_type_union_type(
         &mut self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSType<'a, A> {
         let value = self.ts_union_type(span, types);
         let value = TSType::TSUnionType(self.allocator.alloc(value));
@@ -25133,7 +25133,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_union_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSUnionType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSUnionType<'a, A>, A>, A>,
     {
         let value = TSType::TSUnionType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25163,7 +25163,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_ts_parenthesized_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSParenthesizedType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSParenthesizedType<'a, A>, A>, A>,
     {
         let value = TSType::TSParenthesizedType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25195,7 +25195,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_js_doc_nullable_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSDocNullableType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSDocNullableType<'a, A>, A>, A>,
     {
         let value = TSType::JSDocNullableType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25227,7 +25227,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_js_doc_non_nullable_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSDocNonNullableType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSDocNonNullableType<'a, A>, A>, A>,
     {
         let value = TSType::JSDocNonNullableType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25252,7 +25252,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_from_js_doc_unknown_type<T>(&mut self, inner: T) -> TSType<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSDocUnknownType>, A>,
+        T: IntoIn<'a, Box<'a, JSDocUnknownType, A>, A>,
     {
         let value = TSType::JSDocUnknownType(inner.into_in(self.allocator));
         self.handler.handle_ts_type(&value);
@@ -25311,7 +25311,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         extends_type: TSType<'a, A>,
         true_type: TSType<'a, A>,
         false_type: TSType<'a, A>,
-    ) -> A::Box<'a, TSConditionalType<'a, A>> {
+    ) -> Box<'a, TSConditionalType<'a, A>, A> {
         self.allocator.alloc(self.ts_conditional_type(
             _scope_token,
             span,
@@ -25333,7 +25333,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_union_type(
         &mut self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSUnionType<'a, A> {
         let value = TSUnionType { span, types };
         self.handler.handle_ts_union_type(&value);
@@ -25351,8 +25351,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_union_type(
         &mut self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
-    ) -> A::Box<'a, TSUnionType<'a, A>> {
+        types: Vec<'a, TSType<'a, A>, A>,
+    ) -> Box<'a, TSUnionType<'a, A>, A> {
         self.allocator.alloc(self.ts_union_type(span, types))
     }
 
@@ -25367,7 +25367,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_intersection_type(
         &mut self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSIntersectionType<'a, A> {
         let value = TSIntersectionType { span, types };
         self.handler.handle_ts_intersection_type(&value);
@@ -25385,8 +25385,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_intersection_type(
         &mut self,
         span: Span,
-        types: A::Vec<'a, TSType<'a, A>>,
-    ) -> A::Box<'a, TSIntersectionType<'a, A>> {
+        types: Vec<'a, TSType<'a, A>, A>,
+    ) -> Box<'a, TSIntersectionType<'a, A>, A> {
         self.allocator.alloc(self.ts_intersection_type(span, types))
     }
 
@@ -25420,7 +25420,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSParenthesizedType<'a, A>> {
+    ) -> Box<'a, TSParenthesizedType<'a, A>, A> {
         self.allocator.alloc(self.ts_parenthesized_type(span, type_annotation))
     }
 
@@ -25458,7 +25458,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSTypeOperator<'a, A>> {
+    ) -> Box<'a, TSTypeOperator<'a, A>, A> {
         self.allocator.alloc(self.ts_type_operator(span, operator, type_annotation))
     }
 
@@ -25488,7 +25488,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         element_type: TSType<'a, A>,
-    ) -> A::Box<'a, TSArrayType<'a, A>> {
+    ) -> Box<'a, TSArrayType<'a, A>, A> {
         self.allocator.alloc(self.ts_array_type(span, element_type))
     }
 
@@ -25526,7 +25526,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         object_type: TSType<'a, A>,
         index_type: TSType<'a, A>,
-    ) -> A::Box<'a, TSIndexedAccessType<'a, A>> {
+    ) -> Box<'a, TSIndexedAccessType<'a, A>, A> {
         self.allocator.alloc(self.ts_indexed_access_type(span, object_type, index_type))
     }
 
@@ -25541,7 +25541,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_tuple_type(
         &mut self,
         span: Span,
-        element_types: A::Vec<'a, TSTupleElement<'a, A>>,
+        element_types: Vec<'a, TSTupleElement<'a, A>, A>,
     ) -> TSTupleType<'a, A> {
         let value = TSTupleType { span, element_types };
         self.handler.handle_ts_tuple_type(&value);
@@ -25559,8 +25559,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_tuple_type(
         &mut self,
         span: Span,
-        element_types: A::Vec<'a, TSTupleElement<'a, A>>,
-    ) -> A::Box<'a, TSTupleType<'a, A>> {
+        element_types: Vec<'a, TSTupleElement<'a, A>, A>,
+    ) -> Box<'a, TSTupleType<'a, A>, A> {
         self.allocator.alloc(self.ts_tuple_type(span, element_types))
     }
 
@@ -25602,7 +25602,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         element_type: TSTupleElement<'a, A>,
         label: IdentifierName<'a>,
         optional: bool,
-    ) -> A::Box<'a, TSNamedTupleMember<'a, A>> {
+    ) -> Box<'a, TSNamedTupleMember<'a, A>, A> {
         self.allocator.alloc(self.ts_named_tuple_member(span, element_type, label, optional))
     }
 
@@ -25636,7 +25636,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSOptionalType<'a, A>> {
+    ) -> Box<'a, TSOptionalType<'a, A>, A> {
         self.allocator.alloc(self.ts_optional_type(span, type_annotation))
     }
 
@@ -25670,7 +25670,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSRestType<'a, A>> {
+    ) -> Box<'a, TSRestType<'a, A>, A> {
         self.allocator.alloc(self.ts_rest_type(span, type_annotation))
     }
 
@@ -25697,7 +25697,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_tuple_element_from_ts_optional_type<T>(&mut self, inner: T) -> TSTupleElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSOptionalType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSOptionalType<'a, A>, A>, A>,
     {
         let value = TSTupleElement::TSOptionalType(inner.into_in(self.allocator));
         self.handler.handle_ts_tuple_element(&value);
@@ -25727,7 +25727,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_tuple_element_from_ts_rest_type<T>(&mut self, inner: T) -> TSTupleElement<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSRestType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSRestType<'a, A>, A>, A>,
     {
         let value = TSTupleElement::TSRestType(inner.into_in(self.allocator));
         self.handler.handle_ts_tuple_element(&value);
@@ -25761,7 +25761,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_any_keyword(&mut self, span: Span) -> A::Box<'a, TSAnyKeyword> {
+    pub fn alloc_ts_any_keyword(&mut self, span: Span) -> Box<'a, TSAnyKeyword, A> {
         self.allocator.alloc(self.ts_any_keyword(span))
     }
 
@@ -25785,7 +25785,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_string_keyword(&mut self, span: Span) -> A::Box<'a, TSStringKeyword> {
+    pub fn alloc_ts_string_keyword(&mut self, span: Span) -> Box<'a, TSStringKeyword, A> {
         self.allocator.alloc(self.ts_string_keyword(span))
     }
 
@@ -25809,7 +25809,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_boolean_keyword(&mut self, span: Span) -> A::Box<'a, TSBooleanKeyword> {
+    pub fn alloc_ts_boolean_keyword(&mut self, span: Span) -> Box<'a, TSBooleanKeyword, A> {
         self.allocator.alloc(self.ts_boolean_keyword(span))
     }
 
@@ -25833,7 +25833,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_number_keyword(&mut self, span: Span) -> A::Box<'a, TSNumberKeyword> {
+    pub fn alloc_ts_number_keyword(&mut self, span: Span) -> Box<'a, TSNumberKeyword, A> {
         self.allocator.alloc(self.ts_number_keyword(span))
     }
 
@@ -25857,7 +25857,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_never_keyword(&mut self, span: Span) -> A::Box<'a, TSNeverKeyword> {
+    pub fn alloc_ts_never_keyword(&mut self, span: Span) -> Box<'a, TSNeverKeyword, A> {
         self.allocator.alloc(self.ts_never_keyword(span))
     }
 
@@ -25881,7 +25881,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_intrinsic_keyword(&mut self, span: Span) -> A::Box<'a, TSIntrinsicKeyword> {
+    pub fn alloc_ts_intrinsic_keyword(&mut self, span: Span) -> Box<'a, TSIntrinsicKeyword, A> {
         self.allocator.alloc(self.ts_intrinsic_keyword(span))
     }
 
@@ -25905,7 +25905,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_unknown_keyword(&mut self, span: Span) -> A::Box<'a, TSUnknownKeyword> {
+    pub fn alloc_ts_unknown_keyword(&mut self, span: Span) -> Box<'a, TSUnknownKeyword, A> {
         self.allocator.alloc(self.ts_unknown_keyword(span))
     }
 
@@ -25929,7 +25929,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_null_keyword(&mut self, span: Span) -> A::Box<'a, TSNullKeyword> {
+    pub fn alloc_ts_null_keyword(&mut self, span: Span) -> Box<'a, TSNullKeyword, A> {
         self.allocator.alloc(self.ts_null_keyword(span))
     }
 
@@ -25953,7 +25953,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_undefined_keyword(&mut self, span: Span) -> A::Box<'a, TSUndefinedKeyword> {
+    pub fn alloc_ts_undefined_keyword(&mut self, span: Span) -> Box<'a, TSUndefinedKeyword, A> {
         self.allocator.alloc(self.ts_undefined_keyword(span))
     }
 
@@ -25977,7 +25977,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_void_keyword(&mut self, span: Span) -> A::Box<'a, TSVoidKeyword> {
+    pub fn alloc_ts_void_keyword(&mut self, span: Span) -> Box<'a, TSVoidKeyword, A> {
         self.allocator.alloc(self.ts_void_keyword(span))
     }
 
@@ -26001,7 +26001,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_symbol_keyword(&mut self, span: Span) -> A::Box<'a, TSSymbolKeyword> {
+    pub fn alloc_ts_symbol_keyword(&mut self, span: Span) -> Box<'a, TSSymbolKeyword, A> {
         self.allocator.alloc(self.ts_symbol_keyword(span))
     }
 
@@ -26025,7 +26025,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_this_type(&mut self, span: Span) -> A::Box<'a, TSThisType> {
+    pub fn alloc_ts_this_type(&mut self, span: Span) -> Box<'a, TSThisType, A> {
         self.allocator.alloc(self.ts_this_type(span))
     }
 
@@ -26049,7 +26049,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_object_keyword(&mut self, span: Span) -> A::Box<'a, TSObjectKeyword> {
+    pub fn alloc_ts_object_keyword(&mut self, span: Span) -> Box<'a, TSObjectKeyword, A> {
         self.allocator.alloc(self.ts_object_keyword(span))
     }
 
@@ -26073,7 +26073,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_big_int_keyword(&mut self, span: Span) -> A::Box<'a, TSBigIntKeyword> {
+    pub fn alloc_ts_big_int_keyword(&mut self, span: Span) -> Box<'a, TSBigIntKeyword, A> {
         self.allocator.alloc(self.ts_big_int_keyword(span))
     }
 
@@ -26093,7 +26093,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> TSTypeReference<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSTypeReference {
             span,
@@ -26118,9 +26118,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         type_name: TSTypeName<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSTypeReference<'a, A>>
+    ) -> Box<'a, TSTypeReference<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_type_reference(span, type_name, type_parameters))
     }
@@ -26151,7 +26151,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_name_from_identifier_reference<T>(&mut self, inner: T) -> TSTypeName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value = TSTypeName::IdentifierReference(inner.into_in(self.allocator));
         self.handler.handle_ts_type_name(&value);
@@ -26183,7 +26183,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_type_name_from_ts_qualified_name<T>(&mut self, inner: T) -> TSTypeName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSQualifiedName<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSQualifiedName<'a, A>, A>, A>,
     {
         let value = TSTypeName::QualifiedName(inner.into_in(self.allocator));
         self.handler.handle_ts_type_name(&value);
@@ -26224,7 +26224,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         left: TSTypeName<'a, A>,
         right: IdentifierName<'a>,
-    ) -> A::Box<'a, TSQualifiedName<'a, A>> {
+    ) -> Box<'a, TSQualifiedName<'a, A>, A> {
         self.allocator.alloc(self.ts_qualified_name(span, left, right))
     }
 
@@ -26239,7 +26239,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_type_parameter_instantiation(
         &mut self,
         span: Span,
-        params: A::Vec<'a, TSType<'a, A>>,
+        params: Vec<'a, TSType<'a, A>, A>,
     ) -> TSTypeParameterInstantiation<'a, A> {
         let value = TSTypeParameterInstantiation { span, params };
         self.handler.handle_ts_type_parameter_instantiation(&value);
@@ -26257,8 +26257,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_type_parameter_instantiation(
         &mut self,
         span: Span,
-        params: A::Vec<'a, TSType<'a, A>>,
-    ) -> A::Box<'a, TSTypeParameterInstantiation<'a, A>> {
+        params: Vec<'a, TSType<'a, A>, A>,
+    ) -> Box<'a, TSTypeParameterInstantiation<'a, A>, A> {
         self.allocator.alloc(self.ts_type_parameter_instantiation(span, params))
     }
 
@@ -26312,7 +26312,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         r#in: bool,
         out: bool,
         r#const: bool,
-    ) -> A::Box<'a, TSTypeParameter<'a, A>> {
+    ) -> Box<'a, TSTypeParameter<'a, A>, A> {
         self.allocator
             .alloc(self.ts_type_parameter(span, name, constraint, default, r#in, out, r#const))
     }
@@ -26328,7 +26328,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_type_parameter_declaration(
         &mut self,
         span: Span,
-        params: A::Vec<'a, TSTypeParameter<'a, A>>,
+        params: Vec<'a, TSTypeParameter<'a, A>, A>,
     ) -> TSTypeParameterDeclaration<'a, A> {
         let value = TSTypeParameterDeclaration { span, params };
         self.handler.handle_ts_type_parameter_declaration(&value);
@@ -26346,8 +26346,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_type_parameter_declaration(
         &mut self,
         span: Span,
-        params: A::Vec<'a, TSTypeParameter<'a, A>>,
-    ) -> A::Box<'a, TSTypeParameterDeclaration<'a, A>> {
+        params: Vec<'a, TSTypeParameter<'a, A>, A>,
+    ) -> Box<'a, TSTypeParameterDeclaration<'a, A>, A> {
         self.allocator.alloc(self.ts_type_parameter_declaration(span, params))
     }
 
@@ -26372,7 +26372,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         declare: bool,
     ) -> TSTypeAliasDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
     {
         let value = TSTypeAliasDeclaration {
             span,
@@ -26406,9 +26406,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
         type_annotation: TSType<'a, A>,
         declare: bool,
-    ) -> A::Box<'a, TSTypeAliasDeclaration<'a, A>>
+    ) -> Box<'a, TSTypeAliasDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_type_alias_declaration(
             _scope_token,
@@ -26436,7 +26436,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> TSClassImplementsItem<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSClassImplementsItem {
             span,
@@ -26461,9 +26461,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         expression: TSTypeName<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSClassImplementsItem<'a, A>>
+    ) -> Box<'a, TSClassImplementsItem<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_class_implements_item(span, expression, type_parameters))
     }
@@ -26479,7 +26479,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_class_implements(
         &mut self,
         span: Span,
-        items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
+        items: Vec<'a, TSClassImplementsItem<'a, A>, A>,
     ) -> TSClassImplements<'a, A> {
         let value = TSClassImplements { span, items };
         self.handler.handle_ts_class_implements(&value);
@@ -26497,8 +26497,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_class_implements(
         &mut self,
         span: Span,
-        items: A::Vec<'a, TSClassImplementsItem<'a, A>>,
-    ) -> A::Box<'a, TSClassImplements<'a, A>> {
+        items: Vec<'a, TSClassImplementsItem<'a, A>, A>,
+    ) -> Box<'a, TSClassImplements<'a, A>, A> {
         self.allocator.alloc(self.ts_class_implements(span, items))
     }
 
@@ -26519,14 +26519,14 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         _scope_token: ScopeToken<TSInterfaceDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
         type_parameters: T1,
         body: T2,
         declare: bool,
     ) -> TSInterfaceDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, TSInterfaceBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a, A>, A>, A>,
     {
         let value = TSInterfaceDeclaration {
             span,
@@ -26559,14 +26559,14 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         _scope_token: ScopeToken<TSInterfaceDeclaration<'a, A>>,
         span: Span,
         id: BindingIdentifier<'a>,
-        extends: Option<A::Vec<'a, TSInterfaceHeritage<'a, A>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a, A>, A>>,
         type_parameters: T1,
         body: T2,
         declare: bool,
-    ) -> A::Box<'a, TSInterfaceDeclaration<'a, A>>
+    ) -> Box<'a, TSInterfaceDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, TSInterfaceBody<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_interface_declaration(
             _scope_token,
@@ -26590,7 +26590,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_interface_body(
         &mut self,
         span: Span,
-        body: A::Vec<'a, TSSignature<'a, A>>,
+        body: Vec<'a, TSSignature<'a, A>, A>,
     ) -> TSInterfaceBody<'a, A> {
         let value = TSInterfaceBody { span, body };
         self.handler.handle_ts_interface_body(&value);
@@ -26608,8 +26608,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_interface_body(
         &mut self,
         span: Span,
-        body: A::Vec<'a, TSSignature<'a, A>>,
-    ) -> A::Box<'a, TSInterfaceBody<'a, A>> {
+        body: Vec<'a, TSSignature<'a, A>, A>,
+    ) -> Box<'a, TSInterfaceBody<'a, A>, A> {
         self.allocator.alloc(self.ts_interface_body(span, body))
     }
 
@@ -26635,7 +26635,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> TSPropertySignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSPropertySignature {
             span,
@@ -26669,9 +26669,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         readonly: bool,
         key: PropertyKey<'a, A>,
         type_annotation: T1,
-    ) -> A::Box<'a, TSPropertySignature<'a, A>>
+    ) -> Box<'a, TSPropertySignature<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_property_signature(
             span,
@@ -26697,11 +26697,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         modifiers: Option<ClassElementModifiers>,
-        parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
         type_annotation: T1,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = self.ts_index_signature(span, modifiers, parameters, type_annotation);
         let value = TSSignature::TSIndexSignature(self.allocator.alloc(value));
@@ -26713,7 +26713,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_signature_from_ts_index_signature<T>(&mut self, inner: T) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSIndexSignature<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSIndexSignature<'a, A>, A>, A>,
     {
         let value = TSSignature::TSIndexSignature(inner.into_in(self.allocator));
         self.handler.handle_ts_signature(&value);
@@ -26742,7 +26742,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value =
             self.ts_property_signature(span, computed, optional, readonly, key, type_annotation);
@@ -26755,7 +26755,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_signature_from_ts_property_signature<T>(&mut self, inner: T) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSPropertySignature<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSPropertySignature<'a, A>, A>, A>,
     {
         let value = TSSignature::TSPropertySignature(inner.into_in(self.allocator));
         self.handler.handle_ts_signature(&value);
@@ -26782,9 +26782,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T3,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.ts_call_signature_declaration(
             span,
@@ -26805,7 +26805,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSCallSignatureDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSCallSignatureDeclaration<'a, A>, A>, A>,
     {
         let value = TSSignature::TSCallSignatureDeclaration(inner.into_in(self.allocator));
         self.handler.handle_ts_signature(&value);
@@ -26831,9 +26831,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T3,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.ts_construct_signature_declaration(
             scope_token,
@@ -26854,7 +26854,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSConstructSignatureDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSConstructSignatureDeclaration<'a, A>, A>, A>,
     {
         let value = TSSignature::TSConstructSignatureDeclaration(inner.into_in(self.allocator));
         self.handler.handle_ts_signature(&value);
@@ -26890,10 +26890,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T4,
     ) -> TSSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = self.ts_method_signature(
             scope_token,
@@ -26916,7 +26916,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_signature_from_ts_method_signature<T>(&mut self, inner: T) -> TSSignature<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSMethodSignature<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSMethodSignature<'a, A>, A>, A>,
     {
         let value = TSSignature::TSMethodSignature(inner.into_in(self.allocator));
         self.handler.handle_ts_signature(&value);
@@ -26937,11 +26937,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         modifiers: Option<ClassElementModifiers>,
-        parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
         type_annotation: T1,
     ) -> TSIndexSignature<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = TSIndexSignature {
             span,
@@ -26967,11 +26967,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         modifiers: Option<ClassElementModifiers>,
-        parameters: A::Vec<'a, TSIndexSignatureName<'a, A>>,
+        parameters: Vec<'a, TSIndexSignatureName<'a, A>, A>,
         type_annotation: T1,
-    ) -> A::Box<'a, TSIndexSignature<'a, A>>
+    ) -> Box<'a, TSIndexSignature<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_index_signature(span, modifiers, parameters, type_annotation))
     }
@@ -26996,9 +26996,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T3,
     ) -> TSCallSignatureDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSCallSignatureDeclaration {
             span,
@@ -27029,11 +27029,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         this_param: Option<TSThisParameter<'a, A>>,
         params: T2,
         return_type: T3,
-    ) -> A::Box<'a, TSCallSignatureDeclaration<'a, A>>
+    ) -> Box<'a, TSCallSignatureDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_call_signature_declaration(
             span,
@@ -27073,10 +27073,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T4,
     ) -> TSMethodSignature<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSMethodSignature {
             span,
@@ -27122,12 +27122,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         this_param: T2,
         params: T3,
         return_type: T4,
-    ) -> A::Box<'a, TSMethodSignature<'a, A>>
+    ) -> Box<'a, TSMethodSignature<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_method_signature(
             _scope_token,
@@ -27162,9 +27162,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T3,
     ) -> TSConstructSignatureDeclaration<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSConstructSignatureDeclaration {
             span,
@@ -27195,11 +27195,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
         params: T2,
         return_type: T3,
-    ) -> A::Box<'a, TSConstructSignatureDeclaration<'a, A>>
+    ) -> Box<'a, TSConstructSignatureDeclaration<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_construct_signature_declaration(
             _scope_token,
@@ -27227,7 +27227,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ) -> TSIndexSignatureName<'a, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = TSIndexSignatureName {
             span,
@@ -27252,10 +27252,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         name: IntoAtom,
         type_annotation: T1,
-    ) -> A::Box<'a, TSIndexSignatureName<'a, A>>
+    ) -> Box<'a, TSIndexSignatureName<'a, A>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
-        T1: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_index_signature_name(span, name, type_annotation))
     }
@@ -27276,7 +27276,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> TSInterfaceHeritage<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSInterfaceHeritage {
             span,
@@ -27301,9 +27301,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         expression: Expression<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSInterfaceHeritage<'a, A>>
+    ) -> Box<'a, TSInterfaceHeritage<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_interface_heritage(span, expression, type_parameters))
     }
@@ -27326,7 +27326,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: T1,
     ) -> TSTypePredicate<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         let value = TSTypePredicate {
             span,
@@ -27354,9 +27354,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         parameter_name: TSTypePredicateName<'a, A>,
         asserts: bool,
         type_annotation: T1,
-    ) -> A::Box<'a, TSTypePredicate<'a, A>>
+    ) -> Box<'a, TSTypePredicate<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeAnnotation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_type_predicate(span, parameter_name, asserts, type_annotation))
     }
@@ -27390,7 +27390,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSTypePredicateName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierName<'a>, A>, A>,
     {
         let value = TSTypePredicateName::Identifier(inner.into_in(self.allocator));
         self.handler.handle_ts_type_predicate_name(&value);
@@ -27468,7 +27468,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         body: Option<TSModuleDeclarationBody<'a, A>>,
         kind: TSModuleDeclarationKind,
         declare: bool,
-    ) -> A::Box<'a, TSModuleDeclaration<'a, A>> {
+    ) -> Box<'a, TSModuleDeclaration<'a, A>, A> {
         self.allocator.alloc(self.ts_module_declaration(
             _scope_token,
             span,
@@ -27578,7 +27578,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSModuleDeclarationBody<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSModuleDeclaration<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSModuleDeclaration<'a, A>, A>, A>,
     {
         let value = TSModuleDeclarationBody::TSModuleDeclaration(inner.into_in(self.allocator));
         self.handler.handle_ts_module_declaration_body(&value);
@@ -27597,8 +27597,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_module_declaration_body_module_block(
         &mut self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> TSModuleDeclarationBody<'a, A> {
         let value = self.ts_module_block(span, directives, body);
         let value = TSModuleDeclarationBody::TSModuleBlock(self.allocator.alloc(value));
@@ -27613,7 +27613,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSModuleDeclarationBody<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSModuleBlock<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSModuleBlock<'a, A>, A>, A>,
     {
         let value = TSModuleDeclarationBody::TSModuleBlock(inner.into_in(self.allocator));
         self.handler.handle_ts_module_declaration_body(&value);
@@ -27632,8 +27632,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_module_block(
         &mut self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
     ) -> TSModuleBlock<'a, A> {
         let value = TSModuleBlock { span, directives, body };
         self.handler.handle_ts_module_block(&value);
@@ -27652,9 +27652,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_module_block(
         &mut self,
         span: Span,
-        directives: A::Vec<'a, Directive<'a>>,
-        body: A::Vec<'a, Statement<'a, A>>,
-    ) -> A::Box<'a, TSModuleBlock<'a, A>> {
+        directives: Vec<'a, Directive<'a>, A>,
+        body: Vec<'a, Statement<'a, A>, A>,
+    ) -> Box<'a, TSModuleBlock<'a, A>, A> {
         self.allocator.alloc(self.ts_module_block(span, directives, body))
     }
 
@@ -27669,7 +27669,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_type_literal(
         &mut self,
         span: Span,
-        members: A::Vec<'a, TSSignature<'a, A>>,
+        members: Vec<'a, TSSignature<'a, A>, A>,
     ) -> TSTypeLiteral<'a, A> {
         let value = TSTypeLiteral { span, members };
         self.handler.handle_ts_type_literal(&value);
@@ -27687,8 +27687,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_type_literal(
         &mut self,
         span: Span,
-        members: A::Vec<'a, TSSignature<'a, A>>,
-    ) -> A::Box<'a, TSTypeLiteral<'a, A>> {
+        members: Vec<'a, TSSignature<'a, A>, A>,
+    ) -> Box<'a, TSTypeLiteral<'a, A>, A> {
         self.allocator.alloc(self.ts_type_literal(span, members))
     }
 
@@ -27702,7 +27702,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn ts_infer_type<T1>(&mut self, span: Span, type_parameter: T1) -> TSInferType<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         let value = TSInferType { span, type_parameter: type_parameter.into_in(self.allocator) };
         self.handler.handle_ts_infer_type(&value);
@@ -27721,9 +27721,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         type_parameter: T1,
-    ) -> A::Box<'a, TSInferType<'a, A>>
+    ) -> Box<'a, TSInferType<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_infer_type(span, type_parameter))
     }
@@ -27744,7 +27744,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> TSTypeQuery<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSTypeQuery {
             span,
@@ -27769,9 +27769,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         expr_name: TSTypeQueryExprName<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSTypeQuery<'a, A>>
+    ) -> Box<'a, TSTypeQuery<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_type_query(span, expr_name, type_parameters))
     }
@@ -27798,8 +27798,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T2,
     ) -> TSTypeQueryExprName<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSImportAttributes<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = self.ts_import_type(
             span,
@@ -27821,7 +27821,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSTypeQueryExprName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSImportType<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, TSImportType<'a, A>, A>, A>,
     {
         let value = TSTypeQueryExprName::TSImportType(inner.into_in(self.allocator));
         self.handler.handle_ts_type_query_expr_name(&value);
@@ -27860,8 +27860,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T2,
     ) -> TSImportType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSImportAttributes<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = TSImportType {
             span,
@@ -27895,10 +27895,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         qualifier: Option<TSTypeName<'a, A>>,
         attributes: T1,
         type_parameters: T2,
-    ) -> A::Box<'a, TSImportType<'a, A>>
+    ) -> Box<'a, TSImportType<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSImportAttributes<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.ts_import_type(
             span,
@@ -27923,7 +27923,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
-        elements: A::Vec<'a, TSImportAttribute<'a, A>>,
+        elements: Vec<'a, TSImportAttribute<'a, A>, A>,
     ) -> TSImportAttributes<'a, A> {
         let value = TSImportAttributes { span, attributes_keyword, elements };
         self.handler.handle_ts_import_attributes(&value);
@@ -27943,8 +27943,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
-        elements: A::Vec<'a, TSImportAttribute<'a, A>>,
-    ) -> A::Box<'a, TSImportAttributes<'a, A>> {
+        elements: Vec<'a, TSImportAttribute<'a, A>, A>,
+    ) -> Box<'a, TSImportAttributes<'a, A>, A> {
         self.allocator.alloc(self.ts_import_attributes(span, attributes_keyword, elements))
     }
 
@@ -27982,7 +27982,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         name: TSImportAttributeName<'a>,
         value: Expression<'a, A>,
-    ) -> A::Box<'a, TSImportAttribute<'a, A>> {
+    ) -> Box<'a, TSImportAttribute<'a, A>, A> {
         self.allocator.alloc(self.ts_import_attribute(span, name, value))
     }
 
@@ -28072,10 +28072,10 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T4,
     ) -> TSFunctionType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = TSFunctionType {
             span,
@@ -28106,12 +28106,12 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         this_param: T2,
         params: T3,
         return_type: T4,
-    ) -> A::Box<'a, TSFunctionType<'a, A>>
+    ) -> Box<'a, TSFunctionType<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, TSThisParameter<'a, A>>>, A>,
-        T3: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T4: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a, A>, A>>, A>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T4: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_function_type(
             span,
@@ -28142,9 +28142,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         return_type: T3,
     ) -> TSConstructorType<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         let value = TSConstructorType {
             span,
@@ -28175,11 +28175,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
         params: T2,
         return_type: T3,
-    ) -> A::Box<'a, TSConstructorType<'a, A>>
+    ) -> Box<'a, TSConstructorType<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterDeclaration<'a, A>>>, A>,
-        T2: IntoIn<'a, A::Box<'a, FormalParameters<'a, A>>, A>,
-        T3: IntoIn<'a, A::Box<'a, TSTypeAnnotation<'a, A>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a, A>, A>>, A>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a, A>, A>, A>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_constructor_type(
             span,
@@ -28213,7 +28213,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         readonly: TSMappedTypeModifierOperator,
     ) -> TSMappedType<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         let value = TSMappedType {
             span,
@@ -28250,9 +28250,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_annotation: Option<TSType<'a, A>>,
         optional: TSMappedTypeModifierOperator,
         readonly: TSMappedTypeModifierOperator,
-    ) -> A::Box<'a, TSMappedType<'a, A>>
+    ) -> Box<'a, TSMappedType<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameter<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_mapped_type(
             _scope_token,
@@ -28277,8 +28277,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn ts_template_literal_type(
         &mut self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        types: A::Vec<'a, TSType<'a, A>>,
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        types: Vec<'a, TSType<'a, A>, A>,
     ) -> TSTemplateLiteralType<'a, A> {
         let value = TSTemplateLiteralType { span, quasis, types };
         self.handler.handle_ts_template_literal_type(&value);
@@ -28297,9 +28297,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     pub fn alloc_ts_template_literal_type(
         &mut self,
         span: Span,
-        quasis: A::Vec<'a, TemplateElement<'a>>,
-        types: A::Vec<'a, TSType<'a, A>>,
-    ) -> A::Box<'a, TSTemplateLiteralType<'a, A>> {
+        quasis: Vec<'a, TemplateElement<'a>, A>,
+        types: Vec<'a, TSType<'a, A>, A>,
+    ) -> Box<'a, TSTemplateLiteralType<'a, A>, A> {
         self.allocator.alloc(self.ts_template_literal_type(span, quasis, types))
     }
 
@@ -28337,7 +28337,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         expression: Expression<'a, A>,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSAsExpression<'a, A>> {
+    ) -> Box<'a, TSAsExpression<'a, A>, A> {
         self.allocator.alloc(self.ts_as_expression(span, expression, type_annotation))
     }
 
@@ -28375,7 +28375,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         expression: Expression<'a, A>,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSSatisfiesExpression<'a, A>> {
+    ) -> Box<'a, TSSatisfiesExpression<'a, A>, A> {
         self.allocator.alloc(self.ts_satisfies_expression(span, expression, type_annotation))
     }
 
@@ -28409,7 +28409,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         type_annotation: TSType<'a, A>,
-    ) -> A::Box<'a, TSTypeAssertionAnnotation<'a, A>> {
+    ) -> Box<'a, TSTypeAssertionAnnotation<'a, A>, A> {
         self.allocator.alloc(self.ts_type_assertion_annotation(span, type_annotation))
     }
 
@@ -28447,7 +28447,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         type_annotation: TSTypeAssertionAnnotation<'a, A>,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, TSTypeAssertion<'a, A>> {
+    ) -> Box<'a, TSTypeAssertion<'a, A>, A> {
         self.allocator.alloc(self.ts_type_assertion(span, type_annotation, expression))
     }
 
@@ -28489,7 +28489,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         id: BindingIdentifier<'a>,
         module_reference: TSModuleReference<'a, A>,
         import_kind: ImportOrExportKind,
-    ) -> A::Box<'a, TSImportEqualsDeclaration<'a, A>> {
+    ) -> Box<'a, TSImportEqualsDeclaration<'a, A>, A> {
         self.allocator.alloc(self.ts_import_equals_declaration(
             span,
             id,
@@ -28524,7 +28524,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSModuleReference<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, TSExternalModuleReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, TSExternalModuleReference<'a>, A>, A>,
     {
         let value = TSModuleReference::ExternalModuleReference(inner.into_in(self.allocator));
         self.handler.handle_ts_module_reference(&value);
@@ -28571,7 +28571,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         expression: StringLiteral<'a>,
-    ) -> A::Box<'a, TSExternalModuleReference<'a>> {
+    ) -> Box<'a, TSExternalModuleReference<'a>, A> {
         self.allocator.alloc(self.ts_external_module_reference(span, expression))
     }
 
@@ -28609,7 +28609,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         expression: Expression<'a, A>,
         definite_mark: TSDefiniteMark,
-    ) -> A::Box<'a, TSNonNullExpression<'a, A>> {
+    ) -> Box<'a, TSNonNullExpression<'a, A>, A> {
         self.allocator.alloc(self.ts_non_null_expression(span, expression, definite_mark))
     }
 
@@ -28639,7 +28639,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, Decorator<'a, A>> {
+    ) -> Box<'a, Decorator<'a, A>, A> {
         self.allocator.alloc(self.decorator(span, expression))
     }
 
@@ -28673,7 +28673,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, TSExportAssignment<'a, A>> {
+    ) -> Box<'a, TSExportAssignment<'a, A>, A> {
         self.allocator.alloc(self.ts_export_assignment(span, expression))
     }
 
@@ -28707,7 +28707,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         id: IdentifierName<'a>,
-    ) -> A::Box<'a, TSNamespaceExportDeclaration<'a>> {
+    ) -> Box<'a, TSNamespaceExportDeclaration<'a>, A> {
         self.allocator.alloc(self.ts_namespace_export_declaration(span, id))
     }
 
@@ -28727,7 +28727,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         type_parameters: T1,
     ) -> TSInstantiationExpression<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a, A>, A>, A>,
     {
         let value = TSInstantiationExpression {
             span,
@@ -28752,9 +28752,9 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         expression: Expression<'a, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, TSInstantiationExpression<'a, A>>
+    ) -> Box<'a, TSInstantiationExpression<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, TSTypeParameterInstantiation<'a, A>>, A>,
+        T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a, A>, A>, A>,
     {
         self.allocator.alloc(self.ts_instantiation_expression(span, expression, type_parameters))
     }
@@ -28779,7 +28779,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_optional_mark(&mut self, span: Span) -> A::Box<'a, TSOptionalMark> {
+    pub fn alloc_ts_optional_mark(&mut self, span: Span) -> Box<'a, TSOptionalMark, A> {
         self.allocator.alloc(self.ts_optional_mark(span))
     }
 
@@ -28803,7 +28803,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_ts_definite_mark(&mut self, span: Span) -> A::Box<'a, TSDefiniteMark> {
+    pub fn alloc_ts_definite_mark(&mut self, span: Span) -> Box<'a, TSDefiniteMark, A> {
         self.allocator.alloc(self.ts_definite_mark(span))
     }
 
@@ -28841,7 +28841,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         type_annotation: TSType<'a, A>,
         postfix: bool,
-    ) -> A::Box<'a, JSDocNullableType<'a, A>> {
+    ) -> Box<'a, JSDocNullableType<'a, A>, A> {
         self.allocator.alloc(self.js_doc_nullable_type(span, type_annotation, postfix))
     }
 
@@ -28879,7 +28879,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         type_annotation: TSType<'a, A>,
         postfix: bool,
-    ) -> A::Box<'a, JSDocNonNullableType<'a, A>> {
+    ) -> Box<'a, JSDocNonNullableType<'a, A>, A> {
         self.allocator.alloc(self.js_doc_non_nullable_type(span, type_annotation, postfix))
     }
 
@@ -28903,7 +28903,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_js_doc_unknown_type(&mut self, span: Span) -> A::Box<'a, JSDocUnknownType> {
+    pub fn alloc_js_doc_unknown_type(&mut self, span: Span) -> Box<'a, JSDocUnknownType, A> {
         self.allocator.alloc(self.js_doc_unknown_type(span))
     }
 
@@ -28922,11 +28922,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXElement<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         let value = JSXElement {
             span,
@@ -28953,11 +28953,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
-    ) -> A::Box<'a, JSXElement<'a, A>>
+        children: Vec<'a, JSXChild<'a, A>, A>,
+    ) -> Box<'a, JSXElement<'a, A>, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.jsx_element(span, opening_element, closing_element, children))
     }
@@ -28978,11 +28978,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         self_closing: bool,
         name: JSXElementName<'a, A>,
-        attributes: A::Vec<'a, JSXAttributeItem<'a, A>>,
+        attributes: Vec<'a, JSXAttributeItem<'a, A>, A>,
         type_parameters: T1,
     ) -> JSXOpeningElement<'a, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         let value = JSXOpeningElement {
             span,
@@ -29011,11 +29011,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         self_closing: bool,
         name: JSXElementName<'a, A>,
-        attributes: A::Vec<'a, JSXAttributeItem<'a, A>>,
+        attributes: Vec<'a, JSXAttributeItem<'a, A>, A>,
         type_parameters: T1,
-    ) -> A::Box<'a, JSXOpeningElement<'a, A>>
+    ) -> Box<'a, JSXOpeningElement<'a, A>, A>
     where
-        T1: IntoIn<'a, Option<A::Box<'a, TSTypeParameterInstantiation<'a, A>>>, A>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a, A>, A>>, A>,
     {
         self.allocator.alloc(self.jsx_opening_element(
             span,
@@ -29056,7 +29056,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         name: JSXElementName<'a, A>,
-    ) -> A::Box<'a, JSXClosingElement<'a, A>> {
+    ) -> Box<'a, JSXClosingElement<'a, A>, A> {
         self.allocator.alloc(self.jsx_closing_element(span, name))
     }
 
@@ -29075,7 +29075,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXFragment<'a, A> {
         let value = JSXFragment { span, opening_fragment, closing_fragment, children };
         self.handler.handle_jsx_fragment(&value);
@@ -29097,8 +29097,8 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
-    ) -> A::Box<'a, JSXFragment<'a, A>> {
+        children: Vec<'a, JSXChild<'a, A>, A>,
+    ) -> Box<'a, JSXFragment<'a, A>, A> {
         self.allocator.alloc(self.jsx_fragment(span, opening_fragment, closing_fragment, children))
     }
 
@@ -29128,7 +29128,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_element_name_from_jsx_identifier<T>(&mut self, inner: T) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXIdentifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXIdentifier<'a>, A>, A>,
     {
         let value = JSXElementName::Identifier(inner.into_in(self.allocator));
         self.handler.handle_jsx_element_name(&value);
@@ -29164,7 +29164,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value = JSXElementName::IdentifierReference(inner.into_in(self.allocator));
         self.handler.handle_jsx_element_name(&value);
@@ -29199,7 +29199,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXNamespacedName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXNamespacedName<'a>, A>, A>,
     {
         let value = JSXElementName::NamespacedName(inner.into_in(self.allocator));
         self.handler.handle_jsx_element_name(&value);
@@ -29234,7 +29234,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXMemberExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXMemberExpression<'a, A>, A>, A>,
     {
         let value = JSXElementName::MemberExpression(inner.into_in(self.allocator));
         self.handler.handle_jsx_element_name(&value);
@@ -29259,7 +29259,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_element_name_from_this_expression<T>(&mut self, inner: T) -> JSXElementName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ThisExpression>, A>,
+        T: IntoIn<'a, Box<'a, ThisExpression, A>, A>,
     {
         let value = JSXElementName::ThisExpression(inner.into_in(self.allocator));
         self.handler.handle_jsx_element_name(&value);
@@ -29300,7 +29300,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
-    ) -> A::Box<'a, JSXNamespacedName<'a>> {
+    ) -> Box<'a, JSXNamespacedName<'a>, A> {
         self.allocator.alloc(self.jsx_namespaced_name(span, namespace, property))
     }
 
@@ -29338,7 +29338,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         object: JSXMemberExpressionObject<'a, A>,
         property: JSXIdentifier<'a>,
-    ) -> A::Box<'a, JSXMemberExpression<'a, A>> {
+    ) -> Box<'a, JSXMemberExpression<'a, A>, A> {
         self.allocator.alloc(self.jsx_member_expression(span, object, property))
     }
 
@@ -29371,7 +29371,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXMemberExpressionObject<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, IdentifierReference<'a>>, A>,
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>, A>, A>,
     {
         let value = JSXMemberExpressionObject::IdentifierReference(inner.into_in(self.allocator));
         self.handler.handle_jsx_member_expression_object(&value);
@@ -29406,7 +29406,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXMemberExpressionObject<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXMemberExpression<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXMemberExpression<'a, A>, A>, A>,
     {
         let value = JSXMemberExpressionObject::MemberExpression(inner.into_in(self.allocator));
         self.handler.handle_jsx_member_expression_object(&value);
@@ -29437,7 +29437,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXMemberExpressionObject<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, ThisExpression>, A>,
+        T: IntoIn<'a, Box<'a, ThisExpression, A>, A>,
     {
         let value = JSXMemberExpressionObject::ThisExpression(inner.into_in(self.allocator));
         self.handler.handle_jsx_member_expression_object(&value);
@@ -29474,7 +29474,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         expression: JSXExpression<'a, A>,
-    ) -> A::Box<'a, JSXExpressionContainer<'a, A>> {
+    ) -> Box<'a, JSXExpressionContainer<'a, A>, A> {
         self.allocator.alloc(self.jsx_expression_container(span, expression))
     }
 
@@ -29527,7 +29527,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_jsx_empty_expression(&mut self, span: Span) -> A::Box<'a, JSXEmptyExpression> {
+    pub fn alloc_jsx_empty_expression(&mut self, span: Span) -> Box<'a, JSXEmptyExpression, A> {
         self.allocator.alloc(self.jsx_empty_expression(span))
     }
 
@@ -29556,7 +29556,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_attribute_item_from_jsx_attribute<T>(&mut self, inner: T) -> JSXAttributeItem<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXAttribute<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXAttribute<'a, A>, A>, A>,
     {
         let value = JSXAttributeItem::Attribute(inner.into_in(self.allocator));
         self.handler.handle_jsx_attribute_item(&value);
@@ -29589,7 +29589,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXAttributeItem<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXSpreadAttribute<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXSpreadAttribute<'a, A>, A>, A>,
     {
         let value = JSXAttributeItem::SpreadAttribute(inner.into_in(self.allocator));
         self.handler.handle_jsx_attribute_item(&value);
@@ -29630,7 +29630,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         name: JSXAttributeName<'a, A>,
         value: Option<JSXAttributeValue<'a, A>>,
-    ) -> A::Box<'a, JSXAttribute<'a, A>> {
+    ) -> Box<'a, JSXAttribute<'a, A>, A> {
         self.allocator.alloc(self.jsx_attribute(span, name, value))
     }
 
@@ -29664,7 +29664,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         argument: Expression<'a, A>,
-    ) -> A::Box<'a, JSXSpreadAttribute<'a, A>> {
+    ) -> Box<'a, JSXSpreadAttribute<'a, A>, A> {
         self.allocator.alloc(self.jsx_spread_attribute(span, argument))
     }
 
@@ -29694,7 +29694,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_attribute_name_from_jsx_identifier<T>(&mut self, inner: T) -> JSXAttributeName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXIdentifier<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXIdentifier<'a>, A>, A>,
     {
         let value = JSXAttributeName::Identifier(inner.into_in(self.allocator));
         self.handler.handle_jsx_attribute_name(&value);
@@ -29729,7 +29729,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXAttributeName<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXNamespacedName<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXNamespacedName<'a>, A>, A>,
     {
         let value = JSXAttributeName::NamespacedName(inner.into_in(self.allocator));
         self.handler.handle_jsx_attribute_name(&value);
@@ -29765,7 +29765,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXAttributeValue<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, StringLiteral<'a>>, A>,
+        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
     {
         let value = JSXAttributeValue::StringLiteral(inner.into_in(self.allocator));
         self.handler.handle_jsx_attribute_value(&value);
@@ -29798,7 +29798,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> JSXAttributeValue<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXExpressionContainer<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXExpressionContainer<'a, A>, A>, A>,
     {
         let value = JSXAttributeValue::ExpressionContainer(inner.into_in(self.allocator));
         self.handler.handle_jsx_attribute_value(&value);
@@ -29820,11 +29820,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXAttributeValue<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         let value = self.jsx_element(span, opening_element, closing_element, children);
         let value = JSXAttributeValue::Element(self.allocator.alloc(value));
@@ -29836,7 +29836,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_attribute_value_from_jsx_element<T>(&mut self, inner: T) -> JSXAttributeValue<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXElement<'a, A>, A>, A>,
     {
         let value = JSXAttributeValue::Element(inner.into_in(self.allocator));
         self.handler.handle_jsx_attribute_value(&value);
@@ -29858,7 +29858,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXAttributeValue<'a, A> {
         let value = self.jsx_fragment(span, opening_fragment, closing_fragment, children);
         let value = JSXAttributeValue::Fragment(self.allocator.alloc(value));
@@ -29870,7 +29870,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_attribute_value_from_jsx_fragment<T>(&mut self, inner: T) -> JSXAttributeValue<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXFragment<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXFragment<'a, A>, A>, A>,
     {
         let value = JSXAttributeValue::Fragment(inner.into_in(self.allocator));
         self.handler.handle_jsx_attribute_value(&value);
@@ -29906,7 +29906,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         name: IntoAtom,
-    ) -> A::Box<'a, JSXIdentifier<'a>>
+    ) -> Box<'a, JSXIdentifier<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
@@ -29935,7 +29935,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_child_from_jsx_text<T>(&mut self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXText<'a>>, A>,
+        T: IntoIn<'a, Box<'a, JSXText<'a>, A>, A>,
     {
         let value = JSXChild::Text(inner.into_in(self.allocator));
         self.handler.handle_jsx_child(&value);
@@ -29957,11 +29957,11 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_element: T1,
         closing_element: T2,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXChild<'a, A>
     where
-        T1: IntoIn<'a, A::Box<'a, JSXOpeningElement<'a, A>>, A>,
-        T2: IntoIn<'a, Option<A::Box<'a, JSXClosingElement<'a, A>>>, A>,
+        T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a, A>, A>, A>,
+        T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a, A>, A>>, A>,
     {
         let value = self.jsx_element(span, opening_element, closing_element, children);
         let value = JSXChild::Element(self.allocator.alloc(value));
@@ -29973,7 +29973,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_child_from_jsx_element<T>(&mut self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXElement<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXElement<'a, A>, A>, A>,
     {
         let value = JSXChild::Element(inner.into_in(self.allocator));
         self.handler.handle_jsx_child(&value);
@@ -29995,7 +29995,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
-        children: A::Vec<'a, JSXChild<'a, A>>,
+        children: Vec<'a, JSXChild<'a, A>, A>,
     ) -> JSXChild<'a, A> {
         let value = self.jsx_fragment(span, opening_fragment, closing_fragment, children);
         let value = JSXChild::Fragment(self.allocator.alloc(value));
@@ -30007,7 +30007,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_child_from_jsx_fragment<T>(&mut self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXFragment<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXFragment<'a, A>, A>, A>,
     {
         let value = JSXChild::Fragment(inner.into_in(self.allocator));
         self.handler.handle_jsx_child(&value);
@@ -30037,7 +30037,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_child_from_jsx_expression_container<T>(&mut self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXExpressionContainer<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXExpressionContainer<'a, A>, A>, A>,
     {
         let value = JSXChild::ExpressionContainer(inner.into_in(self.allocator));
         self.handler.handle_jsx_child(&value);
@@ -30067,7 +30067,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     #[inline]
     pub fn jsx_child_from_jsx_spread_child<T>(&mut self, inner: T) -> JSXChild<'a, A>
     where
-        T: IntoIn<'a, A::Box<'a, JSXSpreadChild<'a, A>>, A>,
+        T: IntoIn<'a, Box<'a, JSXSpreadChild<'a, A>, A>, A>,
     {
         let value = JSXChild::Spread(inner.into_in(self.allocator));
         self.handler.handle_jsx_child(&value);
@@ -30104,7 +30104,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         expression: Expression<'a, A>,
-    ) -> A::Box<'a, JSXSpreadChild<'a, A>> {
+    ) -> Box<'a, JSXSpreadChild<'a, A>, A> {
         self.allocator.alloc(self.jsx_spread_child(span, expression))
     }
 
@@ -30137,7 +30137,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         &mut self,
         span: Span,
         value: IntoAtom,
-    ) -> A::Box<'a, JSXText<'a>>
+    ) -> Box<'a, JSXText<'a>, A>
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
