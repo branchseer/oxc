@@ -70,6 +70,7 @@ pub use crate::{
 pub use generated::{ast_builder, ast_kind};
 pub use num_bigint::BigUint;
 use oxc_span::ast_alloc::AstAllocator;
+use crate::ast::Program;
 
 impl<'a, A: AstAllocator> handle::Handler<'a, A> for () {}
 
@@ -143,16 +144,8 @@ fn size_asserts() {
     assert!(size_of::<ast::TSType>() == 16);
 }
 
-#[test]
-fn lifetime_variance() {
-    type Node<'a, A = oxc_allocator::Allocator> = <A as AstAllocator>::Vec<'a, u8>;
+use oxc_span::ast_alloc::{Vec, Box};
 
-    // Variance infer doesn't work on concrete GAT types.
-    // The struct below doesn't pass the variance test but the type alias above does.
-    // Could be a rust compiler limitation.
-    // struct Node<'a, A: AstAllocator = oxc_allocator::Allocator>(Vec<'a, u8, A>);
-
-    fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: Node<'a>) -> Node<'b> {
-        program
-    }
+fn _assert_program_variant_lifetime<'a: 'b, 'b>(program: Program<'a>) -> Program<'b> {
+    program
 }

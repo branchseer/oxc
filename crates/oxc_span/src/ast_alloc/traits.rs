@@ -40,6 +40,9 @@ pub unsafe trait AstAllocator: Sized + 'static + Sealed {
         &'a self,
         iter: I,
     ) -> super::Vec<'a, T, Self>;
+
+    unsafe fn transmute_vec<'a, 'b, T1: Debug, T2: Debug>(val: Self::Vec<'a, T1>) -> Self::Vec<'b, T2>;
+    unsafe fn transmute_box<'a, 'b, T1: Debug + GetSpan + GetSpanMut, T2: Debug + GetSpan + GetSpanMut>(val: Self::Box<'a, T1>) -> Self::Box<'b, T2>;
 }
 
 pub trait Box<'a>: Sized {
@@ -62,6 +65,7 @@ pub trait Box<'a>: Sized {
     where
         Self::Target: Sized;
 }
+
 impl<'a, T> Box<'a> for oxc_allocator::Box<'a, T> {
     type Target = T;
 
@@ -218,5 +222,13 @@ unsafe impl AstAllocator for oxc_allocator::Allocator {
         iter: I,
     ) -> super::Vec<'a, T, Self> {
         super::Vec::from_alloc_vec(oxc_allocator::Vec::from_iter_in(iter, self))
+    }
+
+    unsafe fn transmute_vec<'a, 'b, T1: Debug, T2: Debug>(val: Self::Vec<'a, T1>) -> Self::Vec<'b, T2> {
+        unsafe { std::mem::transmute(val) }
+    }
+
+    unsafe fn transmute_box<'a, 'b, T1: Debug + GetSpan + GetSpanMut, T2: Debug + GetSpan + GetSpanMut>(val: Self::Box<'a, T1>) -> Self::Box<'b, T2> {
+        unsafe { std::mem::transmute(val) }
     }
 }

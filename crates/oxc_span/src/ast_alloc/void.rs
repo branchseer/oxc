@@ -169,4 +169,12 @@ unsafe impl super::AstAllocator for VoidAllocator {
     ) -> super::Vec<'a, T, Self> {
         super::Vec::from_alloc_vec(VoidVec(PhantomData))
     }
+
+    unsafe fn transmute_vec<'a, 'b, T1: Debug, T2: Debug>(val: Self::Vec<'a, T1>) -> Self::Vec<'b, T2> {
+        unsafe { std::mem::transmute(val) }
+    }
+
+    unsafe fn transmute_box<'a, 'b, T1: Debug + GetSpan + GetSpanMut, T2: Debug + GetSpan + GetSpanMut>(val: Self::Box<'a, T1>) -> Self::Box<'b, T2> {
+       unsafe { std::mem::transmute(val) }
+    }
 }
