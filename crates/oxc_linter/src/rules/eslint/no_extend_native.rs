@@ -4,7 +4,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::cmp::ContentEq;
 use oxc_span::{CompactStr, GetSpan};
-use std::mem::transmute;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -85,8 +84,7 @@ impl Rule for NoExtendNative {
         }))
     }
 
-    fn run_once<'a>(&self, ctx: &'a LintContext) {
-        let ctx = unsafe { transmute::<_, &'a LintContext<'a>>(ctx) };
+    fn run_once(&self, ctx: &LintContext) {
         let symbols = ctx.symbols();
         for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
             for reference_id in reference_id_list {
@@ -141,7 +139,7 @@ impl Rule for NoExtendNative {
 /// If this usage of `*.prototype` is a `Object.defineProperty` or `Object.defineProperties` call,
 /// then this function returns the `CallExpression` node.
 fn get_define_property_call<'a>(
-    ctx: &'a LintContext<'a>,
+    ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
     for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
@@ -178,7 +176,7 @@ fn is_define_property_call(call_expr: &CallExpression) -> bool {
 /// Get an assignment to the property of the given node.
 /// Example: `*.prop = 0` where `*.prop` is the given node.
 fn get_property_assignment<'a>(
-    ctx: &'a LintContext<'a>,
+    ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
     for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
@@ -208,9 +206,8 @@ fn get_property_assignment<'a>(
 /// `Object?.['prototype']`
 fn get_prototype_property_accessed<'a>(
     ctx: &'a LintContext,
-    node: &'a AstNode<'a>,
+    node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    let ctx = unsafe { transmute::<_, &'a LintContext<'a>>(ctx) };
     let AstKind::IdentifierReference(_) = node.kind() else {
         return None;
     };
@@ -239,9 +236,9 @@ fn get_prototype_property_accessed<'a>(
     prototype_node
 }
 
-fn is_computed_member_expression_matching<'a>(
-    node: &AstNode<'a>,
-    prop_access_expr: &MemberExpression<'a>,
+fn is_computed_member_expression_matching(
+    node: &AstNode,
+    prop_access_expr: &MemberExpression,
 ) -> bool {
     match node.kind() {
         AstKind::ChainExpression(chain_expr) => {

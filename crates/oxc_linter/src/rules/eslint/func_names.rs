@@ -43,7 +43,7 @@ enum FuncNamesConfig {
 }
 
 impl FuncNamesConfig {
-    fn is_invalid_function<'a>(self, func: &Function<'a>, parent_node: &AstNode<'a>) -> bool {
+    fn is_invalid_function(self, func: &Function, parent_node: &AstNode<'_>) -> bool {
         let func_name = func.name();
 
         match self {
@@ -228,7 +228,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
 /**
  * Gets the identifier for the function
  */
-fn get_function_identifier<'a>(func: &'a Function<'_>) -> Option<&'a Span> {
+fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     func.id.as_ref().map(|id| &id.span)
 }
 

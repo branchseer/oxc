@@ -241,7 +241,7 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    pub fn print_expression(&mut self, expr: &Expression<'a>) {
+    pub fn print_expression(&mut self, expr: &Expression<'_>) {
         expr.print_expr(self, Precedence::Lowest, Context::empty());
     }
 }
@@ -381,7 +381,7 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'=');
     }
 
-    fn print_sequence<T: Gen<'a>>(&mut self, items: &[T], ctx: Context) {
+    fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
         for item in items {
             item.print(self, ctx);
             self.print_comma();
@@ -418,7 +418,7 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'}');
     }
 
-    fn print_body(&mut self, stmt: &Statement<'a>, need_space: bool, ctx: Context) {
+    fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
         match stmt {
             Statement::BlockStatement(stmt) => {
                 self.print_soft_space();
@@ -439,7 +439,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_block_statement(&mut self, stmt: &BlockStatement<'a>, ctx: Context) {
+    fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
             for stmt in &stmt.body {
                 p.print_semicolon_if_needed();
@@ -462,7 +462,7 @@ impl<'a> Codegen<'a> {
     // ```
     // But it turned out this was actually a bit slower.
     // <https://github.com/oxc-project/oxc/pull/5221>
-    fn print_list<T: Gen<'a>>(&mut self, items: &[T], ctx: Context) {
+    fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
@@ -472,7 +472,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_list_with_comments<T: Gen<'a> + GetSpan>(&mut self, items: &[T], ctx: Context) {
+    fn print_list_with_comments<T: Gen + GetSpan>(&mut self, items: &[T], ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
@@ -488,12 +488,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_expressions<T: GenExpr<'a>>(
-        &mut self,
-        items: &[T],
-        precedence: Precedence,
-        ctx: Context,
-    ) {
+    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();

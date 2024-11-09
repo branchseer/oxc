@@ -1,6 +1,4 @@
 use std::cmp::Ordering;
-use std::mem;
-use std::mem::transmute;
 use std::ops::Neg;
 
 use num_bigint::BigInt;
@@ -48,10 +46,7 @@ impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
 
 impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Safety: TraverseCtx is actually covariant on 'a, because the ast nodes types in it are covariant,
-        // but compiler doesn't know it because of GAT in AstAllocator.
-        let ctx = Ctx(unsafe { transmute::<&mut TraverseCtx<'a>, &mut TraverseCtx<'_>>(ctx) });
-        let expr = unsafe { transmute::<&mut Expression<'a>, &mut Expression<'_>>(expr) };
+        let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::CallExpression(e) => {
                 Self::try_fold_useless_object_dot_define_properties_call(e, ctx)
