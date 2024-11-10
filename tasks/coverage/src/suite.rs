@@ -100,7 +100,7 @@ pub trait Suite<T: Case> {
             WalkDir::new(&cases_path)
                 .into_iter()
                 .filter_map(Result::ok)
-                .filter(|e| !e.file_type().is_dir())
+                .filter(|e| !e.file_type().is_dir() && e.file_name() != ".DS_Store")
                 .map(|e| e.path().to_owned())
                 .filter(|path| !self.skip_test_path(path))
                 .filter(|path| filter.map_or(true, |query| path.to_string_lossy().contains(query)))

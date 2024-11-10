@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_span::ast_alloc::Box;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -58,7 +58,7 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
         let decls = {
             let binding_pattern_kind =
                 ctx.ast.binding_pattern_kind_binding_identifier(SPAN, &decl.id.name);
-            let binding = ctx.ast.binding_pattern(binding_pattern_kind, NONE, false);
+            let binding = ctx.ast.binding_pattern(binding_pattern_kind, NONE, None);
             let decl_span = decl.span;
 
             let init = match &mut decl.module_reference {
@@ -79,7 +79,7 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
                     ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
                 }
             };
-            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, binding, Some(init), false))
+            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, binding, Some(init), None))
         };
 
         ctx.ast.declaration_variable(SPAN, kind, decls, false)

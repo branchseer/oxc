@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_span::ast_alloc::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_traverse::{Traverse, TraverseCtx};

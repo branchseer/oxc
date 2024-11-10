@@ -1,10 +1,11 @@
-use oxc_allocator::{Allocator, Box};
+use std::fmt::Debug;
+use oxc_allocator::{Allocator};
 use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
     AstBuilder,
 };
 use oxc_semantic::{NodeId, ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, GetSpan, Span, SPAN};
+use oxc_span::{Atom, CompactStr, GetSpan, GetSpanMut, Span, SPAN, ast_alloc::Box};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -133,7 +134,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.ast.alloc`.
     #[inline]
-    pub fn alloc<T: GetSpan>(&self, node: T) -> Box<'a, T> {
+    pub fn alloc<T: GetSpan + GetSpanMut + Debug>(&self, node: T) -> Box<'a, T> {
         self.ast.alloc(node)
     }
 

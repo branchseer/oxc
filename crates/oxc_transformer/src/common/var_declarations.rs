@@ -14,7 +14,7 @@
 
 use std::cell::RefCell;
 
-use oxc_allocator::Vec;
+use oxc_span::ast_alloc::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
@@ -76,7 +76,7 @@ impl<'a> VarDeclarationsStore<'a> {
     ) {
         let ident = binding.create_binding_identifier();
         let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
-        let ident = ctx.ast.binding_pattern(ident, NONE, false);
+        let ident = ctx.ast.binding_pattern(ident, NONE, None);
         self.insert_binding_pattern(ident, init, ctx);
     }
 
@@ -89,7 +89,7 @@ impl<'a> VarDeclarationsStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let declarator =
-            ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, init, false);
+            ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, ident, init, None);
         self.insert_declarator(declarator, ctx);
     }
 

@@ -2176,7 +2176,7 @@ pub enum MethodDefinitionType {
 }
 
 #[ast(visit)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
 #[serde(rename_all = "camelCase")]

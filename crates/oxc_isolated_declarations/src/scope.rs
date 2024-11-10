@@ -1,13 +1,13 @@
 use std::cell::Cell;
 
 use bitflags::bitflags;
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::AstBuilder;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{visit::walk::*, Visit};
-use oxc_span::Atom;
+use oxc_span::{Atom, ast_alloc::Vec};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::FxHashMap;
 

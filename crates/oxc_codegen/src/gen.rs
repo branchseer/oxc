@@ -3,6 +3,7 @@ use std::ops::Not;
 use cow_utils::CowUtils;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_ast::{ClassElementModifiersExt, ClassModifiersExt, FormalParameterModifiersExt};
 use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
@@ -584,10 +585,10 @@ impl<'a> Gen for VariableDeclaration<'a> {
 impl<'a> Gen for VariableDeclarator<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         self.id.kind.print(p, ctx);
-        if self.definite {
+        if self.definite.is_some() {
             p.print_ascii_byte(b'!');
         }
-        if self.id.optional {
+        if self.id.optional.is_some() {
             p.print_str("?");
         }
         if let Some(type_annotation) = &self.id.type_annotation {
@@ -676,11 +677,11 @@ impl<'a> Gen for FormalParameter<'a> {
             decorator.print(p, ctx);
             p.print_hard_space();
         }
-        if let Some(accessibility) = self.accessibility {
+        if let Some(accessibility) = self.modifiers.accessibility() {
             p.print_str(accessibility.as_str());
             p.print_hard_space();
         }
-        if self.readonly {
+        if self.modifiers.is_readonly() {
             p.print_str("readonly ");
         }
         self.pattern.print(p, ctx);
@@ -2139,10 +2140,10 @@ impl<'a> GenExpr for TSTypeAssertion<'a> {
             p.print_str("<");
             // var r = < <T>(x: T) => T > ((x) => { return null; });
             //          ^ make sure space is printed here.
-            if matches!(self.type_annotation, TSType::TSFunctionType(_)) {
+            if matches!(self.type_annotation.type_annotation, TSType::TSFunctionType(_)) {
                 p.print_hard_space();
             }
-            self.type_annotation.print(p, ctx);
+            self.type_annotation.type_annotation.print(p, ctx);
             p.print_str(">");
             self.expression.print_expr(p, Precedence::Member, ctx);
         });
@@ -2168,10 +2169,10 @@ impl<'a> Gen for Class<'a> {
                 decorator.print(p, ctx);
                 p.print_hard_space();
             }
-            if self.declare {
+            if self.modifiers.is_declare() {
                 p.print_str("declare ");
             }
-            if self.r#abstract {
+            if self.modifiers.is_abstract() {
                 p.print_str("abstract ");
             }
             p.print_str("class");
@@ -2191,7 +2192,7 @@ impl<'a> Gen for Class<'a> {
             }
             if let Some(implements) = self.implements.as_ref() {
                 p.print_str(" implements ");
-                p.print_list(implements, ctx);
+                p.print_list(&implements.items, ctx);
             }
             p.print_soft_space();
             self.body.print(p, ctx);
@@ -2480,14 +2481,14 @@ impl<'a> Gen for MethodDefinition<'a> {
             p.print_hard_space();
         }
 
-        if let Some(accessibility) = &self.accessibility {
+        if let Some(accessibility) = &self.modifiers.accessibility() {
             p.print_str(accessibility.as_str());
             p.print_hard_space();
         }
-        if self.r#type == MethodDefinitionType::TSAbstractMethodDefinition {
+        if self.modifiers.is_abstract() {
             p.print_str("abstract ");
         }
-        if self.r#static {
+        if self.modifiers.is_static() {
             p.print_str("static ");
         }
 
@@ -2516,7 +2517,7 @@ impl<'a> Gen for MethodDefinition<'a> {
         if self.computed {
             p.print_ascii_byte(b']');
         }
-        if self.optional {
+        if self.optional.is_some() {
             p.print_ascii_byte(b'?');
         }
         if let Some(type_parameters) = self.value.type_parameters.as_ref() {
@@ -2546,20 +2547,20 @@ impl<'a> Gen for PropertyDefinition<'a> {
             decorator.print(p, ctx);
             p.print_hard_space();
         }
-        if self.declare {
+        if self.modifiers.is_declare() {
             p.print_str("declare ");
         }
-        if let Some(accessibility) = self.accessibility {
+        if let Some(accessibility) = self.modifiers.accessibility() {
             p.print_str(accessibility.as_str());
             p.print_hard_space();
         }
-        if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
+        if self.modifiers.is_abstract() {
             p.print_str("abstract ");
         }
-        if self.r#static {
+        if self.modifiers.is_static() {
             p.print_str("static ");
         }
-        if self.readonly {
+        if self.modifiers.is_readonly() {
             p.print_str("readonly ");
         }
         if self.computed {
@@ -2569,7 +2570,7 @@ impl<'a> Gen for PropertyDefinition<'a> {
         if self.computed {
             p.print_ascii_byte(b']');
         }
-        if self.optional {
+        if self.optional.is_some() {
             p.print_str("?");
         }
         if let Some(type_annotation) = &self.type_annotation {
@@ -2593,14 +2594,14 @@ impl<'a> Gen for AccessorProperty<'a> {
             decorator.print(p, ctx);
             p.print_hard_space();
         }
-        if self.r#type.is_abstract() {
+        if self.modifiers.is_abstract() {
             p.print_str("abstract ");
         }
-        if let Some(accessibility) = self.accessibility {
+        if let Some(accessibility) = self.modifiers.accessibility() {
             p.print_str(accessibility.as_str());
             p.print_hard_space();
         }
-        if self.r#static {
+        if self.modifiers.is_static() {
             p.print_str("static ");
         }
         p.print_str("accessor");
@@ -2639,7 +2640,7 @@ impl<'a> Gen for PrivateIdentifier<'a> {
 impl<'a> Gen for BindingPattern<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         self.kind.print(p, ctx);
-        if self.optional {
+        if self.optional.is_some() {
             p.print_str("?");
         }
         if let Some(type_annotation) = &self.type_annotation {
@@ -2795,7 +2796,7 @@ impl<'a> Gen for Decorator<'a> {
     }
 }
 
-impl<'a> Gen for TSClassImplements<'a> {
+impl<'a> Gen for TSClassImplementsItem<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         self.expression.print(p, ctx);
         if let Some(type_parameters) = self.type_parameters.as_ref() {
@@ -3420,7 +3421,7 @@ impl<'a> Gen for TSTypeParameterInstantiation<'a> {
 
 impl<'a> Gen for TSIndexSignature<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.readonly {
+        if self.modifiers.is_readonly() {
             p.print_str("readonly ");
         }
         p.print_str("[");

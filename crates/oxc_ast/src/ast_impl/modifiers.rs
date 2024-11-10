@@ -20,6 +20,8 @@ pub trait ClassElementModifiersExt {
 
 pub trait FormalParameterModifiersExt {
     fn accessibility(&self) -> Option<TSAccessibility>;
+    fn is_override(&self) -> bool;
+    fn is_readonly(&self) -> bool;
 }
 
 impl ClassModifiersExt for Option<ClassModifiers> {
@@ -70,5 +72,13 @@ impl FormalParameterModifiersExt for Option<FormalParameterModifiers> {
     #[inline]
     fn accessibility(&self) -> Option<TSAccessibility> {
         self.as_ref().and_then(|modifiers| modifiers.accessibility)
+    }
+    #[inline]
+    fn is_override(&self) -> bool {
+        self.as_ref().map_or(false, |modifiers| modifiers.r#override)
+    }
+    #[inline]
+    fn is_readonly(&self) -> bool {
+        self.as_ref().map_or(false, |modifiers| modifiers.readonly)
     }
 }

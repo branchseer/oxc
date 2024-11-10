@@ -32,10 +32,10 @@
 //! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, ast_alloc::Vec};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 

@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Box, Vec};
+use oxc_span::ast_alloc::{Box, Vec};
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, Span, SPAN};
@@ -92,10 +92,10 @@ impl<'a> TypeScriptEnum<'a> {
             param_symbol_id,
         );
         let kind = ast.binding_pattern_kind_from_binding_identifier(ident.clone());
-        let id = ast.binding_pattern(kind, NONE, false);
+        let id = ast.binding_pattern(kind, NONE, None);
 
         // ((Foo) => {
-        let params = ast.formal_parameter(SPAN, ast.vec(), id, None, false, false);
+        let params = ast.formal_parameter(SPAN, ast.vec(), None, id);
         let params = ast.vec1(params);
         let params = ast.alloc_formal_parameters(
             SPAN,
@@ -169,8 +169,8 @@ impl<'a> TypeScriptEnum<'a> {
             let binding_identifier = decl.id.clone();
             let binding_pattern_kind =
                 ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-            let binding = ast.binding_pattern(binding_pattern_kind, NONE, false);
-            let decl = ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
+            let binding = ast.binding_pattern(binding_pattern_kind, NONE, None);
+            let decl = ast.variable_declarator(SPAN, kind, binding, Some(call_expression), None);
             ast.vec1(decl)
         };
         let variable_declaration = ast.declaration_variable(decl.span, kind, decls, false);

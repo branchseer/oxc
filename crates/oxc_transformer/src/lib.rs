@@ -39,11 +39,11 @@ use es2018::ES2018;
 use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, ast_alloc::Vec};
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 use regexp::RegExp;
 

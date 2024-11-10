@@ -71,7 +71,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSTypeAssertion(expr) => {
                 // SAFETY: `ast.copy` is unsound! We need to fix.
-                Some(unsafe { self.ast.copy(&expr.type_annotation) })
+                Some(unsafe { self.ast.copy(&expr.type_annotation.type_annotation) })
             }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {

@@ -171,10 +171,10 @@ impl<'a> Traverse<'a> for AsyncToGenerator {
                         ctx.ast.binding_pattern(
                             ctx.ast.binding_pattern_kind_from_binding_identifier(id),
                             NONE,
-                            false,
+                            None,
                         ),
                         Some(ctx.ast.expression_from_function(new_function)),
-                        false,
+                        None,
                     )),
                     false,
                 ));

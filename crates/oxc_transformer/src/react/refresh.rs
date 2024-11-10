@@ -101,11 +101,11 @@ pub struct ReactRefresh<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
     // States
     registrations: Vec<(SymbolId, Atom<'a>)>,
-    signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
+    signature_declarator_items: Vec<oxc_span::ast_alloc::Vec<'a, VariableDeclarator<'a>>>,
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
-    last_signature: Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)>,
-    extra_statements: FxHashMap<SymbolId, oxc_allocator::Vec<'a, Statement<'a>>>,
+    last_signature: Option<(BindingIdentifier<'a>, oxc_span::ast_alloc::Vec<'a, Argument<'a>>)>,
+    extra_statements: FxHashMap<SymbolId, oxc_span::ast_alloc::Vec<'a, Statement<'a>>>,
     // (function_scope_id, (hook_name, hook_key, custom_hook_callee)
     hook_calls: FxHashMap<ScopeId, Vec<(Atom<'a>, Atom<'a>)>>,
     non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
@@ -164,10 +164,10 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
                             binding_identifier.clone(),
                         ),
                         NONE,
-                        false,
+                        None,
                     ),
                     None,
-                    false,
+                    None,
                 ),
             );
 
@@ -195,7 +195,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
 
     fn enter_statements(
         &mut self,
-        _stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
+        _stmts: &mut oxc_span::ast_alloc::Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.signature_declarator_items.push(ctx.ast.vec());
@@ -203,7 +203,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
 
     fn exit_statements(
         &mut self,
-        stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
+        stmts: &mut oxc_span::ast_alloc::Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // TODO: check is there any function declaration
@@ -597,7 +597,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         scope_id: ScopeId,
         body: &mut FunctionBody<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)> {
+    ) -> Option<(BindingIdentifier<'a>, oxc_span::ast_alloc::Vec<'a, Argument<'a>>)> {
         let fn_hook_calls = self.hook_calls.remove(&scope_id)?;
 
         let mut key = fn_hook_calls
@@ -704,7 +704,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             ctx.ast.binding_pattern(
                 ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier.clone()),
                 NONE,
-                false,
+                None,
             ),
             Some(ctx.ast.expression_call(
                 SPAN,
@@ -713,7 +713,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
                 ctx.ast.vec(),
                 false,
             )),
-            false,
+            None,
         ));
 
         // Following is the signature call expression, will be generated in call site.

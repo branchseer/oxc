@@ -55,7 +55,7 @@ impl<'a> BoundIdentifier<'a> {
     pub fn create_binding_pattern(&self, ctx: &mut TraverseCtx<'a>) -> BindingPattern<'a> {
         let ident = self.create_binding_identifier();
         let binding_pattern_kind = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
-        ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
+        ctx.ast.binding_pattern(binding_pattern_kind, NONE, None)
     }
 
     // --- Read only ---

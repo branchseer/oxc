@@ -28,7 +28,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{ast::*, AstKind, ClassElementModifiersExt};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
 
@@ -2500,9 +2500,17 @@ impl<'a> Format<'a> for TSClassImplementsItem<'a> {
     }
 }
 
+
+impl<'a> Format<'a> for TSTypeAssertionAnnotation<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array!(p, ss!("<"), self.type_annotation.format(p), ss!(">"))
+    }
+}
+
+
 impl<'a> Format<'a> for TSTypeAssertion<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array!(p, ss!("<"), self.type_annotation.format(p), ss!(">"), self.expression.format(p))
+        array!(p, self.type_annotation.format(p), self.expression.format(p))
     }
 }
 
@@ -2823,7 +2831,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
             BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
         });
 
-        if self.optional {
+        if self.optional.is_some() {
             parts.push(ss!("?"));
         }
 
@@ -2907,7 +2915,7 @@ impl<'a> Format<'a> for TSIndexSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
 
-        if self.readonly {
+        if self.modifiers.is_readonly() {
             parts.push(ss!("readonly "));
         }
 

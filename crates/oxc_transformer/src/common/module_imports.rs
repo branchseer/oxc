@@ -244,7 +244,7 @@ impl<'a> ModuleImportsStore<'a> {
         let id = local.create_binding_pattern(ctx);
         let decl = {
             let init = ctx.ast.expression_call(SPAN, callee, NONE, args, false);
-            let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
+            let decl = ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), None);
             ctx.ast.vec1(decl)
         };
         let var_decl = ctx.ast.declaration_variable(SPAN, var_kind, decl, false);

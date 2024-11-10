@@ -8,7 +8,7 @@ use crate::{
     IsolatedDeclarations,
 };
 use oxc_allocator::CloneIn;
-use oxc_ast::ClassElementModifiersExt as _;
+use oxc_ast::{ClassElementModifiersExt, ClassModifiersExt, FormalParameterModifiersExt as _};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, NONE};
 use oxc_span::ast_alloc::Box;
@@ -146,7 +146,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn create_class_property(
         &self,
-        r#type: PropertyDefinitionType,
+        r#abstract: bool,
         span: Span,
         key: PropertyKey<'a>,
         r#static: bool,
@@ -154,20 +154,15 @@ impl<'a> IsolatedDeclarations<'a> {
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a> {
         self.ast.class_element_property_definition(
-            r#type,
             span,
             self.ast.vec(),
+            Some(ClassElementModifiers { span: SPAN, r#abstract, r#static, r#override, accessibility, ..Default::default() }),
             key,
             None,
-            false,
-            r#static,
-            false,
-            r#override,
-            false,
-            false,
+            None,
+            None,
             false,
             NONE,
-            accessibility,
         )
     }
 
@@ -182,42 +177,29 @@ impl<'a> IsolatedDeclarations<'a> {
         };
         let key = self.ast.property_key_identifier_name(SPAN, ident_name);
         Some(self.ast.class_element_property_definition(
-            PropertyDefinitionType::PropertyDefinition,
             param.span,
             self.ast.vec(),
+            Some(ClassElementModifiers { span: SPAN, r#override: param.modifiers.is_override(), readonly: param.modifiers.is_readonly(), accessibility: self.transform_accessibility(param.modifiers.accessibility()), ..Default::default() }),
             key,
+            param.pattern.optional,
+            None,
             None,
             false,
-            false,
-            false,
-            param.r#override,
-            param.pattern.optional,
-            false,
-            param.readonly,
             type_annotation,
-            self.transform_accessibility(param.accessibility),
         ))
     }
 
     fn transform_private_modifier_method(&self, method: &MethodDefinition<'a>) -> ClassElement<'a> {
         match method.kind {
             MethodDefinitionKind::Method => {
-                let r#type = match method.r#type {
-                    MethodDefinitionType::MethodDefinition => {
-                        PropertyDefinitionType::PropertyDefinition
-                    }
-                    MethodDefinitionType::TSAbstractMethodDefinition => {
-                        PropertyDefinitionType::TSAbstractPropertyDefinition
-                    }
-                };
                 self.create_class_property(
-                    r#type,
+                    method.modifiers.is_abstract(),
                     method.span,
                     // SAFETY: `ast.copy` is unsound! We need to fix.
                     unsafe { self.ast.copy(&method.key) },
-                    method.r#static,
-                    method.r#override,
-                    self.transform_accessibility(method.accessibility),
+                    method.modifiers.is_static(),
+                    method.modifiers.is_override(),
+                    self.transform_accessibility(method.modifiers.accessibility()),
                 )
             }
             MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
@@ -245,9 +227,9 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> oxc_span::ast_alloc::Vec<'a, ClassElement<'a>> {
         let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
-            if param.accessibility.is_some() || param.readonly {
+            if param.modifiers.accessibility().is_some() || param.modifiers.is_readonly() {
                 let type_annotation =
-                    if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                    if param.modifiers.accessibility().is_some_and(TSAccessibility::is_private) {
                         None
                     } else {
                         // transformed params will definitely have type annotation
@@ -282,7 +264,7 @@ impl<'a> IsolatedDeclarations<'a> {
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if (method.key.is_private_identifier()
-                    || method.accessibility.is_some_and(TSAccessibility::is_private))
+                    || method.modifiers.accessibility().is_some_and(TSAccessibility::is_private))
                     || (method.computed && !self.is_literal_key(&method.key))
                 {
                     continue;
@@ -326,7 +308,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &Class<'a>,
         declare: Option<bool>,
     ) -> Option<Box<'a, Class<'a>>> {
-        if decl.declare {
+        if decl.modifiers.is_declare() {
             return None;
         }
 
@@ -354,7 +336,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.has_internal_annotation(method.span) {
                         continue;
                     }
-                    if !(method.r#type.is_abstract() || method.optional)
+                    if !(method.modifiers.is_abstract() || method.optional.is_some())
                         && method.value.body.is_none()
                     {
                         is_function_overloads = true;
@@ -374,7 +356,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     let function = &method.value;
                     let params = match method.kind {
                         MethodDefinitionKind::Set => {
-                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                            if method.modifiers.accessibility().is_some_and(TSAccessibility::is_private) {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
@@ -408,7 +390,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
 
-                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                            if method.modifiers.accessibility().is_some_and(TSAccessibility::is_private) {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
@@ -416,7 +398,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             params
                         }
                         _ => {
-                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                            if method.modifiers.accessibility().is_some_and(TSAccessibility::is_private) {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
@@ -488,19 +470,31 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     // FIXME: missing many fields
                     let new_element = self.ast.class_element_accessor_property(
-                        property.r#type,
                         property.span,
                         self.ast.vec(),
+                        Some(ClassElementModifiers { r#abstract: property.modifiers.is_abstract(), r#static: property.modifiers.is_static(), accessibility: property.modifiers.accessibility(), ..Default::default() }),
                         // SAFETY: `ast.copy` is unsound! We need to fix.
                         unsafe { self.ast.copy(&property.key) },
                         None,
                         property.computed,
-                        property.r#static,
                         property.definite,
                         // SAFETY: `ast.copy` is unsound! We need to fix.
                         unsafe { self.ast.copy(&property.type_annotation) },
-                        property.accessibility,
                     );
+                    // let new_element = self.ast.class_element_accessor_property(
+                    //     property.r#type,
+                    //     property.span,
+                    //     self.ast.vec(),
+                    //     // SAFETY: `ast.copy` is unsound! We need to fix.
+                    //     unsafe { self.ast.copy(&property.key) },
+                    //     None,
+                    //     property.computed,
+                    //     property.r#static,
+                    //     property.definite,
+                    //     // SAFETY: `ast.copy` is unsound! We need to fix.
+                    //     unsafe { self.ast.copy(&property.type_annotation) },
+                    //     property.accessibility,
+                    // );
                     elements.push(new_element);
                 }
                 ClassElement::TSIndexSignature(signature) => elements.push({
@@ -521,8 +515,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let r#type = PropertyDefinitionType::PropertyDefinition;
             let decorators = self.ast.vec();
             let element = self.ast.class_element_property_definition(
-                r#type, SPAN, decorators, ident, None, false, false, false, false, false, false,
-                false, NONE, None,
+                SPAN, decorators, None, ident, None, None, None, false, None,
             );
 
             elements.insert(0, element);
@@ -530,10 +523,14 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let body = self.ast.class_body(decl.body.span, elements);
 
+
         Some(self.ast.alloc_class(
             decl.r#type,
             decl.span,
             self.ast.vec(),
+
+            Some(ClassModifiers { span: SPAN, r#abstract: decl.modifiers.is_abstract(), declare: declare.unwrap_or_else(|| self.is_declare()) }),
+            
             // SAFETY: `ast.copy` is unsound! We need to fix.
             unsafe { self.ast.copy(&decl.id) },
             // SAFETY: `ast.copy` is unsound! We need to fix.
@@ -545,8 +542,6 @@ impl<'a> IsolatedDeclarations<'a> {
             // SAFETY: `ast.copy` is unsound! We need to fix.
             unsafe { self.ast.copy(&decl.implements) },
             body,
-            decl.r#abstract,
-            declare.unwrap_or_else(|| self.is_declare()),
         ))
     }
 
@@ -554,9 +549,9 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         kind: BindingPatternKind<'a>,
     ) -> Box<'a, FormalParameters<'a>> {
-        let pattern = self.ast.binding_pattern(kind, None::<Box<'a, TSTypeAnnotation<'a>>>, false);
+        let pattern = self.ast.binding_pattern(kind, None::<Box<'a, TSTypeAnnotation<'a>>>, None);
         let parameter =
-            self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);
+            self.ast.formal_parameter(SPAN, self.ast.vec(), None, pattern);
         let items = self.ast.vec1(parameter);
         self.ast.alloc_formal_parameters(SPAN, FormalParameterKind::Signature, items, NONE)
     }

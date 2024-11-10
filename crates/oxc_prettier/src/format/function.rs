@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-
+use oxc_ast::ClassElementModifiersExt;
 use crate::{
     doc::{Doc, DocBuilder},
     format::function_parameters::should_group_function_parameters,
@@ -69,20 +69,20 @@ pub(super) fn print_function<'a>(
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = p.vec();
 
-    if let Some(accessibility) = &method.accessibility {
+    if let Some(accessibility) = &method.modifiers.accessibility() {
         parts.push(ss!(accessibility.as_str()));
         parts.push(space!());
     }
 
-    if method.r#static {
+    if method.modifiers.is_static() {
         parts.push(ss!("static "));
     }
 
-    if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
+    if method.modifiers.is_abstract() {
         parts.push(ss!("abstract "));
     }
 
-    if method.r#override {
+    if method.modifiers.is_override() {
         parts.push(ss!("override "));
     }
 
@@ -106,7 +106,7 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
 
     parts.push(method.key.format(p));
 
-    if method.optional {
+    if method.optional.is_some() {
         parts.push(ss!("?"));
     }
 

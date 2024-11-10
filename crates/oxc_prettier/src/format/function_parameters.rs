@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{ast::*, AstKind, FormalParameterModifiersExt};
 
 use crate::{
     comments::CommentFlags,
@@ -95,16 +95,16 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     for (i, param) in params.items.iter().enumerate() {
-        if let Some(accessibility) = &param.accessibility {
+        if let Some(accessibility) = &param.modifiers.accessibility() {
             printed.push(ss!(accessibility.as_str()));
             printed.push(space!());
         }
 
-        if param.r#override {
+        if param.modifiers.is_override() {
             printed.push(ss!("override "));
         }
 
-        if param.readonly {
+        if param.modifiers.is_readonly() {
             printed.push(ss!("readonly "));
         }
 

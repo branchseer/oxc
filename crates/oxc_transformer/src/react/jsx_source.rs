@@ -208,12 +208,12 @@ impl<'a, 'ctx> ReactJsxSource<'a, 'ctx> {
         let id = {
             let ident = filename_var.create_binding_identifier();
             let ident = ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
-            ctx.ast.binding_pattern(ident, NONE, false)
+            ctx.ast.binding_pattern(ident, NONE, None)
         };
         let decl = {
             let init =
                 ctx.ast.expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy());
-            ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false)
+            ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), None)
         };
         Some(decl)
     }

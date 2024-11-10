@@ -2,8 +2,8 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::ast::*;
+use oxc_span::ast_alloc::Vec as ArenaVec;
+use oxc_ast::{ast::*, ClassElementModifiersExt, FormalParameterModifiersExt};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
@@ -173,14 +173,14 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         decl: &mut VariableDeclarator<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        decl.definite = false;
+        decl.definite = None;
     }
 
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, _ctx: &mut TraverseCtx<'a>) {
         pat.type_annotation = None;
 
         if pat.kind.is_binding_identifier() {
-            pat.optional = false;
+            pat.optional = None;
         }
     }
 
@@ -192,25 +192,27 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         class.type_parameters = None;
         class.super_type_parameters = None;
         class.implements = None;
-        class.r#abstract = false;
+        if let Some(modifiers) = class.modifiers.as_mut() {
+            modifiers.r#abstract = false;
+        }
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
         // Remove type only members
         body.body.retain(|elem| match elem {
             ClassElement::MethodDefinition(method) => {
-                matches!(method.r#type, MethodDefinitionType::MethodDefinition)
+                !method.modifiers.is_abstract()
                     && !method.value.is_typescript_syntax()
             }
             ClassElement::PropertyDefinition(prop) => {
-                if prop.declare {
+                if prop.modifiers.is_declare() {
                     false
                 } else {
-                    matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
+                    !prop.modifiers.is_abstract()
                 }
             }
             ClassElement::AccessorProperty(prop) => {
-                matches!(prop.r#type, AccessorPropertyType::AccessorProperty)
+                !prop.modifiers.is_abstract()
             }
             ClassElement::TSIndexSignature(_) => false,
             ClassElement::StaticBlock(_) => true,
@@ -273,7 +275,9 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         param: &mut FormalParameter<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        param.accessibility = None;
+        if let Some(modifiers) = param.modifiers.as_mut() {
+            modifiers.accessibility = None;
+        }
     }
 
     fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -299,7 +303,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
-                if param.accessibility.is_some() || param.readonly || param.r#override {
+                if param.modifiers.accessibility().is_some() || param.modifiers.is_readonly() || param.modifiers.is_override() {
                     if let Some(id) = param.pattern.get_binding_identifier() {
                         self.assignments.push(Assignment {
                             span: id.span,
@@ -309,15 +313,15 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                     }
                 }
 
-                param.readonly = false;
-                param.accessibility = None;
-                param.r#override = false;
+                param.modifiers = None;
             }
         }
 
-        def.accessibility = None;
-        def.optional = false;
-        def.r#override = false;
+        if let Some(modifiers) = def.modifiers.as_mut() {
+            modifiers.accessibility = None;
+            modifiers.r#override = false;
+        }
+        def.optional = None;
     }
 
     fn exit_method_definition(
@@ -357,21 +361,23 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         assert!(
-            !(def.declare && def.value.is_some()),
+            !(def.modifiers.is_declare() && def.value.is_some()),
             "Fields with the 'declare' modifier cannot be initialized here, but only in the constructor"
         );
 
         assert!(
-            !(def.definite && def.value.is_some()),
+            !(def.definite.is_some() && def.value.is_some()),
             "Definitely assigned fields cannot be initialized here, but only in the constructor"
         );
 
-        def.accessibility = None;
-        def.declare = false;
-        def.definite = false;
-        def.r#override = false;
-        def.optional = false;
-        def.readonly = false;
+        if let Some(modifiers) = def.modifiers.as_mut() {
+            modifiers.accessibility = None;
+            modifiers.declare = false;
+            modifiers.r#override = false;
+            modifiers.readonly = false;
+        }
+        def.definite = None;
+        def.optional = None;
         def.type_annotation = None;
     }
 
@@ -380,8 +386,10 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         def: &mut AccessorProperty<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        def.accessibility = None;
-        def.definite = false;
+        if let Some(modifiers) = def.modifiers.as_mut() {
+            modifiers.accessibility = None;
+        }
+        def.definite = None;
         def.type_annotation = None;
     }
 

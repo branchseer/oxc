@@ -19,7 +19,7 @@ export default function generateTraverseTraitCode(types) {
   }
 
   return `
-    use oxc_allocator::Vec;
+    use oxc_span::ast_alloc::Vec;
     #[allow(clippy::wildcard_imports)]
     use oxc_ast::ast::*;
 

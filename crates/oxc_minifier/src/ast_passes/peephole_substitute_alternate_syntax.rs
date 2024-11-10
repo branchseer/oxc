@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_span::ast_alloc::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::ToInt32;
 use oxc_semantic::IsGlobalReference;

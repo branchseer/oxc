@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_span::ast_alloc::{Box, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, CompactStr, SPAN};
@@ -306,8 +306,8 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
             let pattern_kind = ctx.ast.binding_pattern_kind_binding_identifier(SPAN, name);
-            let binding = ctx.ast.binding_pattern(pattern_kind, NONE, false);
-            let decl = ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
+            let binding = ctx.ast.binding_pattern(pattern_kind, NONE, None);
+            let decl = ctx.ast.variable_declarator(SPAN, kind, binding, None, None);
             ctx.ast.vec1(decl)
         };
         ctx.ast.declaration_variable(SPAN, kind, declarations, false)
@@ -331,7 +331,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
             let body = ctx.ast.function_body(SPAN, directives, stmts);
             let params = {
                 let ident = ctx.ast.binding_pattern_kind_binding_identifier(SPAN, arg_name);
-                let pattern = ctx.ast.binding_pattern(ident, NONE, false);
+                let pattern = ctx.ast.binding_pattern(ident, NONE, None);
                 let items = ctx.ast.vec1(ctx.ast.plain_formal_parameter(SPAN, pattern));
                 ctx.ast.formal_parameters(SPAN, FormalParameterKind::FormalParameter, items, NONE)
             };

@@ -45,7 +45,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-display-name/src/index.ts>
 
-use oxc_allocator::Box;
+use oxc_span::ast_alloc::Box;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
