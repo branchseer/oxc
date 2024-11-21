@@ -730,6 +730,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             class.bind(self);
         }
 
+        if let Some(class_modifiers) = &class.modifiers {
+            self.visit_class_modifiers(class_modifiers);
+        }
         if let Some(type_parameters) = &class.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }

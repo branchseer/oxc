@@ -21,11 +21,18 @@ use traits::{Box as _, Vec as _};
 pub use void::VoidAllocator;
 use void::{VoidBox, VoidVec};
 
-#[derive_where(Debug)]
+
 pub struct Vec<'a, T: Debug, A: AstAllocator = Allocator>(
     A::Vec<'static, ()>,
     PhantomData<(&'a (), T)>,
 );
+
+impl<'a, T: Debug, A: AstAllocator> Debug for Vec<'a, T, A> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(self.as_alloc_vec(), f)
+    }
+}
+
 
 impl<'a, T: Debug, A: AstAllocator> Vec<'a, T, A> {
     #[inline]
@@ -135,11 +142,16 @@ impl GetSpanMut for VariantBoxPlaceholder {
     }
 }
 
-#[derive_where(Debug)]
 pub struct Box<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator = Allocator>(
     A::Box<'static, VariantBoxPlaceholder>,
     PhantomData<(&'a (), T)>,
 );
+
+impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> Debug for Box<'a, T, A> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(self.as_alloc_box(), f)
+    }
+}
 
 
 impl<'a, T: Debug + GetSpan + GetSpanMut> Deref for Box<'a, T> {

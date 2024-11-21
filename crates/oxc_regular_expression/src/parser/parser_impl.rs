@@ -847,9 +847,6 @@ impl<'a, A: AstAllocator> Parser<'a, A> {
                 let (from, to) = match (from.try_deref(), to.try_deref()) {
                     (Some(from), Some(to)) => (from, to),
                     (_, _) => {
-                        body.push(ast::CharacterClassContents::CharacterClassRange(
-                            A::box_from_span(span).unwrap(),
-                        ));
                         continue;
                     }
                 };

@@ -228,15 +228,13 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         }
 
         // ParenthesizedExpression is from acorn --preserveParens
-        if let Ok(expressions) = expressions.specialize_mut() {
-            if expressions.len() == 1 {
-                expressions.remove(0);
-            }
-        }
-
-        let expression = self
-            .ast
-            .expression_sequence(Span::new(paren_span.start + 1, paren_span.end - 1), expressions);
+        let expression = match expressions.specialize_mut() {
+            Ok(expressions) if expressions.len() == 1 => expressions.remove(0),
+            _ => self.ast.expression_sequence(
+                Span::new(paren_span.start + 1, paren_span.end - 1),
+                expressions,
+            ),
+        };
 
         Ok(if self.options.preserve_parens {
             self.ast.expression_parenthesized(paren_span, expression)
@@ -1089,7 +1087,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
         let span = self.start_span();
 
-        if self.cur_kind().is_binding_identifier() && self.nth_at(2, Kind::Arrow) {
+        if self.cur_kind().is_binding_identifier() && self.peek_at(Kind::Arrow) {
             // oxidase TODO: move parse_simple_arrow_function_expression here
         }
 

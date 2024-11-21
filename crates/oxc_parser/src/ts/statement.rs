@@ -92,7 +92,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             }
             Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
                 let node = self.parse_template_literal(false)?;
-                if node.expressions.specialize_ref().is_ok_and(|expressions| expressions.is_empty())
+                if node.expressions.specialize_ref().is_ok_and(|expressions| !expressions.is_empty())
                 {
                     self.error(diagnostics::computed_property_names_not_allowed_in_enums(
                         node.span(),
