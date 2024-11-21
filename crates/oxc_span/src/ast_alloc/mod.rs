@@ -105,7 +105,7 @@ impl<'a, T: Debug + ContentEq> ContentEq for Vec<'a, T> {
 }
 impl<'a, T: Debug + ContentHash> ContentHash for Vec<'a, T> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.deref().content_hash(state)
+        self.as_alloc_vec().content_hash(state)
     }
 }
 
@@ -160,14 +160,14 @@ impl<'a, T: Debug + GetSpan + GetSpanMut> DerefMut for Box<'a, T> {
 impl<'a, T: Debug + GetSpan + GetSpanMut> AsRef<T> for Box<'a, T> {
     #[inline]
     fn as_ref(&self) -> &T {
-        self.deref()
+        self.as_alloc_box().deref()
     }
 }
 
 impl<'a, T: Debug + GetSpan + GetSpanMut> AsMut<T> for Box<'a, T> {
     #[inline]
     fn as_mut(&mut self) -> &mut T {
-        self.deref_mut()
+        self.as_alloc_box_mut().deref_mut()
     }
 }
 
@@ -236,18 +236,18 @@ where
 
 impl<'a, T: Debug + GetSpan + GetSpanMut + ContentEq> ContentEq for Box<'a, T> {
     fn content_eq(&self, other: &Self) -> bool {
-        self.deref().content_eq(other.deref())
+        self.as_alloc_box().content_eq(other.as_alloc_box())
     }
 }
 impl<'a, T: Debug + GetSpan + GetSpanMut + ContentHash> ContentHash for Box<'a, T> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.deref().content_hash(state)
+        self.as_alloc_box().content_hash(state)
     }
 }
 
 impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> GetSpan for Box<'a, T, A> {
     fn span(&self) -> Span {
-        self.deref().span()
+        self.as_alloc_box().span()
     }
 }
 impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> GetSpanMut for Box<'a, T, A> {
