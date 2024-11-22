@@ -280,7 +280,10 @@ after transform: ["T", "a", "b", "c", "x", "y"]
 rebuilt        : ["a", "b", "c", "x", "y"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/for-of-lhs/input.ts
-semantic error: Unresolved references mismatch:
+semantic error: Reference flags mismatch for "a":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Unresolved references mismatch:
 after transform: ["T", "a"]
 rebuilt        : ["a"]
 
