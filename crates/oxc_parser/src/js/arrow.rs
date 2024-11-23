@@ -40,12 +40,12 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             let scope_token = self.ast.enter_scope();
             let span = self.start_span();
             self.bump_any(); // bump `async`
-            let expr = self.parse_binary_expression_or_higher(Precedence::Comma)?;
+            let ident = self.parse_binding_identifier()?;
             return self
                 .parse_simple_arrow_function_expression(
                     scope_token,
                     span,
-                    expr,
+                    ident,
                     /* async */ true,
                 )
                 .map(Some);
@@ -214,24 +214,13 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         &mut self,
         scope_token: ScopeToken<ArrowFunctionExpression<'a, A>>,
         span: Span,
-        ident: Expression<'a, A>,
+        ident: BindingIdentifier<'a>,
         r#async: bool,
     ) -> Result<Expression<'a, A>> {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
         let params = {
-            let ident = match ident {
-                Expression::Identifier(ident) => BindingIdentifier::new(
-                    ident.span(),
-                    if let Some(ident) = ident.try_deref() {
-                        ident.name.clone()
-                    } else {
-                        Atom::empty()
-                    },
-                ),
-                _ => unreachable!(),
-            };
             let params_span = self.end_span(ident.span);
             let ident = self.ast.binding_pattern_kind_from_binding_identifier(ident);
             let pattern = self.ast.binding_pattern(ident, NONE, None);
