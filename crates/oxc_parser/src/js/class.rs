@@ -95,6 +95,8 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         } else {
             None
         };
+        let scope_token = self.ast.enter_scope();
+
         let type_parameters = if self.is_ts { self.parse_ts_type_parameters()? } else { None };
         let (extends, implements) = self.parse_heritage_clause()?;
         let mut super_class = None;
@@ -109,7 +111,6 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
                 }
             }
         }
-        let scope_token = self.ast.enter_scope();
         let body =
             self.parse_class_body(modifiers.as_ref().is_some_and(|modifiers| modifiers.declare))?;
 
