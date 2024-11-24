@@ -1,6 +1,6 @@
-use oxc_span::ast_alloc::Vec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_span::ast_alloc::Vec;
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 

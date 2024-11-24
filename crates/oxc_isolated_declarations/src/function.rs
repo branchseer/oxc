@@ -117,7 +117,13 @@ impl<'a> IsolatedDeclarations<'a> {
                 unsafe { self.ast.copy(&pattern.kind) },
                 type_annotation.map(|type_annotation| self.ast.alloc(type_annotation)),
                 // if it's assignment pattern, it's optional
-                pattern.optional.or_else(||  if !is_remaining_params_have_required && is_assignment_pattern { Some(TSOptionalMark { span: SPAN }) } else { None }),
+                pattern.optional.or_else(|| {
+                    if !is_remaining_params_have_required && is_assignment_pattern {
+                        Some(TSOptionalMark { span: SPAN })
+                    } else {
+                        None
+                    }
+                }),
             );
         }
 
@@ -137,7 +143,8 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.vec_from_iter(params.items.iter().enumerate().filter_map(|(index, item)| {
                 let is_remaining_params_have_required =
                     params.items.iter().skip(index).any(|item| {
-                        !(item.pattern.optional.is_some() || item.pattern.kind.is_assignment_pattern())
+                        !(item.pattern.optional.is_some()
+                            || item.pattern.kind.is_assignment_pattern())
                     });
                 self.transform_formal_parameter(item, is_remaining_params_have_required)
             }));

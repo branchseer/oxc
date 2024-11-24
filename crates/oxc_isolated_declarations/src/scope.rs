@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_ast::AstBuilder;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{visit::walk::*, Visit};
-use oxc_span::{Atom, ast_alloc::Vec};
+use oxc_span::{ast_alloc::Vec, Atom};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::FxHashMap;
 

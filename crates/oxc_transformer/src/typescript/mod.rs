@@ -8,8 +8,8 @@ mod rewrite_extensions;
 
 use module::TypeScriptModule;
 use namespace::TypeScriptNamespace;
-use oxc_span::ast_alloc::Vec;
 use oxc_ast::ast::*;
+use oxc_span::ast_alloc::Vec;
 use oxc_traverse::{Traverse, TraverseCtx};
 use rewrite_extensions::TypeScriptRewriteExtensions;
 

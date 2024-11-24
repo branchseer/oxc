@@ -1,6 +1,6 @@
-use oxc_span::ast_alloc::{Box, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::BoundNames;
+use oxc_span::ast_alloc::{Box, Vec};
 use oxc_span::{Atom, CompactStr, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},

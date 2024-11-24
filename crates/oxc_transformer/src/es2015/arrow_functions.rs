@@ -124,9 +124,9 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-arrow-functions>
 //! * Arrow function specification: <https://tc39.es/ecma262/#sec-arrow-function-definitions>
 
-use oxc_span::ast_alloc::{Box, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::SparseStack;
+use oxc_span::ast_alloc::{Box, Vec};
 use oxc_span::SPAN;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},

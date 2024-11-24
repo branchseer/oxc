@@ -43,7 +43,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::{SPAN, ast_alloc::Vec};
+use oxc_span::{ast_alloc::Vec, SPAN};
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 use regexp::RegExp;
 

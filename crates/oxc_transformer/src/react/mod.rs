@@ -8,8 +8,8 @@ mod options;
 mod refresh;
 mod utils;
 
-use oxc_span::ast_alloc::Vec;
 use oxc_ast::{ast::*, AstBuilder};
+use oxc_span::ast_alloc::Vec;
 use oxc_traverse::{Traverse, TraverseCtx};
 use refresh::ReactRefresh;
 

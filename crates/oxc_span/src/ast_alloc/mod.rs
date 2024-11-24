@@ -3,13 +3,13 @@ mod default;
 pub mod traits;
 mod void;
 
-use std::borrow::{Borrow, BorrowMut};
 use crate::cmp::ContentEq;
 use crate::hash::ContentHash;
 use crate::{GetSpan, GetSpanMut, Span};
 pub use cast::*;
 use derive_where::derive_where;
 use oxc_allocator::{Allocator, CloneIn, FromIn};
+use std::borrow::{Borrow, BorrowMut};
 use std::fmt::Debug;
 use std::hash::Hasher;
 use std::marker::PhantomData;
@@ -21,7 +21,6 @@ use traits::{Box as _, Vec as _};
 pub use void::VoidAllocator;
 use void::{VoidBox, VoidVec};
 
-
 pub struct Vec<'a, T: Debug, A: AstAllocator = Allocator>(
     A::Vec<'static, ()>,
     PhantomData<(&'a (), T)>,
@@ -32,7 +31,6 @@ impl<'a, T: Debug, A: AstAllocator> Debug for Vec<'a, T, A> {
         Debug::fmt(self.as_alloc_vec(), f)
     }
 }
-
 
 impl<'a, T: Debug, A: AstAllocator> Vec<'a, T, A> {
     #[inline]
@@ -153,7 +151,6 @@ impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> Debug for Box<'a, T, 
     }
 }
 
-
 impl<'a, T: Debug + GetSpan + GetSpanMut> Deref for Box<'a, T> {
     type Target = T;
     #[inline]
@@ -202,12 +199,11 @@ impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> Box<'a, T, A> {
     fn as_alloc_box_mut(&mut self) -> &mut A::Box<'a, T> {
         unsafe { transmute(&mut self.0) }
     }
-    
+
     #[inline]
     pub fn try_deref(&self) -> Option<&T> {
         self.as_alloc_box().try_deref()
     }
-
 
     #[inline]
     pub fn try_unbox(self) -> Result<T, Self> {
@@ -218,9 +214,7 @@ impl<'a, T: Debug + GetSpan + GetSpanMut, A: AstAllocator> Box<'a, T, A> {
     }
 
     #[inline]
-    fn specialize_ref(
-        &self,
-    ) -> Result<&oxc_allocator::Box<'a, T>, &VoidBox<'a, T>> {
+    fn specialize_ref(&self) -> Result<&oxc_allocator::Box<'a, T>, &VoidBox<'a, T>> {
         self.as_alloc_box().specialize_ref()
     }
 }

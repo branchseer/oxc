@@ -2,10 +2,10 @@
 
 use std::cell::Cell;
 
-use oxc_span::ast_alloc::Vec as ArenaVec;
 use oxc_ast::{ast::*, ClassElementModifiersExt, FormalParameterModifiersExt};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
+use oxc_span::ast_alloc::Vec as ArenaVec;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     operator::AssignmentOperator,
@@ -201,8 +201,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         // Remove type only members
         body.body.retain(|elem| match elem {
             ClassElement::MethodDefinition(method) => {
-                !method.modifiers.is_abstract()
-                    && !method.value.is_typescript_syntax()
+                !method.modifiers.is_abstract() && !method.value.is_typescript_syntax()
             }
             ClassElement::PropertyDefinition(prop) => {
                 if prop.modifiers.is_declare() {
@@ -211,9 +210,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                     !prop.modifiers.is_abstract()
                 }
             }
-            ClassElement::AccessorProperty(prop) => {
-                !prop.modifiers.is_abstract()
-            }
+            ClassElement::AccessorProperty(prop) => !prop.modifiers.is_abstract(),
             ClassElement::TSIndexSignature(_) => false,
             ClassElement::StaticBlock(_) => true,
         });
@@ -303,7 +300,10 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
-                if param.modifiers.accessibility().is_some() || param.modifiers.is_readonly() || param.modifiers.is_override() {
+                if param.modifiers.accessibility().is_some()
+                    || param.modifiers.is_readonly()
+                    || param.modifiers.is_override()
+                {
                     if let Some(id) = param.pattern.get_binding_identifier() {
                         self.assignments.push(Assignment {
                             span: id.span,

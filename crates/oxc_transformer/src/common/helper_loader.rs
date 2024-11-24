@@ -63,7 +63,10 @@ use std::{borrow::Cow, cell::RefCell};
 
 use oxc_ast::ast::{Argument, CallExpression, Expression, Program, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{Atom, SPAN, ast_alloc::{Box, Vec}};
+use oxc_span::{
+    ast_alloc::{Box, Vec},
+    Atom, SPAN,
+};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;

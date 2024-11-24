@@ -1,10 +1,10 @@
-use oxc_ast::ast::*;
-use oxc_ast::ClassElementModifiersExt;
 use crate::{
     doc::{Doc, DocBuilder},
     format::function_parameters::should_group_function_parameters,
     group, if_break, indent, softline, space, ss, Format, Prettier,
 };
+use oxc_ast::ast::*;
+use oxc_ast::ClassElementModifiersExt;
 
 pub(super) fn print_function<'a>(
     p: &mut Prettier<'a>,

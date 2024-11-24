@@ -1,16 +1,16 @@
-use std::fmt::Debug;
-use oxc_allocator::{Allocator};
+use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
     AstBuilder,
 };
 use oxc_semantic::{NodeId, ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, GetSpan, GetSpanMut, Span, SPAN, ast_alloc::Box};
+use oxc_span::{ast_alloc::Box, Atom, CompactStr, GetSpan, GetSpanMut, Span, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
+use std::fmt::Debug;
 
 use crate::{
     ancestor::{Ancestor, AncestorType},

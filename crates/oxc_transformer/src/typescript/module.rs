@@ -1,5 +1,5 @@
-use oxc_span::ast_alloc::Box;
 use oxc_ast::{ast::*, NONE};
+use oxc_span::ast_alloc::Box;
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::{Traverse, TraverseCtx};

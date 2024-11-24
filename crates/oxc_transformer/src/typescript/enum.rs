@@ -1,8 +1,8 @@
 use rustc_hash::FxHashMap;
 
-use oxc_span::ast_alloc::{Box, Vec};
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_ecmascript::ToInt32;
+use oxc_span::ast_alloc::{Box, Vec};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     node::NodeId,

@@ -1,7 +1,7 @@
-use oxc_span::ast_alloc::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::ToInt32;
 use oxc_semantic::IsGlobalReference;
+use oxc_span::ast_alloc::Vec;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
     number::NumberBase,

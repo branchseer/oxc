@@ -8,9 +8,9 @@ use crate::{
     IsolatedDeclarations,
 };
 use oxc_allocator::CloneIn;
-use oxc_ast::{ClassElementModifiersExt, ClassModifiersExt, FormalParameterModifiersExt as _};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, NONE};
+use oxc_ast::{ClassElementModifiersExt, ClassModifiersExt, FormalParameterModifiersExt as _};
 use oxc_span::ast_alloc::Box;
 use oxc_span::{GetSpan, SPAN};
 use rustc_hash::FxHashMap;
@@ -156,7 +156,14 @@ impl<'a> IsolatedDeclarations<'a> {
         self.ast.class_element_property_definition(
             span,
             self.ast.vec(),
-            Some(ClassElementModifiers { span: SPAN, r#abstract, r#static, r#override, accessibility, ..Default::default() }),
+            Some(ClassElementModifiers {
+                span: SPAN,
+                r#abstract,
+                r#static,
+                r#override,
+                accessibility,
+                ..Default::default()
+            }),
             key,
             None,
             None,
@@ -179,7 +186,13 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(self.ast.class_element_property_definition(
             param.span,
             self.ast.vec(),
-            Some(ClassElementModifiers { span: SPAN, r#override: param.modifiers.is_override(), readonly: param.modifiers.is_readonly(), accessibility: self.transform_accessibility(param.modifiers.accessibility()), ..Default::default() }),
+            Some(ClassElementModifiers {
+                span: SPAN,
+                r#override: param.modifiers.is_override(),
+                readonly: param.modifiers.is_readonly(),
+                accessibility: self.transform_accessibility(param.modifiers.accessibility()),
+                ..Default::default()
+            }),
             key,
             param.pattern.optional,
             None,
@@ -356,7 +369,11 @@ impl<'a> IsolatedDeclarations<'a> {
                     let function = &method.value;
                     let params = match method.kind {
                         MethodDefinitionKind::Set => {
-                            if method.modifiers.accessibility().is_some_and(TSAccessibility::is_private) {
+                            if method
+                                .modifiers
+                                .accessibility()
+                                .is_some_and(TSAccessibility::is_private)
+                            {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
@@ -390,7 +407,11 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
 
-                            if method.modifiers.accessibility().is_some_and(TSAccessibility::is_private) {
+                            if method
+                                .modifiers
+                                .accessibility()
+                                .is_some_and(TSAccessibility::is_private)
+                            {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
@@ -398,7 +419,11 @@ impl<'a> IsolatedDeclarations<'a> {
                             params
                         }
                         _ => {
-                            if method.modifiers.accessibility().is_some_and(TSAccessibility::is_private) {
+                            if method
+                                .modifiers
+                                .accessibility()
+                                .is_some_and(TSAccessibility::is_private)
+                            {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
@@ -472,7 +497,12 @@ impl<'a> IsolatedDeclarations<'a> {
                     let new_element = self.ast.class_element_accessor_property(
                         property.span,
                         self.ast.vec(),
-                        Some(ClassElementModifiers { r#abstract: property.modifiers.is_abstract(), r#static: property.modifiers.is_static(), accessibility: property.modifiers.accessibility(), ..Default::default() }),
+                        Some(ClassElementModifiers {
+                            r#abstract: property.modifiers.is_abstract(),
+                            r#static: property.modifiers.is_static(),
+                            accessibility: property.modifiers.accessibility(),
+                            ..Default::default()
+                        }),
                         // SAFETY: `ast.copy` is unsound! We need to fix.
                         unsafe { self.ast.copy(&property.key) },
                         None,
@@ -523,14 +553,15 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let body = self.ast.class_body(decl.body.span, elements);
 
-
         Some(self.ast.alloc_class(
             decl.r#type,
             decl.span,
             self.ast.vec(),
-
-            Some(ClassModifiers { span: SPAN, r#abstract: decl.modifiers.is_abstract(), declare: declare.unwrap_or_else(|| self.is_declare()) }),
-            
+            Some(ClassModifiers {
+                span: SPAN,
+                r#abstract: decl.modifiers.is_abstract(),
+                declare: declare.unwrap_or_else(|| self.is_declare()),
+            }),
             // SAFETY: `ast.copy` is unsound! We need to fix.
             unsafe { self.ast.copy(&decl.id) },
             // SAFETY: `ast.copy` is unsound! We need to fix.
@@ -550,8 +581,7 @@ impl<'a> IsolatedDeclarations<'a> {
         kind: BindingPatternKind<'a>,
     ) -> Box<'a, FormalParameters<'a>> {
         let pattern = self.ast.binding_pattern(kind, None::<Box<'a, TSTypeAnnotation<'a>>>, None);
-        let parameter =
-            self.ast.formal_parameter(SPAN, self.ast.vec(), None, pattern);
+        let parameter = self.ast.formal_parameter(SPAN, self.ast.vec(), None, pattern);
         let items = self.ast.vec1(parameter);
         self.ast.alloc_formal_parameters(SPAN, FormalParameterKind::Signature, items, NONE)
     }

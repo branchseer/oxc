@@ -2500,13 +2500,11 @@ impl<'a> Format<'a> for TSClassImplementsItem<'a> {
     }
 }
 
-
 impl<'a> Format<'a> for TSTypeAssertionAnnotation<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         array!(p, ss!("<"), self.type_annotation.format(p), ss!(">"))
     }
 }
-
 
 impl<'a> Format<'a> for TSTypeAssertion<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {

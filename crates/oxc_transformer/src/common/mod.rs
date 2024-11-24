@@ -1,8 +1,8 @@
 //! Utility transforms which are in common between other transforms.
 
 use helper_loader::HelperLoader;
-use oxc_span::ast_alloc::Vec;
 use oxc_ast::ast::*;
+use oxc_span::ast_alloc::Vec;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;

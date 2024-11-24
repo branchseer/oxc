@@ -4,7 +4,10 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::ast_alloc::{traits::Box as _, Box};
-use oxc_span::{ast_alloc::{traits::Vec as _, Vec}, cast, Atom, GetSpan, Span};
+use oxc_span::{
+    ast_alloc::{traits::Vec as _, Vec},
+    cast, Atom, GetSpan, Span,
+};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     operator::BinaryOperator,
@@ -1089,7 +1092,10 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             let scope_token = self.ast.enter_scope();
             let single_param_ident = self.parse_binding_identifier()?;
             return self.parse_simple_arrow_function_expression(
-                scope_token, span, single_param_ident, /* async */ false,
+                scope_token,
+                span,
+                single_param_ident,
+                /* async */ false,
             );
         }
 

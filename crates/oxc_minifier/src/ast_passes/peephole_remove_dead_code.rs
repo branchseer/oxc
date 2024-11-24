@@ -1,6 +1,6 @@
-use oxc_span::ast_alloc::Vec;
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
+use oxc_span::ast_alloc::Vec;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 

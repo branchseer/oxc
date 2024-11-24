@@ -35,7 +35,7 @@
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{SPAN, ast_alloc::Vec};
+use oxc_span::{ast_alloc::Vec, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 

@@ -14,9 +14,9 @@
 
 use std::cell::RefCell;
 
-use oxc_span::ast_alloc::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::SparseStack;
+use oxc_span::ast_alloc::Vec;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
