@@ -70,7 +70,7 @@ impl Generator for AstBuilderGenerator {
                 }
 
                 ///@line_break
-                pub struct ScopeToken<T>(PhantomData<T>);
+                pub struct ScopeToken<T>(pub(crate) PhantomData<T>);
 
                 ///@@line_break
                 /// AST builder for creating AST nodes and calling handler

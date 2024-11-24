@@ -14634,7 +14634,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     }
 }
 //line_break
-pub struct ScopeToken<T>(PhantomData<T>);
+pub struct ScopeToken<T>(pub(crate) PhantomData<T>);
 
 /// AST builder for creating AST nodes and calling handler
 #[derive(Clone, Copy)]

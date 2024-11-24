@@ -4,6 +4,7 @@ use crate::{
 };
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
+use oxc_ast::ast_builder::ScopeToken;
 use oxc_diagnostics::Result;
 use oxc_span::ast_alloc::{traits::Box as _, Box};
 use oxc_span::{
@@ -243,6 +244,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     /// Section 14.7.4 For Statement
     fn parse_for_statement(&mut self) -> Result<Statement<'a, A>> {
+        let scope_token = self.ast.enter_scope();
         let span = self.start_span();
         self.bump_any(); // bump `for`
 
@@ -253,7 +255,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
         // for (;..
         if self.at(Kind::Semicolon) {
-            return self.parse_for_loop(span, None, r#await);
+            return self.parse_for_loop(scope_token, span, None, r#await);
         }
 
         // for (let | for (const | for (var
@@ -262,13 +264,13 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             || self.at(Kind::Var)
             || (self.at(Kind::Let) && self.peek_kind().is_after_let())
         {
-            return self.parse_variable_declaration_for_statement(span, r#await);
+            return self.parse_variable_declaration_for_statement(scope_token, span, r#await);
         }
 
         if (self.cur_kind() == Kind::Await && self.peek_kind() == Kind::Using)
             || (self.cur_kind() == Kind::Using && self.peek_kind() == Kind::Ident)
         {
-            return self.parse_using_declaration_for_statement(span, r#await);
+            return self.parse_using_declaration_for_statement(scope_token, span, r#await);
         }
 
         let is_let_of = self.at(Kind::Let) && self.peek_at(Kind::Of);
@@ -277,7 +279,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let expr_span = self.start_span();
 
         if self.at(Kind::RParen) {
-            return self.parse_for_loop(span, None, r#await);
+            return self.parse_for_loop(scope_token, span, None, r#await);
         }
 
         let init_expression =
@@ -294,14 +296,15 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             if is_let_of {
                 self.error(diagnostics::unexpected_token(self.end_span(expr_span)));
             }
-            return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
+            return self.parse_for_in_or_of_loop(scope_token, span, r#await, for_stmt_left);
         }
 
-        self.parse_for_loop(span, Some(ForStatementInit::from(init_expression)), r#await)
+        self.parse_for_loop(scope_token, span, Some(ForStatementInit::from(init_expression)), r#await)
     }
 
     fn parse_variable_declaration_for_statement(
         &mut self,
+        scope_token: ScopeToken<ForStatement<'a, A>>,
         span: Span,
         r#await: bool,
     ) -> Result<Statement<'a, A>> {
@@ -314,15 +317,16 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         // for (.. a in) for (.. a of)
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
             let init = ForStatementLeft::VariableDeclaration(init_declaration);
-            return self.parse_for_in_or_of_loop(span, r#await, init);
+            return self.parse_for_in_or_of_loop(scope_token, span, r#await, init);
         }
 
         let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
-        self.parse_for_loop(span, init, r#await)
+        self.parse_for_loop(scope_token, span, init, r#await)
     }
 
     fn parse_using_declaration_for_statement(
         &mut self,
+        scope_token: ScopeToken<ForStatement<'a, A>>,
         span: Span,
         r#await: bool,
     ) -> Result<Statement<'a, A>> {
@@ -342,15 +346,16 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
             let init = ForStatementLeft::VariableDeclaration(self.ast.alloc(using_decl));
-            return self.parse_for_in_or_of_loop(span, r#await, init);
+            return self.parse_for_in_or_of_loop(scope_token, span, r#await, init);
         }
 
         let init = Some(ForStatementInit::VariableDeclaration(self.ast.alloc(using_decl)));
-        self.parse_for_loop(span, init, r#await)
+        self.parse_for_loop(scope_token, span, init, r#await)
     }
 
     fn parse_for_loop(
         &mut self,
+        scope_token: ScopeToken<ForStatement<'a, A>>,
         span: Span,
         init: Option<ForStatementInit<'a, A>>,
         r#await: bool,
@@ -378,6 +383,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     fn parse_for_in_or_of_loop(
         &mut self,
+        scope_token: ScopeToken<ForStatement<'a, A>>,
         span: Span,
         r#await: bool,
         left: ForStatementLeft<'a, A>,
@@ -395,16 +401,14 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             self.error(diagnostics::for_await(self.end_span(span)));
         }
 
+
+        let body = self.parse_statement_list_item(StatementContext::For)?;
+        let span = self.end_span(span);
+
         if is_for_in {
-            let scope_token = self.ast.enter_scope();
-            let body = self.parse_statement_list_item(StatementContext::For)?;
-            let span = self.end_span(span);
-            Ok(self.ast.statement_for_in(scope_token, span, left, right, body))
+            Ok(self.ast.statement_for_in(scope_token.cast(), span, left, right, body))
         } else {
-            let scope_token = self.ast.enter_scope();
-            let body = self.parse_statement_list_item(StatementContext::For)?;
-            let span = self.end_span(span);
-            Ok(self.ast.statement_for_of(scope_token, span, r#await, left, right, body))
+            Ok(self.ast.statement_for_of(scope_token.cast(), span, r#await, left, right, body))
         }
     }
 

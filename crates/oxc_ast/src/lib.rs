@@ -54,6 +54,7 @@ mod generated {
 }
 
 pub use generated::handle;
+use std::marker::PhantomData;
 
 pub mod visit {
     pub use crate::generated::{visit::*, visit_mut::*};
@@ -83,8 +84,6 @@ pub enum ScopeType {
     Program,
     BlockStatement,
     ForStatement,
-    ForInStatement,
-    ForOfStatement,
     SwitchStatement,
     CatchClause,
     Function,
@@ -99,6 +98,30 @@ pub enum ScopeType {
     TSConstructSignatureDeclaration,
     TSModuleDeclaration,
     TSMappedType,
+}
+
+impl ScopeType {
+    pub(crate) const ForInStatement: Self = Self::ForStatement;
+    pub(crate) const ForOfStatement: Self = Self::ForStatement;
+}
+
+trait Sealed {}
+#[allow(private_bounds)]
+pub trait SameScopeType<T>: Sealed {}
+
+impl<'a, A: AstAllocator> Sealed for ast::ForInStatement<'a, A> {}
+impl<'a, A: AstAllocator> SameScopeType<ast::ForStatement<'a, A>> for ast::ForInStatement<'a, A> {}
+
+impl<'a, A: AstAllocator> Sealed for ast::ForOfStatement<'a, A> {}
+impl<'a, A: AstAllocator> SameScopeType<ast::ForStatement<'a, A>> for ast::ForOfStatement<'a, A> {}
+
+impl<T> ast_builder::ScopeToken<T> {
+    pub fn cast<U>(self) -> ast_builder::ScopeToken<U>
+    where
+        U: SameScopeType<T>,
+    {
+        ast_builder::ScopeToken(PhantomData)
+    }
 }
 
 // After experimenting with two types of boxed enum variants:
