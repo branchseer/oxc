@@ -264,7 +264,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
                     None
                 } else {
                     Some(self.ast.class_element_modifiers(
-                        modifiers_span,
+                        self.end_span(modifiers_span),
                         r#async,
                         r#abstract,
                         r#static,
@@ -291,7 +291,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
                     None
                 } else {
                     Some(self.ast.class_element_modifiers(
-                        modifiers_span,
+                        self.end_span(modifiers_span),
                         r#async,
                         r#abstract,
                         r#static,
@@ -305,6 +305,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             }
         }
 
+    ;
         let class_element_modifiers = class_element_modifiers.unwrap_or_else(|| {
             if modifiers.is_empty() {
                 None

@@ -376,7 +376,6 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         if r#await {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
-        let scope_token = self.ast.enter_scope();
         let body = self.parse_statement_list_item(StatementContext::For)?;
         Ok(self.ast.statement_for(scope_token, self.end_span(span), init, test, update, body))
     }

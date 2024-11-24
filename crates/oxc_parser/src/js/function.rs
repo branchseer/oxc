@@ -49,9 +49,6 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         self.expect(Kind::LParen)?;
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter()?;
-            if !self.at(Kind::RParen) {
-                self.expect(Kind::Comma)?;
-            }
             Some(param)
         } else {
             None
@@ -138,6 +135,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     ) -> Result<Function<'a, A>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
+        let scope_token = self.ast.enter_scope();
 
         let type_parameters = self.parse_ts_type_parameters()?;
 
@@ -147,7 +145,6 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let return_type =
             self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true)?;
 
-        let scope_token = self.ast.enter_scope();
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()?) } else { None };
 
         self.ctx =

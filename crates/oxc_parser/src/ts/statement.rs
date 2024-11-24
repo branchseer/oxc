@@ -527,6 +527,9 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let this = self.end_span(this_span);
 
         let type_annotation = self.parse_ts_type_annotation()?;
+        if !self.at(Kind::RParen) {
+            self.expect(Kind::Comma)?;
+        }
         Ok(self.ast.ts_this_parameter(self.end_span(span), this, type_annotation))
     }
 

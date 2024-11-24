@@ -128,16 +128,13 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
     fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>> {
-        self.expect(Kind::LCurly)?;
         let list = self.context(Context::empty(), self.ctx, |p| {
-            p.parse_delimited_list(
+            p.parse_normal_list(
+                Kind::LCurly,
                 Kind::RCurly,
-                Kind::Comma,
-                /* trailing_separator */ true,
                 Self::parse_import_specifier,
             )
         })?;
-        self.expect(Kind::RCurly)?;
         Ok(list)
     }
 
@@ -198,13 +195,13 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
     pub(crate) fn parse_ts_export_namespace(
         &mut self,
+        start_span: Span,
     ) -> Result<Box<'a, TSNamespaceExportDeclaration<'a>, A>> {
-        let span = self.start_span();
         self.expect(Kind::As)?;
         self.expect(Kind::Namespace)?;
         let id = self.parse_identifier_name()?;
         self.asi()?;
-        Ok(self.ast.alloc_ts_namespace_export_declaration(self.end_span(span), id))
+        Ok(self.ast.alloc_ts_namespace_export_declaration(self.end_span(start_span), id))
     }
 
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
@@ -217,7 +214,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
                 .parse_ts_export_assignment_declaration(span)
                 .map(ModuleDeclaration::TSExportAssignment),
             Kind::As if self.peek_at(Kind::Namespace) && self.is_ts => self
-                .parse_ts_export_namespace()
+                .parse_ts_export_namespace(span)
                 .map(ModuleDeclaration::TSNamespaceExportDeclaration),
             Kind::Default => self
                 .parse_export_default_declaration(span)
@@ -257,16 +254,13 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         span: Span,
     ) -> Result<Box<'a, ExportNamedDeclaration<'a, A>, A>> {
         let export_kind = self.parse_import_or_export_kind();
-        self.expect(Kind::LCurly)?;
         let mut specifiers = self.context(Context::empty(), self.ctx, |p| {
-            p.parse_delimited_list(
+            p.parse_normal_list(
+                Kind::LCurly,
                 Kind::RCurly,
-                Kind::Comma,
-                /* trailing_separator */ true,
                 Self::parse_export_named_specifier,
             )
         })?;
-        self.expect(Kind::RCurly)?;
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string()?;
             (Some(source), self.parse_import_attributes()?)
@@ -425,7 +419,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     // ImportSpecifier :
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
-    pub(crate) fn parse_import_specifier(&mut self) -> Result<ImportDeclarationSpecifier<'a, A>> {
+    pub(crate) fn parse_import_specifier(&mut self) -> Result<Option<ImportDeclarationSpecifier<'a, A>>> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
@@ -455,12 +449,13 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             let local = self.parse_binding_identifier()?;
             (self.ast.module_export_name_identifier_name(local.span, local.name.clone()), local)
         };
-        Ok(self.ast.import_declaration_specifier_import_specifier(
+        self.eat(Kind::Comma);
+        Ok(Some(self.ast.import_declaration_specifier_import_specifier(
             self.end_span(specifier_span),
             imported,
             local,
             import_kind,
-        ))
+        )))
     }
 
     // ModuleExportName :
@@ -517,7 +512,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         ImportOrExportKind::Value
     }
 
-    fn parse_export_named_specifier(&mut self) -> Result<ExportSpecifier<'a>> {
+    fn parse_export_named_specifier(&mut self) -> Result<Option<ExportSpecifier<'a>>> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         // export { type}              // name: `type`
@@ -547,6 +542,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let local = self.parse_module_export_name()?;
         let exported =
             if self.eat(Kind::As) { self.parse_module_export_name()? } else { local.clone() };
-        Ok(self.ast.export_specifier(self.end_span(specifier_span), local, exported, export_kind))
+        self.eat(Kind::Comma);
+        Ok(Some(self.ast.export_specifier(self.end_span(specifier_span), local, exported, export_kind)))
     }
 }

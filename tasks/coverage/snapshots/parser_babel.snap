@@ -4349,11 +4349,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ─────
    ╰────
 
-  × Expected `,` but found `:`
+  × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/392/input.js:1:18]
  1 │ import foo, { bar: { a } } from 'my-module';
-   ·                  ┬
-   ·                  ╰── `,` expected
+   ·                  ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

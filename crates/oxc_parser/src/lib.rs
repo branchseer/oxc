@@ -65,6 +65,7 @@
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
+#![recursion_limit = "256"]
 
 mod context;
 mod cursor;
@@ -785,7 +786,7 @@ mod test {
     fn a() {
         let allocator = Allocator::default();
         let source_type = SourceType::ts();
-        let source = "function foo(x: string | undefined) { }";
+        let source = "export { type foo };";
         let ret = Parser::new(&allocator, source, source_type).parse();
         dbg!(ret.program);
     }

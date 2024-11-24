@@ -19115,12 +19115,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │ }
     ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers_js.ts:2:15]
+  × Export 'type' is not defined
+   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers_js.ts:2:10]
  1 │ const foo = 0;
  2 │ export { type foo };
-   ·               ─┬─
-   ·                ╰── `,` expected
+   ·          ────
    ╰────
 
   × A rest parameter must be last in a parameter list
@@ -24540,7 +24539,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
      ╭─[typescript/tests/cases/conformance/types/thisType/thisTypeInFunctionsNegative.ts:158:17]
  157 │ class ThisConstructor {
  158 │     constructor(this: ThisConstructor, private n: number) {
-     ·                 ─────────────────────
+     ·                 ──────────────────────
  159 │     }
      ╰────
 
@@ -24548,7 +24547,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
      ╭─[typescript/tests/cases/conformance/types/thisType/thisTypeInFunctionsNegative.ts:162:9]
  161 │ interface ThisConstructorInterface {
  162 │     new(this: ThisConstructor, n: number);
-     ·         ─────────────────────
+     ·         ──────────────────────
  163 │ }
      ╰────
 
