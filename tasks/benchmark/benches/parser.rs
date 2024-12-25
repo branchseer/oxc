@@ -3,6 +3,7 @@ use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
+use std::hint::black_box;
 
 fn bench_parser(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("parser");
@@ -17,12 +18,14 @@ fn bench_parser(criterion: &mut Criterion) {
                 // so we do the same here.
                 let mut allocator = Allocator::default();
                 b.iter(|| {
-                    Parser::new(&allocator, source_text, source_type)
-                        .with_options(ParseOptions {
-                            parse_regular_expression: true,
-                            ..ParseOptions::default()
-                        })
-                        .parse();
+                    black_box(
+                        Parser::new(&allocator, source_text, source_type)
+                            .with_options(ParseOptions {
+                                parse_regular_expression: true,
+                                ..ParseOptions::default()
+                            })
+                            .parse(),
+                    );
                     allocator.reset();
                 });
             },
