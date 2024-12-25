@@ -6,7 +6,7 @@ use oxc_regular_expression::ast::Pattern;
 use oxc_span::ast_alloc::{traits::Box as _, Box};
 use oxc_span::{
     ast_alloc::{traits::Vec as _, Vec},
-    cast, Atom, GetSpan, Span,
+    cast, Atom, Span,
 };
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
@@ -1087,20 +1087,19 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
 
         let span = self.start_span();
 
-        // `x => {}`
-        if self.cur_kind().is_binding_identifier() && self.peek_at(Kind::Arrow) {
-            let scope_token = self.ast.enter_scope();
-            let single_param_ident = self.parse_binding_identifier()?;
-            return self.parse_simple_arrow_function_expression(
-                scope_token,
-                span,
-                single_param_ident,
-                /* async */ false,
-            );
-        }
+
+
 
         let lhs = self.parse_binary_expression_or_higher(Precedence::Comma)?;
         let kind = self.cur_kind();
+
+        // `x => {}`
+        if lhs.is_identifier_reference() && kind == Kind::Arrow {
+            let todo_token = self.ast.enter_scope();
+            return self.parse_simple_arrow_function_expression(
+                todo_token, span, lhs, /* async */ false,
+            );
+        }
 
         if kind.is_assignment_operator() {
             return self.parse_assignment_expression_recursive(span, lhs);
