@@ -307,7 +307,7 @@ mod parser_parse {
             self.parse_with(ast_allocator, ())
         }
 
-        fn parse_with<A: AstAllocator, H: Handler<'a, A>>(
+        pub fn parse_with<A: AstAllocator, H: Handler<'a, A>>(
             self,
             ast_allocator: &'a A,
             handler: H,
@@ -323,14 +323,6 @@ mod parser_parse {
                 unique,
             );
             parser.parse()
-        }
-
-        pub fn parse_with_handler<A: AstAllocator, H: Handler<'a, A>>(
-            self,
-            ast_allocator: &'a A,
-            handler: H,
-        ) -> ParserReturn<'a, H, A> {
-            self.parse_with(ast_allocator, handler)
         }
 
         /// Parse a single [`Expression`].
