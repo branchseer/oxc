@@ -171,8 +171,9 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         // Use a fast path for common case of ASCII characters, to avoid the more expensive
         // `char::is_uppercase` in most cases.
         let name = identifier.name.as_str();
-        let is_reference = match name.as_bytes()[0] {
-            b if b.is_ascii() => b < b'a',
+        let is_reference = match name.as_bytes().get(0).copied() {
+            None => false,
+            Some(b) if b.is_ascii() => b < b'a',
             _ => name.chars().next().unwrap().is_uppercase(),
         };
 
