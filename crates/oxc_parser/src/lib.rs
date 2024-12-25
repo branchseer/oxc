@@ -325,12 +325,12 @@ mod parser_parse {
             parser.parse()
         }
 
-        pub fn parse_with_handler<H: Handler<'a, VoidAllocator>>(
+        pub fn parse_with_handler<A: AstAllocator, H: Handler<'a, A>>(
             self,
+            ast_allocator: &'a A,
             handler: H,
-        ) -> ParserReturn<'a, H, VoidAllocator> {
-            static VOID_ALLOCATOR: VoidAllocator = VoidAllocator::new();
-            self.parse_with(&VOID_ALLOCATOR, handler)
+        ) -> ParserReturn<'a, H, A> {
+            self.parse_with(ast_allocator, handler)
         }
 
         /// Parse a single [`Expression`].
