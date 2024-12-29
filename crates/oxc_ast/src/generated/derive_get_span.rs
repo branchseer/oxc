@@ -1283,6 +1283,13 @@ impl<'a, A: AstAllocator> GetSpan for TSThisParameter<'a, A> {
     }
 }
 
+impl<'a> GetSpan for TSEnumHead<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a, A: AstAllocator> GetSpan for TSEnumDeclaration<'a, A> {
     #[inline]
     fn span(&self) -> Span {

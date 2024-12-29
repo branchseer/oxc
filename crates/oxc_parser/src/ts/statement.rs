@@ -29,8 +29,10 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     ) -> Result<Declaration<'a, A>> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier()?;
-        let scope_token = self.ast.enter_scope();
         let declare = modifiers.contains_declare();
+        let head =
+            self.ast.ts_enum_head(self.end_span(span), declare, modifiers.contains_const(), id);
+        let scope_token = self.ast.enter_scope();
         let members = if self.options.allow_skip_ambient && declare {
             self.skip_ambient_curly()?;
             self.ast.vec()
@@ -51,14 +53,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             ModifierFlags::DECLARE | ModifierFlags::CONST,
             diagnostics::modifier_cannot_be_used_here,
         );
-        Ok(self.ast.declaration_ts_enum(
-            scope_token,
-            span,
-            id,
-            members,
-            modifiers.contains_const(),
-            declare,
-        ))
+        Ok(self.ast.declaration_ts_enum(scope_token, span, head, members))
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a, A>> {

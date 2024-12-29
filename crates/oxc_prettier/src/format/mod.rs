@@ -1213,14 +1213,14 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
 impl<'a> Format<'a> for TSEnumDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        if self.declare {
+        if self.head.declare {
             parts.push(ss!("declare "));
         }
-        if self.r#const {
+        if self.head.r#const {
             parts.push(ss!("const "));
         }
         parts.push(ss!("enum "));
-        parts.push(self.id.format(p));
+        parts.push(self.head.id.format(p));
         parts.push(ss!(" {"));
         if self.members.len() > 0 {
             let mut indent_parts = p.vec();

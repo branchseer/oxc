@@ -2586,12 +2586,18 @@ impl<'a> ContentEq for TSThisParameter<'a> {
     }
 }
 
+impl<'a> ContentEq for TSEnumHead<'a> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.declare, &other.declare)
+            && ContentEq::content_eq(&self.r#const, &other.r#const)
+            && ContentEq::content_eq(&self.id, &other.id)
+    }
+}
+
 impl<'a> ContentEq for TSEnumDeclaration<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.id, &other.id)
+        ContentEq::content_eq(&self.head, &other.head)
             && ContentEq::content_eq(&self.members, &other.members)
-            && ContentEq::content_eq(&self.r#const, &other.r#const)
-            && ContentEq::content_eq(&self.declare, &other.declare)
     }
 }
 

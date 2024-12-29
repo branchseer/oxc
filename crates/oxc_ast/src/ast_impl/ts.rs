@@ -13,17 +13,17 @@ use oxc_span::{
 
 use crate::ast::*;
 
-impl<'a> TSEnumDeclaration<'a> {
-    pub fn new(
-        span: Span,
-        id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
-        r#const: bool,
-        declare: bool,
-    ) -> Self {
-        Self { span, id, members, r#const, declare, scope_id: Cell::default() }
-    }
-}
+// impl<'a> TSEnumDeclaration<'a> {
+//     pub fn new(
+//         span: Span,
+//         id: BindingIdentifier<'a>,
+//         members: Vec<'a, TSEnumMember<'a>>,
+//         r#const: bool,
+//         declare: bool,
+//     ) -> Self {
+//         Self { span, id, members, r#const, declare, scope_id: Cell::default() }
+//     }
+// }
 impl<'a> TSEnumMemberName<'a> {
     pub fn static_name(&self) -> Option<&'a str> {
         match self {

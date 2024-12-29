@@ -388,7 +388,10 @@ impl<'a> AstKind<'a> {
             Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),
             Self::TSInstantiationExpression(_) => "TSInstantiationExpression".into(),
 
-            Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
+            Self::TSEnumHead(head) => format!("TSEnumHead({})", &head.id.name).into(),
+            Self::TSEnumDeclaration(decl) => {
+                format!("TSEnumDeclaration({})", &decl.head.id.name).into()
+            }
 
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 

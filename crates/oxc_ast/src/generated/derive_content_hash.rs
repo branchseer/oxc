@@ -1420,12 +1420,18 @@ impl<'a> ContentHash for TSThisParameter<'a> {
     }
 }
 
+impl<'a> ContentHash for TSEnumHead<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.declare, state);
+        ContentHash::content_hash(&self.r#const, state);
+        ContentHash::content_hash(&self.id, state);
+    }
+}
+
 impl<'a> ContentHash for TSEnumDeclaration<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.id, state);
+        ContentHash::content_hash(&self.head, state);
         ContentHash::content_hash(&self.members, state);
-        ContentHash::content_hash(&self.r#const, state);
-        ContentHash::content_hash(&self.declare, state);
     }
 }
 

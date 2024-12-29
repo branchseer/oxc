@@ -167,7 +167,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
                 self.add_binding(decl.id.name.clone(), KindFlags::Type);
             }
             Declaration::TSEnumDeclaration(decl) => {
-                self.add_binding(decl.id.name.clone(), KindFlags::All);
+                self.add_binding(decl.head.id.name.clone(), KindFlags::All);
             }
             Declaration::TSModuleDeclaration(decl) => {
                 if let TSModuleDeclarationName::Identifier(ident) = &decl.id {

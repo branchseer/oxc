@@ -1283,6 +1283,13 @@ impl<'a, A: AstAllocator> GetSpanMut for TSThisParameter<'a, A> {
     }
 }
 
+impl<'a> GetSpanMut for TSEnumHead<'a> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl<'a, A: AstAllocator> GetSpanMut for TSEnumDeclaration<'a, A> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {

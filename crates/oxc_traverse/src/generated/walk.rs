@@ -3750,18 +3750,35 @@ pub(crate) unsafe fn walk_ts_this_parameter<'a, Tr: Traverse<'a>>(
     traverser.exit_ts_this_parameter(&mut *node, ctx);
 }
 
+pub(crate) unsafe fn walk_ts_enum_head<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSEnumHead<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_enum_head(&mut *node, ctx);
+    let pop_token =
+        ctx.push_stack(Ancestor::TSEnumHeadId(ancestor::TSEnumHeadWithoutId(node, PhantomData)));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_HEAD_ID) as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_enum_head(&mut *node, ctx);
+}
+
 pub(crate) unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSEnumDeclaration<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_enum_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSEnumDeclarationId(
-        ancestor::TSEnumDeclarationWithoutId(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSEnumDeclarationHead(
+        ancestor::TSEnumDeclarationWithoutHead(node, PhantomData),
     ));
-    walk_binding_identifier(
+    walk_ts_enum_head(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_ID) as *mut BindingIdentifier,
+        (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_HEAD) as *mut TSEnumHead,
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();

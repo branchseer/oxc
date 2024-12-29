@@ -371,15 +371,16 @@ impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let is_const = self.r#const;
+        let is_const = self.head.r#const;
         let includes = if is_const { SymbolFlags::ConstEnum } else { SymbolFlags::RegularEnum };
         let excludes = if is_const {
             SymbolFlags::ConstEnumExcludes
         } else {
             SymbolFlags::RegularEnumExcludes
         };
-        let symbol_id = builder.declare_symbol(self.id.span, &self.id.name, includes, excludes);
-        self.id.symbol_id.set(Some(symbol_id));
+        let symbol_id =
+            builder.declare_symbol(self.head.id.span, &self.head.id.name, includes, excludes);
+        self.head.id.symbol_id.set(Some(symbol_id));
     }
 }
 

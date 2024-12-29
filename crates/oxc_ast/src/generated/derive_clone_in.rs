@@ -2601,15 +2601,25 @@ impl<'old_alloc> CloneIn for TSThisParameter<'old_alloc> {
     }
 }
 
+impl<'old_alloc> CloneIn for TSEnumHead<'old_alloc> {
+    type Cloned<'a> = TSEnumHead<'a>;
+    fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
+        TSEnumHead {
+            span: CloneIn::clone_in(&self.span, allocator),
+            declare: CloneIn::clone_in(&self.declare, allocator),
+            r#const: CloneIn::clone_in(&self.r#const, allocator),
+            id: CloneIn::clone_in(&self.id, allocator),
+        }
+    }
+}
+
 impl<'old_alloc> CloneIn for TSEnumDeclaration<'old_alloc> {
     type Cloned<'a> = TSEnumDeclaration<'a>;
     fn clone_in<'new_alloc>(&self, allocator: &'new_alloc Allocator) -> Self::Cloned<'new_alloc> {
         TSEnumDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
-            id: CloneIn::clone_in(&self.id, allocator),
+            head: CloneIn::clone_in(&self.head, allocator),
             members: CloneIn::clone_in(&self.members, allocator),
-            r#const: CloneIn::clone_in(&self.r#const, allocator),
-            declare: CloneIn::clone_in(&self.declare, allocator),
             scope_id: Default::default(),
         }
     }

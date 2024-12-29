@@ -299,7 +299,12 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             return self.parse_for_in_or_of_loop(scope_token, span, r#await, for_stmt_left);
         }
 
-        self.parse_for_loop(scope_token, span, Some(ForStatementInit::from(init_expression)), r#await)
+        self.parse_for_loop(
+            scope_token,
+            span,
+            Some(ForStatementInit::from(init_expression)),
+            r#await,
+        )
     }
 
     fn parse_variable_declaration_for_statement(
@@ -399,7 +404,6 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         if r#await && is_for_in {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
-
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
         let span = self.end_span(span);

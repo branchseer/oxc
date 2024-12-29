@@ -30,7 +30,7 @@ impl<'a> IsolatedDeclarations<'a> {
         for member in &decl.members {
             let value = if let Some(initializer) = &member.initializer {
                 let computed_value =
-                    self.computed_constant_value(initializer, &decl.id.name, &prev_members);
+                    self.computed_constant_value(initializer, &decl.head.id.name, &prev_members);
 
                 if computed_value.is_none() {
                     self.error(enum_member_initializers(member.id.span()));
@@ -95,14 +95,14 @@ impl<'a> IsolatedDeclarations<'a> {
             members.push(member);
         }
 
-        Some(self.ast.declaration_ts_enum(
-            decl.span,
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&decl.id) },
-            members,
-            decl.r#const,
+        let head = self.ast.ts_enum_head(
+            decl.head.span,
             self.is_declare(),
-        ))
+            decl.head.r#const,
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.head.id) },
+        );
+        Some(self.ast.declaration_ts_enum(decl.span, head, members))
     }
 
     /// Evaluate the expression to a constant value.

@@ -4686,20 +4686,16 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - head
     /// - members
-    /// - r#const: `true` for const enums
-    /// - declare
     #[inline]
     pub fn declaration_ts_enum(
         self,
         span: Span,
-        id: BindingIdentifier<'a>,
+        head: TSEnumHead<'a>,
         members: Vec<'a, TSEnumMember<'a, A>, A>,
-        r#const: bool,
-        declare: bool,
     ) -> Declaration<'a, A> {
-        let value = self.ts_enum_declaration(span, id, members, r#const, declare);
+        let value = self.ts_enum_declaration(span, head, members);
         let value = Declaration::TSEnumDeclaration(self.allocator.alloc(value));
         value
     }
@@ -8401,27 +8397,63 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
         self.allocator.alloc(self.ts_this_parameter(span, this_span, type_annotation))
     }
 
+    /// Builds a [`TSEnumHead`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_enum_head`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - declare
+    /// - r#const: `true` for const enums
+    /// - id
+    #[inline]
+    pub fn ts_enum_head(
+        self,
+        span: Span,
+        declare: bool,
+        r#const: bool,
+        id: BindingIdentifier<'a>,
+    ) -> TSEnumHead<'a> {
+        let value = TSEnumHead { span, declare, r#const, id };
+        value
+    }
+
+    /// Builds a [`TSEnumHead`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_enum_head`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - declare
+    /// - r#const: `true` for const enums
+    /// - id
+    #[inline]
+    pub fn alloc_ts_enum_head(
+        self,
+        span: Span,
+        declare: bool,
+        r#const: bool,
+        id: BindingIdentifier<'a>,
+    ) -> Box<'a, TSEnumHead<'a>, A> {
+        self.allocator.alloc(self.ts_enum_head(span, declare, r#const, id))
+    }
+
     /// Builds a [`TSEnumDeclaration`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_enum_declaration`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - head
     /// - members
-    /// - r#const: `true` for const enums
-    /// - declare
     #[inline]
     pub fn ts_enum_declaration(
         self,
         span: Span,
-        id: BindingIdentifier<'a>,
+        head: TSEnumHead<'a>,
         members: Vec<'a, TSEnumMember<'a, A>, A>,
-        r#const: bool,
-        declare: bool,
     ) -> TSEnumDeclaration<'a, A> {
-        let value =
-            TSEnumDeclaration { span, id, members, r#const, declare, scope_id: Default::default() };
+        let value = TSEnumDeclaration { span, head, members, scope_id: Default::default() };
         value
     }
 
@@ -8431,20 +8463,16 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - head
     /// - members
-    /// - r#const: `true` for const enums
-    /// - declare
     #[inline]
     pub fn alloc_ts_enum_declaration(
         self,
         span: Span,
-        id: BindingIdentifier<'a>,
+        head: TSEnumHead<'a>,
         members: Vec<'a, TSEnumMember<'a, A>, A>,
-        r#const: bool,
-        declare: bool,
     ) -> Box<'a, TSEnumDeclaration<'a, A>, A> {
-        self.allocator.alloc(self.ts_enum_declaration(span, id, members, r#const, declare))
+        self.allocator.alloc(self.ts_enum_declaration(span, head, members))
     }
 
     /// Builds a [`TSEnumMember`]
@@ -19605,21 +19633,17 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - head
     /// - members
-    /// - r#const: `true` for const enums
-    /// - declare
     #[inline]
     pub fn declaration_ts_enum(
         &mut self,
         scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
-        id: BindingIdentifier<'a>,
+        head: TSEnumHead<'a>,
         members: Vec<'a, TSEnumMember<'a, A>, A>,
-        r#const: bool,
-        declare: bool,
     ) -> Declaration<'a, A> {
-        let value = self.ts_enum_declaration(scope_token, span, id, members, r#const, declare);
+        let value = self.ts_enum_declaration(scope_token, span, head, members);
         let value = Declaration::TSEnumDeclaration(self.allocator.alloc(value));
         self.handler.handle_declaration(&value);
         value
@@ -23521,28 +23545,65 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         self.allocator.alloc(self.ts_this_parameter(span, this_span, type_annotation))
     }
 
+    /// Builds a [`TSEnumHead`]
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_enum_head`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - declare
+    /// - r#const: `true` for const enums
+    /// - id
+    #[inline]
+    pub fn ts_enum_head(
+        &mut self,
+        span: Span,
+        declare: bool,
+        r#const: bool,
+        id: BindingIdentifier<'a>,
+    ) -> TSEnumHead<'a> {
+        let value = TSEnumHead { span, declare, r#const, id };
+        self.handler.handle_ts_enum_head(&value);
+        value
+    }
+
+    /// Builds a [`TSEnumHead`] and stores it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::ts_enum_head`] instead.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - declare
+    /// - r#const: `true` for const enums
+    /// - id
+    #[inline]
+    pub fn alloc_ts_enum_head(
+        &mut self,
+        span: Span,
+        declare: bool,
+        r#const: bool,
+        id: BindingIdentifier<'a>,
+    ) -> Box<'a, TSEnumHead<'a>, A> {
+        self.allocator.alloc(self.ts_enum_head(span, declare, r#const, id))
+    }
+
     /// Builds a [`TSEnumDeclaration`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_ts_enum_declaration`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - head
     /// - members
-    /// - r#const: `true` for const enums
-    /// - declare
     #[inline]
     pub fn ts_enum_declaration(
         &mut self,
         _scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
-        id: BindingIdentifier<'a>,
+        head: TSEnumHead<'a>,
         members: Vec<'a, TSEnumMember<'a, A>, A>,
-        r#const: bool,
-        declare: bool,
     ) -> TSEnumDeclaration<'a, A> {
-        let value =
-            TSEnumDeclaration { span, id, members, r#const, declare, scope_id: Default::default() };
+        let value = TSEnumDeclaration { span, head, members, scope_id: Default::default() };
         self.handler.leave_scope();
         self.handler.handle_ts_enum_declaration(&value);
         value
@@ -23554,28 +23615,17 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - id
+    /// - head
     /// - members
-    /// - r#const: `true` for const enums
-    /// - declare
     #[inline]
     pub fn alloc_ts_enum_declaration(
         &mut self,
         _scope_token: ScopeToken<TSEnumDeclaration<'a, A>>,
         span: Span,
-        id: BindingIdentifier<'a>,
+        head: TSEnumHead<'a>,
         members: Vec<'a, TSEnumMember<'a, A>, A>,
-        r#const: bool,
-        declare: bool,
     ) -> Box<'a, TSEnumDeclaration<'a, A>, A> {
-        self.allocator.alloc(self.ts_enum_declaration(
-            _scope_token,
-            span,
-            id,
-            members,
-            r#const,
-            declare,
-        ))
+        self.allocator.alloc(self.ts_enum_declaration(_scope_token, span, head, members))
     }
 
     /// Builds a [`TSEnumMember`]

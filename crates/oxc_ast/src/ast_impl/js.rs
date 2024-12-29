@@ -752,7 +752,7 @@ impl<'a> Declaration<'a> {
             Declaration::ClassDeclaration(decl) => decl.id.as_ref(),
             Declaration::TSTypeAliasDeclaration(decl) => Some(&decl.id),
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
-            Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
+            Declaration::TSEnumDeclaration(decl) => Some(&decl.head.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
             _ => None,
         }
@@ -765,7 +765,7 @@ impl<'a> Declaration<'a> {
             Declaration::ClassDeclaration(decl) => {
                 decl.modifiers.as_ref().is_some_and(|modifiers| modifiers.declare)
             }
-            Declaration::TSEnumDeclaration(decl) => decl.declare,
+            Declaration::TSEnumDeclaration(decl) => decl.head.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,

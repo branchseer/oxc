@@ -129,11 +129,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     // import { export1 , export2 as alias2 , [...] } from "module-name";
     fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier<'a, A>, A>> {
         let list = self.context(Context::empty(), self.ctx, |p| {
-            p.parse_normal_list(
-                Kind::LCurly,
-                Kind::RCurly,
-                Self::parse_import_specifier,
-            )
+            p.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_import_specifier)
         })?;
         Ok(list)
     }
@@ -255,11 +251,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     ) -> Result<Box<'a, ExportNamedDeclaration<'a, A>, A>> {
         let export_kind = self.parse_import_or_export_kind();
         let mut specifiers = self.context(Context::empty(), self.ctx, |p| {
-            p.parse_normal_list(
-                Kind::LCurly,
-                Kind::RCurly,
-                Self::parse_export_named_specifier,
-            )
+            p.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_export_named_specifier)
         })?;
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string()?;
@@ -419,7 +411,9 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
     // ImportSpecifier :
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
-    pub(crate) fn parse_import_specifier(&mut self) -> Result<Option<ImportDeclarationSpecifier<'a, A>>> {
+    pub(crate) fn parse_import_specifier(
+        &mut self,
+    ) -> Result<Option<ImportDeclarationSpecifier<'a, A>>> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
@@ -543,6 +537,11 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let exported =
             if self.eat(Kind::As) { self.parse_module_export_name()? } else { local.clone() };
         self.eat(Kind::Comma);
-        Ok(Some(self.ast.export_specifier(self.end_span(specifier_span), local, exported, export_kind)))
+        Ok(Some(self.ast.export_specifier(
+            self.end_span(specifier_span),
+            local,
+            exported,
+            export_kind,
+        )))
     }
 }

@@ -110,6 +110,7 @@ pub enum AstType {
     ExportAllDeclaration,
     ExportSpecifier,
     TSThisParameter,
+    TSEnumHead,
     TSEnumDeclaration,
     TSEnumMember,
     TSTypeAnnotation,
@@ -290,6 +291,7 @@ pub enum AstKind<'a> {
     ExportAllDeclaration(&'a ExportAllDeclaration<'a>),
     ExportSpecifier(&'a ExportSpecifier<'a>),
     TSThisParameter(&'a TSThisParameter<'a>),
+    TSEnumHead(&'a TSEnumHead<'a>),
     TSEnumDeclaration(&'a TSEnumDeclaration<'a>),
     TSEnumMember(&'a TSEnumMember<'a>),
     TSTypeAnnotation(&'a TSTypeAnnotation<'a>),
@@ -471,6 +473,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::ExportAllDeclaration(it) => it.span(),
             Self::ExportSpecifier(it) => it.span(),
             Self::TSThisParameter(it) => it.span(),
+            Self::TSEnumHead(it) => it.span(),
             Self::TSEnumDeclaration(it) => it.span(),
             Self::TSEnumMember(it) => it.span(),
             Self::TSTypeAnnotation(it) => it.span(),
@@ -1461,6 +1464,15 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_this_parameter(&self) -> Option<&'a TSThisParameter<'a>> {
         if let Self::TSThisParameter(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_ts_enum_head(&self) -> Option<&'a TSEnumHead<'a>> {
+        if let Self::TSEnumHead(v) = self {
             Some(*v)
         } else {
             None

@@ -58,6 +58,19 @@ pub struct TSThisParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a, A>, A>>,
 }
 
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(bound = ""))]
+pub struct TSEnumHead<'a> {
+    #[serde(skip)]
+    pub span: Span,
+    pub declare: bool,
+    /// `true` for const enums
+    pub r#const: bool,
+    pub id: BindingIdentifier<'a>,
+}
+
 /// Enum Declaration
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
@@ -87,12 +100,11 @@ pub struct TSThisParameter<'a, A: AstAllocator = oxc_allocator::Allocator> {
 pub struct TSEnumDeclaration<'a, A: AstAllocator = oxc_allocator::Allocator> {
     #[serde(flatten)]
     pub span: Span,
-    pub id: BindingIdentifier<'a>,
+
+    #[serde(flatten)]
+    pub head: TSEnumHead<'a>,
     #[scope(enter_before)]
     pub members: Vec<'a, TSEnumMember<'a, A>, A>,
-    /// `true` for const enums
-    pub r#const: bool,
-    pub declare: bool,
     #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,

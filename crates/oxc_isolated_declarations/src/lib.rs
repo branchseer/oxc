@@ -547,7 +547,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         assignable_properties_for_namespace
                             .entry(&ident.name)
                             .or_default()
-                            .insert(decl.id.name.clone());
+                            .insert(decl.head.id.name.clone());
                     }
                     _ => {}
                 }

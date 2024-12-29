@@ -1561,6 +1561,11 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_ts_enum_head(&mut self, node: &mut TSEnumHead<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_enum_head(&mut self, node: &mut TSEnumHead<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
     fn enter_ts_enum_declaration(
         &mut self,
         node: &mut TSEnumDeclaration<'a>,

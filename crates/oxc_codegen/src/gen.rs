@@ -3588,15 +3588,15 @@ impl<'a> Gen for TSInterfaceHeritage<'a> {
 impl<'a> Gen for TSEnumDeclaration<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
-        if self.declare {
+        if self.head.declare {
             p.print_str("declare ");
         }
-        if self.r#const {
+        if self.head.r#const {
             p.print_str("const ");
         }
         p.print_space_before_identifier();
         p.print_str("enum ");
-        self.id.print(p, ctx);
+        self.head.id.print(p, ctx);
         p.print_space_before_identifier();
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for member in &self.members {

@@ -240,7 +240,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             Declaration::TSEnumDeclaration(enum_decl) => {
-                if !check_binding || self.scope.has_reference(&enum_decl.id.name) {
+                if !check_binding || self.scope.has_reference(&enum_decl.head.id.name) {
                     self.transform_ts_enum_declaration(enum_decl)
                 } else {
                     None

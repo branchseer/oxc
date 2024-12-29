@@ -66,7 +66,7 @@ impl<'a> TypeScriptEnum<'a> {
         export_span: Option<Span>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        if decl.declare {
+        if decl.head.declare {
             return None;
         }
 
@@ -75,10 +75,10 @@ impl<'a> TypeScriptEnum<'a> {
         let is_export = export_span.is_some();
         let is_not_top_scope = !ctx.scopes().get_flags(ctx.current_scope_id()).is_top();
 
-        let enum_name = decl.id.name.clone();
+        let enum_name = decl.head.id.name.clone();
         let func_scope_id = decl.scope_id.get().unwrap();
         let param_symbol_id = ctx.symbols_mut().create_symbol(
-            decl.id.span,
+            decl.head.id.span,
             enum_name.to_compact_str(),
             SymbolFlags::FunctionScopedVariable,
             func_scope_id,
@@ -87,8 +87,8 @@ impl<'a> TypeScriptEnum<'a> {
         ctx.scopes_mut().add_binding(func_scope_id, enum_name.to_compact_str(), param_symbol_id);
 
         let ident = BindingIdentifier::new_with_symbol_id(
-            decl.id.span,
-            decl.id.name.clone(),
+            decl.head.id.span,
+            decl.head.id.name.clone(),
             param_symbol_id,
         );
         let kind = ast.binding_pattern_kind_from_binding_identifier(ident.clone());
@@ -125,7 +125,7 @@ impl<'a> TypeScriptEnum<'a> {
         function.scope_id.set(Some(func_scope_id));
         let callee = ctx.ast.expression_from_function(function);
 
-        let var_symbol_id = decl.id.symbol_id.get().unwrap();
+        let var_symbol_id = decl.head.id.symbol_id.get().unwrap();
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
             let object_expr = ast.expression_object(SPAN, ast.vec(), None);
@@ -134,7 +134,7 @@ impl<'a> TypeScriptEnum<'a> {
             // }(Foo || {});
             let op = LogicalOperator::Or;
             let left = ctx.create_bound_reference_id(
-                decl.id.span,
+                decl.head.id.span,
                 enum_name.clone(),
                 var_symbol_id,
                 ReferenceFlags::Read,
@@ -150,7 +150,7 @@ impl<'a> TypeScriptEnum<'a> {
         if is_already_declared {
             let op = AssignmentOperator::Assign;
             let left = ctx.create_bound_reference_id(
-                decl.id.span,
+                decl.head.id.span,
                 enum_name.clone(),
                 var_symbol_id,
                 ReferenceFlags::Write,
@@ -166,7 +166,7 @@ impl<'a> TypeScriptEnum<'a> {
             VariableDeclarationKind::Var
         };
         let decls = {
-            let binding_identifier = decl.id.clone();
+            let binding_identifier = decl.head.id.clone();
             let binding_pattern_kind =
                 ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
             let binding = ast.binding_pattern(binding_pattern_kind, NONE, None);

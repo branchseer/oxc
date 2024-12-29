@@ -303,9 +303,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
                 });
                 key_name = Some(self.parse_class_element_name()?);
             }
-        }
-
-    ;
+        };
         let class_element_modifiers = class_element_modifiers.unwrap_or_else(|| {
             if modifiers.is_empty() {
                 None

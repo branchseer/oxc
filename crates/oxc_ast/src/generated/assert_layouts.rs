@@ -804,14 +804,19 @@ const _: () = {
     assert!(offset_of!(TSThisParameter, this_span) == 8usize);
     assert!(offset_of!(TSThisParameter, type_annotation) == 16usize);
 
-    assert!(size_of::<TSEnumDeclaration>() == 80usize);
+    assert!(size_of::<TSEnumHead>() == 48usize);
+    assert!(align_of::<TSEnumHead>() == 8usize);
+    assert!(offset_of!(TSEnumHead, span) == 0usize);
+    assert!(offset_of!(TSEnumHead, declare) == 8usize);
+    assert!(offset_of!(TSEnumHead, r#const) == 9usize);
+    assert!(offset_of!(TSEnumHead, id) == 16usize);
+
+    assert!(size_of::<TSEnumDeclaration>() == 96usize);
     assert!(align_of::<TSEnumDeclaration>() == 8usize);
     assert!(offset_of!(TSEnumDeclaration, span) == 0usize);
-    assert!(offset_of!(TSEnumDeclaration, id) == 8usize);
-    assert!(offset_of!(TSEnumDeclaration, members) == 40usize);
-    assert!(offset_of!(TSEnumDeclaration, r#const) == 72usize);
-    assert!(offset_of!(TSEnumDeclaration, declare) == 73usize);
-    assert!(offset_of!(TSEnumDeclaration, scope_id) == 76usize);
+    assert!(offset_of!(TSEnumDeclaration, head) == 8usize);
+    assert!(offset_of!(TSEnumDeclaration, members) == 56usize);
+    assert!(offset_of!(TSEnumDeclaration, scope_id) == 88usize);
 
     assert!(size_of::<TSEnumMember>() == 40usize);
     assert!(align_of::<TSEnumMember>() == 8usize);
@@ -2393,14 +2398,19 @@ const _: () = {
     assert!(offset_of!(TSThisParameter, this_span) == 8usize);
     assert!(offset_of!(TSThisParameter, type_annotation) == 16usize);
 
-    assert!(size_of::<TSEnumDeclaration>() == 52usize);
+    assert!(size_of::<TSEnumHead>() == 32usize);
+    assert!(align_of::<TSEnumHead>() == 4usize);
+    assert!(offset_of!(TSEnumHead, span) == 0usize);
+    assert!(offset_of!(TSEnumHead, declare) == 8usize);
+    assert!(offset_of!(TSEnumHead, r#const) == 9usize);
+    assert!(offset_of!(TSEnumHead, id) == 12usize);
+
+    assert!(size_of::<TSEnumDeclaration>() == 60usize);
     assert!(align_of::<TSEnumDeclaration>() == 4usize);
     assert!(offset_of!(TSEnumDeclaration, span) == 0usize);
-    assert!(offset_of!(TSEnumDeclaration, id) == 8usize);
-    assert!(offset_of!(TSEnumDeclaration, members) == 28usize);
-    assert!(offset_of!(TSEnumDeclaration, r#const) == 44usize);
-    assert!(offset_of!(TSEnumDeclaration, declare) == 45usize);
-    assert!(offset_of!(TSEnumDeclaration, scope_id) == 48usize);
+    assert!(offset_of!(TSEnumDeclaration, head) == 8usize);
+    assert!(offset_of!(TSEnumDeclaration, members) == 40usize);
+    assert!(offset_of!(TSEnumDeclaration, scope_id) == 56usize);
 
     assert!(size_of::<TSEnumMember>() == 24usize);
     assert!(align_of::<TSEnumMember>() == 4usize);

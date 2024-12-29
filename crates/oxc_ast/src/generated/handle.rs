@@ -652,6 +652,9 @@ pub trait Handler<'a, A: AstAllocator> {
     fn handle_ts_enum_declaration(&mut self, _: &TSEnumDeclaration<'a, A>) {}
 
     #[inline]
+    fn handle_ts_enum_head(&mut self, _: &TSEnumHead<'a>) {}
+
+    #[inline]
     fn handle_ts_enum_member(&mut self, _: &TSEnumMember<'a, A>) {}
 
     #[inline]
