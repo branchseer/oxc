@@ -321,7 +321,7 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
         }
 
         match self.cur_kind() {
-            Kind::Const => !self.peek_token().is_on_new_line && self.peek_kind() == Kind::Enum,
+            Kind::Const => self.peek_kind() == Kind::Enum,
             Kind::Export => {
                 self.bump_any();
                 match self.cur_kind() {
