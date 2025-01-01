@@ -395,7 +395,7 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let value = self.cur_string();
         let span = self.start_span();
         self.bump_any();
-        Ok(self.ast.string_literal(self.end_span(span), value))
+        Ok(self.ast.string_literal(self.end_span(span), Atom::from(value)))
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
