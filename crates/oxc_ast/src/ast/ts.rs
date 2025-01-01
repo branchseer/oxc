@@ -152,8 +152,8 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify),  serde(bound = ""))]
 #[serde(untagged)]
 pub enum TSEnumMemberName<'a, A: AstAllocator = oxc_allocator::Allocator> {
-    StaticIdentifier(Box<'a, IdentifierName<'a>, A>) = 64,
-    StaticStringLiteral(Box<'a, StringLiteral<'a>, A>) = 65,
+    StaticIdentifier(IdentifierName<'a>) = 64,
+    StaticStringLiteral(StringLiteral<'a>) = 65,
     StaticTemplateLiteral(Box<'a, TemplateLiteral<'a, A>, A>) = 66,
     // Invalid Grammar `enum E { 1 }`
     StaticNumericLiteral(Box<'a, NumericLiteral<'a>, A>) = 67,

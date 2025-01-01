@@ -8514,8 +8514,6 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
 
     /// Build a [`TSEnumMemberName::StaticIdentifier`]
     ///
-    /// This node contains a [`IdentifierName`] that will be stored in the memory arena.
-    ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - name
@@ -8528,8 +8526,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
-        let value = self.identifier_name(span, name);
-        let value = TSEnumMemberName::StaticIdentifier(self.allocator.alloc(value));
+        let value = TSEnumMemberName::StaticIdentifier(self.identifier_name(span, name));
         value
     }
 
@@ -8537,15 +8534,13 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_enum_member_name_from_identifier_name<T>(self, inner: T) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, Box<'a, IdentifierName<'a>, A>, A>,
+        T: IntoIn<'a, IdentifierName<'a>, A>,
     {
         let value = TSEnumMemberName::StaticIdentifier(inner.into_in(self.allocator));
         value
     }
 
     /// Build a [`TSEnumMemberName::StaticStringLiteral`]
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
@@ -8559,8 +8554,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
-        let value = self.string_literal(span, value);
-        let value = TSEnumMemberName::StaticStringLiteral(self.allocator.alloc(value));
+        let value = TSEnumMemberName::StaticStringLiteral(self.string_literal(span, value));
         value
     }
 
@@ -8568,7 +8562,7 @@ impl<'a, A: AstAllocator> AstBuilder<'a, A> {
     #[inline]
     pub fn ts_enum_member_name_from_string_literal<T>(self, inner: T) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
+        T: IntoIn<'a, StringLiteral<'a>, A>,
     {
         let value = TSEnumMemberName::StaticStringLiteral(inner.into_in(self.allocator));
         value
@@ -23668,8 +23662,6 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
 
     /// Build a [`TSEnumMemberName::StaticIdentifier`]
     ///
-    /// This node contains a [`IdentifierName`] that will be stored in the memory arena.
-    ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     /// - name
@@ -23682,8 +23674,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
-        let value = self.identifier_name(span, name);
-        let value = TSEnumMemberName::StaticIdentifier(self.allocator.alloc(value));
+        let value = TSEnumMemberName::StaticIdentifier(self.identifier_name(span, name));
         self.handler.handle_ts_enum_member_name(&value);
         value
     }
@@ -23695,7 +23686,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, Box<'a, IdentifierName<'a>, A>, A>,
+        T: IntoIn<'a, IdentifierName<'a>, A>,
     {
         let value = TSEnumMemberName::StaticIdentifier(inner.into_in(self.allocator));
         self.handler.handle_ts_enum_member_name(&value);
@@ -23703,8 +23694,6 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     }
 
     /// Build a [`TSEnumMemberName::StaticStringLiteral`]
-    ///
-    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
@@ -23718,8 +23707,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
     where
         IntoAtom: IntoIn<'a, Atom<'a>, A>,
     {
-        let value = self.string_literal(span, value);
-        let value = TSEnumMemberName::StaticStringLiteral(self.allocator.alloc(value));
+        let value = TSEnumMemberName::StaticStringLiteral(self.string_literal(span, value));
         self.handler.handle_ts_enum_member_name(&value);
         value
     }
@@ -23731,7 +23719,7 @@ impl<'a, A: AstAllocator, H: Handler<'a, A>> AstBuilderWithHandler<'a, H, A> {
         inner: T,
     ) -> TSEnumMemberName<'a, A>
     where
-        T: IntoIn<'a, Box<'a, StringLiteral<'a>, A>, A>,
+        T: IntoIn<'a, StringLiteral<'a>, A>,
     {
         let value = TSEnumMemberName::StaticStringLiteral(inner.into_in(self.allocator));
         self.handler.handle_ts_enum_member_name(&value);
