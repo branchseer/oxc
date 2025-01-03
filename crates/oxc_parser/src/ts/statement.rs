@@ -337,8 +337,12 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
             diagnostics::modifier_cannot_be_used_here,
         );
         let id = match self.cur_kind() {
-            Kind::Str => self.parse_literal_string().map(TSModuleDeclarationName::StringLiteral),
-            _ => self.parse_binding_identifier().map(TSModuleDeclarationName::Identifier),
+            Kind::Str => self
+                .parse_literal_string()
+                .map(|literal| self.ast.ts_module_declaration_name_from_string_literal(literal)),
+            _ => self
+                .parse_binding_identifier()
+                .map(|id| self.ast.ts_module_declaration_name_from_binding_identifier(id)),
         }?;
 
         let scope_token = self.ast.enter_scope();
