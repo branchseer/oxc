@@ -63,16 +63,15 @@ impl<'a, A: oxc_span::ast_alloc::AstAllocator, H: crate::Handler<'a, A>> ParserI
         let with_clause = self.parse_import_attributes()?;
         self.asi()?;
         let span = self.end_span(span);
-        Ok(self
-            .ast
-            .module_declaration_import_declaration(
-                span,
-                specifiers,
-                source,
-                self.ast.map_alloc(with_clause),
-                import_kind,
-            )
-            .into())
+
+        let decl = self.ast.module_declaration_import_declaration(
+            span,
+            specifiers,
+            source,
+            self.ast.map_alloc(with_clause),
+            import_kind,
+        );
+        Ok(self.ast.statement_module_declaration(decl))
     }
 
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
