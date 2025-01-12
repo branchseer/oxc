@@ -58,14 +58,14 @@ impl<'a, A: AstAllocator, H: crate::Handler<'a, A>> ParserImpl<'a, H, A> {
             ModifierFlags::DECLARE | ModifierFlags::ABSTRACT,
             diagnostics::modifier_cannot_be_used_here,
         );
-        let modifiers = if modifiers.is_empty() {
-            None
-        } else {
+        let modifiers = if let Some(first_modifier) = modifiers.iter().next() {
             Some(self.ast.class_modifiers(
-                self.end_span(start_span),
+                self.end_span(first_modifier.span),
                 modifiers.contains_abstract(),
                 modifiers.contains_declare(),
             ))
+        } else {
+            None
         };
         self.parse_class(start_span, ClassType::ClassDeclaration, modifiers)
     }
