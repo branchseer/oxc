@@ -95,29 +95,29 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
 
 /// Bumpalo Vec
 #[derive(Debug, PartialEq, Eq)]
-pub struct Vec<'alloc, T>(vec::Vec<T, &'alloc Bump>);
+pub struct Vec<'alloc, T>(bumpalo::collections::Vec<'alloc, T>);
 
 impl<'alloc, T> Vec<'alloc, T> {
     #[inline]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self(vec::Vec::new_in(allocator))
+        Self(bumpalo::collections::Vec::new_in(allocator))
     }
 
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self(vec::Vec::with_capacity_in(capacity, allocator))
+        Self(bumpalo::collections::Vec::with_capacity_in(capacity, allocator))
     }
 
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        let mut vec = vec::Vec::new_in(&**allocator);
+        let mut vec = bumpalo::collections::Vec::new_in(&**allocator);
         vec.extend(iter);
         Self(vec)
     }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
-    type Target = vec::Vec<T, &'alloc Bump>;
+    type Target = bumpalo::collections::Vec<'alloc, T>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -125,13 +125,13 @@ impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
 }
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
-    fn deref_mut(&mut self) -> &mut vec::Vec<T, &'alloc Bump> {
+    fn deref_mut(&mut self) -> &mut bumpalo::collections::Vec<'alloc, T> {
         &mut self.0
     }
 }
 
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
-    type IntoIter = <vec::Vec<T, &'alloc Bump> as IntoIterator>::IntoIter;
+    type IntoIter = <bumpalo::collections::Vec<'alloc, T> as IntoIterator>::IntoIter;
     type Item = T;
 
     fn into_iter(self) -> Self::IntoIter {
